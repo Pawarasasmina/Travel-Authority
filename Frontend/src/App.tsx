@@ -6,7 +6,7 @@ import ForgotPassword from './pages/forgot-password';
 import ChangePassword from './pages/change-password';
 import AboutUs from './pages/about-us';
 import Home from './pages/home';
-import Categories from './pages/Categories';
+import Categories from './pages/categories';
 
 
 function App() {

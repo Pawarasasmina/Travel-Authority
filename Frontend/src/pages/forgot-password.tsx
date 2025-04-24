@@ -1,7 +1,9 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
-import bgImage from "../assets/login-signup/background-login.jpg";
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
+import AuthLayout from '../components/layouts/AuthLayout';
 
 interface ForgotPasswordFormData {
   email: string;
@@ -29,20 +31,13 @@ function ForgotPasswordForm() {
       </div>
       <div className="flex flex-col gap-4 mb-8 max-sm:gap-3">
         {!isCodeSent && (
-          <div className="flex flex-col gap-1">
-            <label htmlFor="email" className="text-[15px] text-black font-semibold">
-              Email or Phone Number
-            </label>
-            <div className="flex items-center gap-4 border h-[55px] bg-white px-4 py-2 rounded-[10px] border-solid border-[#E0E0E0] shadow-[0_2px_4px_rgba(0,0,0,0.1)] max-sm:h-[50px]">
-              <input
-                id="email"
-                type="text"
-                placeholder="Enter Email or Phone Number"
-                {...register("email")}
-                className="w-full text-[15px] text-black border-[none] focus:outline-none bg-transparent"
-              />
-            </div>
-          </div>
+          <Input
+            id="email"
+            type="text"
+            placeholder="Enter Email or Phone Number"
+            label="Email or Phone Number"
+            {...register("email")}
+          />
         )}
         {isCodeSent && (
           <div className="flex flex-col gap-1">
@@ -74,12 +69,13 @@ function ForgotPasswordForm() {
           </div>
         )}
       </div>
-      <button
+      <Button
         type="submit"
-        className="w-full h-[60px] text-white text-lg font-semibold cursor-pointer shadow-[0_4px_4px_rgba(0,0,0,0.25),0_1px_1px_rgba(0,0,0,0.25)_inset] rounded-[20px] border-none bg-gradient-to-r from-[#FF7F50] to-[#BF360C] max-sm:h-[50px] mt-16"
+        fullWidth
+        className="mt-16"
       >
         {isCodeSent ? "Verify" : "Send Code"}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -87,21 +83,8 @@ function ForgotPasswordForm() {
 // Main Forgot Password page component
 export default function ForgotPassword() {
   return (
-    <div
-      className="flex justify-center items-center min-h-screen bg-neutral-100 p-4 relative"
-      style={{ backgroundImage: `url(${bgImage})` }}
-    >
-      <div className="absolute inset-0 bg-white opacity-40"></div> {/* Overlay */}
-      <div className="flex w-full max-w-[1100px] scale-[0.85] shadow-md bg-white rounded-[20px] max-md:flex-col max-md:max-w-[500px] max-sm:rounded-md relative">
-        <img
-          src="https://cdn.builder.io/api/v1/image/assets/TEMP/45bbe1598e1eb471892256d1ee93adaff5876552"
-          alt="Mountain lake view from wooden boat"
-          className="w-3/5 object-cover h-[700px] rounded-l-[20px] max-md:w-full max-md:h-[150px] max-md:rounded-t-lg"
-        />
-        <div className="w-2/5 flex flex-col items-center px-4 py-16 max-md:w-full max-md:px-3 max-md:py-10"> {/* Increased padding */}
-          <ForgotPasswordForm />
-        </div>
-      </div>
-    </div>
+    <AuthLayout imagePosition="left">
+      <ForgotPasswordForm />
+    </AuthLayout>
   );
 }
