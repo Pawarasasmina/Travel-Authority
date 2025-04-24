@@ -1,6 +1,6 @@
 import React from "react";
 import { Twitter, Instagram, Facebook } from "lucide-react";
-import bg from "../assets/footerbg.png";
+import bg from "../assets/footer/footerbg.png";
 import logo from "../assets/logo.png";
 
 export default function Footer() {
@@ -31,10 +31,10 @@ export default function Footer() {
 
         {/* Right Section: Navigation Links */}
         <ul className="flex flex-col items-center md:items-start space-y-2 text-sm">
-          <li><a href="#" className="hover:underline">HOME</a></li>
-          <li><a href="#" className="hover:underline">CATEGORIES</a></li>
+          <li><a href="/home" className="hover:underline">HOME</a></li>
+          <li><a href="/categories" className="hover:underline">CATEGORIES</a></li>
           <li><a href="#" className="hover:underline">PURCHASE LIST</a></li>
-          <li><a href="#" className="hover:underline">ABOUT US & CONTACT</a></li>
+          <li><a href="/aboutus" className="hover:underline">ABOUT US & CONTACT</a></li>
         </ul>
       </div>
     </footer>

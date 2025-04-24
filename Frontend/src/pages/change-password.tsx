@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
-import bgImage from "../assets/background-login.jpg";
+import bgImage from "../assets/login-signup/background-login.jpg";
 
 interface ChangePasswordFormData {
   newPassword: string;

@@ -1,7 +1,7 @@
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import bg from "../assets/aboutusbg.png"
+import bg from "../assets/about-us/aboutusbg.png"
 
 export default function AboutUs() {
     return (

@@ -2,7 +2,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from 'react-router-dom';
-import bgImage from '../assets/background-login.jpg'; 
+import bgImage from '../assets/login-signup/background-login.jpg'; 
 
 interface LoginFormData {
   email: string;
@@ -82,7 +82,7 @@ function LoginForm() {
   const onSubmit = (data: LoginFormData) => {
 
     console.log(data);
-    navigate('/aboutus')
+    navigate('/home')
     
   };
 

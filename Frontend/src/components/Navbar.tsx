@@ -1,5 +1,5 @@
 import React from "react";
-import navbarBg from "../assets/navbar_bg.png";
+import navbarBg from "../assets/navbar/navbar_bg.png";
 import { Bell, User } from "lucide-react";
 
 const Navbar = () => {
@@ -13,7 +13,7 @@ const Navbar = () => {
         backgroundPosition: 'center',
       }}
     >
-      {/* Background overlay */}
+
     
 
       {/* Navbar content */}
@@ -25,8 +25,8 @@ const Navbar = () => {
         </div>
         <div className="flex-1" />
         <div className="hidden md:flex gap-9 items-center">
-          <a href="#" className="text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition">Home</a>
-          <a href="#" className="text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition">Categories</a>
+          <a href="/home" className="text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition">Home</a>
+          <a href="/categories" className="text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition">Categories</a>
           <a href="#" className="text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition">Purchase List</a>
         </div>
         <div className="flex items-center gap-4 ml-8">
