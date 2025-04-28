@@ -83,7 +83,7 @@ const Profile = () => {
 
       {/* Profile Picture */}
       <div className="flex justify-center">
-        <div className="w-32 h-32 rounded-full bg-white p-1 absolute -mt-16">
+        <div className="w-48 h-48 rounded-full bg-white p-1 absolute -mt-32">
           <img 
             src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=2080&auto=format&fit=crop" 
             alt="Profile" 
