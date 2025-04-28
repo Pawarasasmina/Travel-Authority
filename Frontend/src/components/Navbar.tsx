@@ -1,10 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import navbarBg from "../assets/navbar/navbar_bg.png";
 import { Bell, User } from "lucide-react";
+import NotificationModal from "./NotificationModal";
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const toggleNotifications = () => {
+    setShowNotifications(!showNotifications);
+  };
 
   return (
     <nav
@@ -30,9 +36,18 @@ const Navbar = () => {
           <a href="#" className="text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition">Purchase List</a>
         </div>
         <div className="flex items-center gap-4 ml-8">
-          <button className="text-white hover:text-orange-400 transition" aria-label="Notifications">
-            <Bell size={22} />
-          </button>
+          <div className="relative">
+            <button 
+              className="text-white hover:text-orange-400 transition" 
+              aria-label="Notifications"
+              onClick={toggleNotifications}
+            >
+              <Bell size={22} />
+              {/* Optional: Notification indicator */}
+              <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center text-[10px] text-white">3</span>
+            </button>
+            {showNotifications && <NotificationModal onClose={() => setShowNotifications(false)} />}
+          </div>
           <button 
             className="text-white hover:text-orange-400 transition" 
             aria-label="User"
