@@ -4,7 +4,7 @@ import Footer from '../components/Footer';
 const Categories = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+   
       <div className="pt-24 flex-grow">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <h1 className="text-4xl font-bold mb-8">Travel Categories</h1>
@@ -27,7 +27,7 @@ const Categories = () => {
           </div>
         </div>
       </div>
-      <Footer />
+   
     </div>
   );
 };
