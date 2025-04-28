@@ -1,8 +1,11 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import navbarBg from "../assets/navbar/navbar_bg.png";
 import { Bell, User } from "lucide-react";
 
 const Navbar = () => {
+  const navigate = useNavigate();
+
   return (
     <nav
       className="relative w-full z-20"
@@ -13,9 +16,6 @@ const Navbar = () => {
         backgroundPosition: 'center',
       }}
     >
-
-    
-
       {/* Navbar content */}
       <div className="relative flex items-center justify-between px-4 md:px-12 py-2 h-[52px]">
         <div className="flex items-center">
@@ -33,7 +33,11 @@ const Navbar = () => {
           <button className="text-white hover:text-orange-400 transition" aria-label="Notifications">
             <Bell size={22} />
           </button>
-          <button className="text-white hover:text-orange-400 transition" aria-label="User">
+          <button 
+            className="text-white hover:text-orange-400 transition" 
+            aria-label="User"
+            onClick={() => navigate('/profile')}
+          >
             <User size={22} />
           </button>
         </div>
