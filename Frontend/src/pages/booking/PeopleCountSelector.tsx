@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
+import { useAlert } from '../../contexts/AlertContext';
 
 // Counter component for quantity selection
 const QuantityCounter = ({ 
@@ -43,6 +44,7 @@ const QuantityCounter = ({
 const PeopleCountSelector = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { showAlert, showConfirm } = useAlert();
   const { 
     activityId, 
     activityTitle, 
@@ -102,30 +104,39 @@ const PeopleCountSelector = () => {
   };
 
   // Handle continue to payment
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const totalPeople = Object.values(counts).reduce((sum, count) => sum + count, 0);
     if (totalPeople === 0) {
-      alert("Please select at least one person");
+      await showAlert("Please select at least one person", "Selection Required");
       return;
     }
     
     if (!selectedDate) {
-      alert("Please select a date for your booking");
+      await showAlert("Please select a date for your booking", "Date Required");
       return;
     }
     
-    navigate('/booking/payment', {
-      state: {
-        activityId,
-        activityTitle,
-        activityLocation,
-        packageType,
-        peopleCounts: counts,
-        totalPrice: calculateTotal(),
-        image,
-        bookingDate: selectedDate
-      }
-    });
+    const confirmed = await showConfirm(
+      "Would you like to proceed to payment?",
+      "Confirm Booking",
+      "Yes, Continue",
+      "Not Yet"
+    );
+    
+    if (confirmed) {
+      navigate('/booking/payment', {
+        state: {
+          activityId,
+          activityTitle,
+          activityLocation,
+          packageType,
+          peopleCounts: counts,
+          totalPrice: calculateTotal(),
+          image,
+          bookingDate: selectedDate
+        }
+      });
+    }
   };
 
   // Handle back button
