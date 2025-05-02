@@ -33,7 +33,7 @@ export default function Footer() {
         <ul className="flex flex-col items-center md:items-start space-y-2 text-sm">
           <li><a href="/home" className="hover:underline">HOME</a></li>
           <li><a href="/categories" className="hover:underline">CATEGORIES</a></li>
-          <li><a href="#" className="hover:underline">PURCHASE LIST</a></li>
+          <li><a href="/purchase-list" className="hover:underline">PURCHASE LIST</a></li>
           <li><a href="/aboutus" className="hover:underline">ABOUT US & CONTACT</a></li>
         </ul>
       </div>
