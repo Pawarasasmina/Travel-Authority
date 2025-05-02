@@ -1,5 +1,6 @@
-
 import React from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import image1 from '../../assets/home-images/event-images/1.jpg';
 import image2 from '../../assets/home-images/event-images/2.jpg';
 import image3 from '../../assets/home-images/event-images/3.jpg';
@@ -17,17 +18,52 @@ import image14 from '../../assets/home-images/event-images/14.jpg';
 import image15 from '../../assets/home-images/event-images/15.jpg';
 import image16 from '../../assets/home-images/event-images/16.jpg';
 
+// Define available categories
+const CATEGORIES = [
+  "Adventure",
+  "Water Activities",
+  "Cultural",
+  "Wildlife",
+  "Sightseeing"
+];
 
+// Map activities to categories
+const ACTIVITY_CATEGORIES: { [key: number]: string[] } = {
+  1: ["Adventure"], // White Water Rafting
+  2: ["Cultural"], // Uva Tea Factory Tour
+  3: ["Wildlife"], // Birds Safari Tour
+  4: ["Adventure"], // Flying Ravana
+  5: ["Water Activities"], // Dolphin Watching
+  6: ["Adventure"], // Paramotoring
+  7: ["Cultural"], // Forest Monastery
+  8: ["Adventure"], // Hill Country Adventures
+  9: ["Water Activities"], // Deep Sea Fishing
+  10: ["Sightseeing"], // Nine Arches Bridge
+  11: ["Cultural"], // Fort Frederick
+  12: ["Water Activities"], // Jungle Beach
+  13: ["Sightseeing"], // Galle Day Trip
+  14: ["Wildlife"], // Wilpattu Park Safari
+  15: ["Water Activities"], // Whale Watching
+  16: ["Adventure"] // Cycle down to Hatton
+};
 
 interface ActivityCardProps {
   image: string;
   title: string;
   location: string;
+  id: number;
+  price: number;
+  availability: number;
+  rating: number;
+  onClick: () => void;
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ image, title, location }) => {
+const ActivityCard: React.FC<ActivityCardProps> = ({ image, title, location, price, rating, onClick }) => {
   return (
-    <div className="rounded-lg overflow-hidden shadow-md group cursor-pointer hover:shadow-xl transition-shadow duration-300">
+    <div 
+      className="rounded-lg overflow-hidden shadow-md group cursor-pointer hover:shadow-xl transition-shadow duration-300"
+      onClick={onClick}
+    >
       <div className="h-48 overflow-hidden">
         <img 
           src={image} 
@@ -38,45 +74,318 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ image, title, location }) =
       <div className="p-3 text-center">
         <h3 className="font-bold text-gray-800">{title}</h3>
         <p className="text-xs text-gray-500">{location}</p>
+        <div className="mt-2 flex justify-between items-center">
+          <span className="text-sm font-semibold text-green-600">${price}</span>
+          <div className="flex items-center">
+            <span className="text-yellow-500">★</span>
+            <span className="text-xs ml-1">{rating.toFixed(1)}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-const ACTIVITIES = [
-  { title: "White Water Rafting", location: "Kitulgala", image: image1 },
-  { title: "Uva Tea Factory Tour", location: "Haputale", image: image2 },
-  { title: "Birds Safari Tour", location: "Bundala", image: image3 },
-  { title: "Flying Ravana", location: "Ella", image: image4 },
-  { title: "Dolphin Watching", location: "Kalpitiya", image: image5 },
-  { title: "Paramotoring", location: "Bentota", image: image6 },
-  { title: "Forest Monastery", location: "Mihintale", image: image7 },
-  { title: "Hill Country Adventures", location: "Haputale", image: image8 },
-  { title: "Deep Sea Fishing", location: "Bentota", image: image9 },
-  { title: "Nine Arches Bridge", location: "Ella", image: image10 },
-  { title: "Fort Frederick", location: "Trincomalee", image: image11 },
-  { title: "Jungle Beach", location: "Unawatuna", image: image12 },
-  { title: "Galle Day Trip", location: "Galle", image: image13 },
-  { title: "Wilpattu Park Safari", location: "Kalpitiya", image: image14 },
-  { title: "Whale Watching", location: "Mirissa", image: image15 },
-  { title: "Cycle down to Hatton", location: "Nuwara Eliya", image: image16 },
+export const ACTIVITIES = [
+  { id: 1, title: "White Water Rafting", location: "Kitulgala", image: image1, price: 45, availability: 10, rating: 4.5 },
+  { id: 2, title: "Uva Tea Factory Tour", location: "Haputale", image: image2, price: 25, availability: 25, rating: 4.2 },
+  { id: 3, title: "Birds Safari Tour", location: "Bundala", image: image3, price: 35, availability: 8, rating: 4.7 },
+  { id: 4, title: "Flying Ravana", location: "Ella", image: image4, price: 30, availability: 15, rating: 4.8 },
+  { id: 5, title: "Dolphin Watching", location: "Kalpitiya", image: image5, price: 55, availability: 12, rating: 4.6 },
+  { id: 6, title: "Paramotoring", location: "Bentota", image: image6, price: 60, availability: 5, rating: 4.9 },
+  { id: 7, title: "Forest Monastery", location: "Mihintale", image: image7, price: 15, availability: 30, rating: 4.3 },
+  { id: 8, title: "Hill Country Adventures", location: "Haputale", image: image8, price: 40, availability: 18, rating: 4.4 },
+  { id: 9, title: "Deep Sea Fishing", location: "Bentota", image: image9, price: 65, availability: 6, rating: 4.5 },
+  { id: 10, title: "Nine Arches Bridge", location: "Ella", image: image10, price: 20, availability: 40, rating: 4.7 },
+  { id: 11, title: "Fort Frederick", location: "Trincomalee", image: image11, price: 18, availability: 35, rating: 4.1 },
+  { id: 12, title: "Jungle Beach", location: "Unawatuna", image: image12, price: 22, availability: 30, rating: 4.6 },
+  { id: 13, title: "Galle Day Trip", location: "Galle", image: image13, price: 38, availability: 20, rating: 4.5 },
+  { id: 14, title: "Wilpattu Park Safari", location: "Kalpitiya", image: image14, price: 50, availability: 8, rating: 4.8 },
+  { id: 15, title: "Whale Watching", location: "Mirissa", image: image15, price: 75, availability: 15, rating: 4.9 },
+  { id: 16, title: "Cycle down to Hatton", location: "Nuwara Eliya", image: image16, price: 32, availability: 12, rating: 4.3 }
 ];
 
+type SortOption = 'default' | 'price-low' | 'price-high' | 'rating' | 'availability';
+
 const TravelActivities = () => {
+  const navigate = useNavigate();
+  const [sortOption, setSortOption] = useState<SortOption>('default');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filteredActivities, setFilteredActivities] = useState(ACTIVITIES);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
+  const [ratingFilter, setRatingFilter] = useState<number>(0);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  const handleActivityClick = (id: number, title: string) => {
+    const slugTitle = title.toLowerCase().replace(/\s+/g, '-');
+    navigate(`/activities/${id}/${slugTitle}`);
+  };
+
+  useEffect(() => {
+    let sorted = [...ACTIVITIES];
+    
+    switch(sortOption) {
+      case 'price-low':
+        sorted = sorted.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        sorted = sorted.sort((a, b) => b.price - a.price);
+        break;
+      case 'rating':
+        sorted = sorted.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'availability':
+        sorted = sorted.sort((a, b) => b.availability - a.availability);
+        break;
+      default:
+        sorted = [...ACTIVITIES];
+    }
+    
+    sorted = sorted.filter(activity => 
+      activity.price >= priceRange[0] && 
+      activity.price <= priceRange[1] &&
+      activity.rating >= ratingFilter &&
+      (selectedCategories.length === 0 || 
+        ACTIVITY_CATEGORIES[activity.id].some(cat => selectedCategories.includes(cat)))
+    );
+    
+    setFilteredActivities(sorted);
+  }, [sortOption, priceRange, ratingFilter, selectedCategories]);
+  
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
+  
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const newValue = parseInt(e.target.value);
+    const newRange = [...priceRange] as [number, number];
+    newRange[index] = newValue;
+    setPriceRange(newRange);
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category);
+      } else {
+        return [...prev, category];
+      }
+    });
+  };
+  
   return (
-    <section className="py-12 px-6 md:px-12 max-w-7xl mx-auto">
+    <section className="py-12 px-6 md:px-6 max-w-8xl relative">
       <h2 className="text-3xl font-bold text-center mb-10">Your Ultimate Travel Companion</h2>
       
+      <div className="mb-6">
+        <div className="flex flex-wrap justify-between items-start mb-4">
+          <div className="mb-4 md:mb-0">
+            <label htmlFor="sort" className="text-sm font-medium">Sort by:</label>
+            <select 
+              id="sort"
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value as SortOption)}
+              className="ml-2 border border-gray-300 rounded-md py-1 px-3 focus:outline-none focus:ring-2 focus:ring-gray-500 text-gray-700 bg-white hover:border-gray-400 focus:border-gray-500"
+            >
+              <option value="default">Default</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="rating">Rating</option>
+              <option value="availability">Availability</option>
+            </select>
+          </div>
+          
+          <button 
+            onClick={toggleFilters}
+            className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition flex items-center space-x-2"
+          >
+            <span>Filters</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="mt-3 mb-5">
+          <div className="flex items-center mb-2">
+            <h4 className="text-sm font-medium">Categories:</h4>
+            {selectedCategories.length > 0 && (
+              <button
+                onClick={() => setSelectedCategories([])}
+                className="ml-2 flex items-center px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full border border-gray-300 transition-colors duration-200 shadow-sm"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-0.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Clear ({selectedCategories.length})
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map(category => (
+              <button
+                key={category}
+                onClick={() => handleCategoryChange(category)}
+                className={`px-3 py-1 text-sm rounded-full border ${
+                  selectedCategories.includes(category)
+                    ? 'bg-gray-600 text-white border-gray-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                } transition-colors`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-        {ACTIVITIES.map((activity, index) => (
+        {filteredActivities.map((activity) => (
           <ActivityCard 
-            key={index}
+            key={activity.id}
+            id={activity.id}
             title={activity.title}
             location={activity.location}
             image={activity.image}
+            price={activity.price}
+            availability={activity.availability}
+            rating={activity.rating}
+            onClick={() => handleActivityClick(activity.id, activity.title)}
           />
         ))}
       </div>
+      
+      <div className={`fixed top-0 right-0 h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${showFilters ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold">Filters</h3>
+            <button onClick={toggleFilters} className="text-gray-500 hover:text-gray-700">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <div className="mb-6">
+            <h4 className="font-medium mb-3">Categories</h4>
+            <div className="space-y-2">
+              {CATEGORIES.map(category => (
+                <div key={category} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={`category-${category}`}
+                    checked={selectedCategories.includes(category)}
+                    onChange={() => handleCategoryChange(category)}
+                    className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor={`category-${category}`} className="ml-2 text-sm text-gray-700">
+                    {category}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h4 className="font-medium mb-3">Price Range</h4>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold text-gray-700">${priceRange[0]}</span>
+              <span className="text-sm font-semibold text-gray-700">${priceRange[1]}</span>
+            </div>
+            <div className="relative mt-2 mb-4">
+              <div className="absolute inset-0 h-1 mt-3 bg-gray-200 rounded"></div>
+              <div 
+                className="absolute h-1 mt-3 bg-gray-600 rounded" 
+                style={{ 
+                  left: `${(priceRange[0] / 100) * 100}%`, 
+                  width: `${((priceRange[1] - priceRange[0]) / 100) * 100}%` 
+                }}
+              ></div>
+              <input 
+                type="range" 
+                min="0" 
+                max="100" 
+                value={priceRange[0]} 
+                onChange={(e) => handlePriceChange(e, 0)}
+                className="absolute w-full h-1 mt-3 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
+              />
+              <input 
+                type="range" 
+                min="0" 
+                max="100" 
+                value={priceRange[1]} 
+                onChange={(e) => handlePriceChange(e, 1)}
+                className="absolute w-full h-1 mt-3 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
+              />
+            </div>
+            <div className="flex justify-between mt-6">
+              <input 
+                type="number" 
+                min="0" 
+                max={priceRange[1]} 
+                value={priceRange[0]}
+                onChange={(e) => {
+                  const value = Math.min(Number(e.target.value), priceRange[1]);
+                  setPriceRange([value, priceRange[1]]);
+                }}
+                className="w-16 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-gray-500"
+              />
+              <span className="text-gray-400">to</span>
+              <input 
+                type="number" 
+                min={priceRange[0]} 
+                max="100" 
+                value={priceRange[1]}
+                onChange={(e) => {
+                  const value = Math.max(Number(e.target.value), priceRange[0]);
+                  setPriceRange([priceRange[0], value]);
+                }}
+                className="w-16 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-gray-500"
+              />
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h4 className="font-medium mb-3">Minimum Rating</h4>
+            <select
+              value={ratingFilter}
+              onChange={(e) => setRatingFilter(Number(e.target.value))}
+              className="w-full border border-gray-300 rounded-md py-2 px-3"
+            >
+              <option value="0">Any Rating</option>
+              <option value="3">3+ Stars</option>
+              <option value="4">4+ Stars</option>
+              <option value="4.5">4.5+ Stars</option>
+            </select>
+          </div>
+          
+          <button 
+            onClick={() => {
+              setPriceRange([0, 100]);
+              setRatingFilter(0);
+              setSortOption('default');
+              setSelectedCategories([]);
+            }}
+            className="w-full bg-gray-200 text-gray-800 py-2 rounded-md hover:bg-gray-300 transition mb-4"
+          >
+            Reset Filters
+          </button>
+          
+          <button 
+            onClick={toggleFilters}
+            className="w-full bg-gray-600 text-white py-2 rounded-md hover:bg-gray-800 transition"
+          >
+            Apply Filters
+          </button>
+        </div>
+      </div>
+      
+      {showFilters && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={toggleFilters}
+        ></div>
+      )}
     </section>
   );
 };
