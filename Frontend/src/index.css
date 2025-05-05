@@ -24,7 +24,6 @@
     color: #4CAF50; /* Green */
     transform: scale(1.5);
   }
-  
 }
 
 @keyframes scroll {
@@ -38,4 +37,22 @@
 
 .animate-scroll {
   animation: scroll 8s linear infinite;
+}
+
+@keyframes infinite-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.33%);
+  }
+}
+
+.animate-infinite-scroll {
+  animation: infinite-scroll 5s linear infinite;
+}
+
+/* Optional: Pause animation on hover */
+.animate-infinite-scroll:hover {
+  animation-play-state: paused;
 }

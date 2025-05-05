@@ -36,35 +36,23 @@ const SpecialOffers = () => {
   return (
     <section className="py-12 max-w-7xl mx-auto px-4 overflow-hidden">
       <div className="relative w-full">
-        <div className="flex animate-scroll">
-          {/* First set of images */}
-          {baseImages.map((image, index) => (
-            <div 
-              key={`first-${index}`} 
-              className="w-1/4 flex-shrink-0 px-2"
-            >
-              <OfferCard 
-                image={image}
-                title={`Special Offer ${index + 1}`}
-                discount={index % 3 === 0 ? "30% OFF" : undefined}
-                className="h-[300px] w-full"
-              />
-            </div>
-          ))}
-          {/* Duplicate set for seamless loop */}
-          {baseImages.map((image, index) => (
-            <div 
-              key={`second-${index}`} 
-              className="w-1/4 flex-shrink-0 px-2"
-            >
-              <OfferCard 
-                image={image}
-                title={`Special Offer ${index + 1}`}
-                discount={index % 3 === 0 ? "30% OFF" : undefined}
-                className="h-[300px] w-full"
-              />
-            </div>
-          ))}
+        <div className="flex whitespace-nowrap animate-infinite-scroll">
+          {/* Three sets of images for smoother loop */}
+          {[1, 2, 3].map((setNum) =>
+            baseImages.map((image, index) => (
+              <div 
+                key={`set${setNum}-${index}`} 
+                className="inline-block w-1/4 flex-shrink-0 px-2"
+              >
+                <OfferCard 
+                  image={image}
+                  title={`Special Offer ${index + 1}`}
+                  discount={index % 3 === 0 ? "30% OFF" : undefined}
+                  className="h-[300px] w-full"
+                />
+              </div>
+            ))
+          )}
         </div>
       </div>
     </section>
