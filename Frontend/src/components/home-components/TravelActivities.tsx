@@ -1,5 +1,4 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import image1 from '../../assets/home-images/event-images/1.jpg';
 import image2 from '../../assets/home-images/event-images/2.jpg';
@@ -56,13 +55,45 @@ interface ActivityCardProps {
   availability: number;
   rating: number;
   onClick: () => void;
+  index: number; // Added index property
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ image, title, location, price, rating, onClick }) => {
+const ActivityCard: React.FC<ActivityCardProps> = ({ image, title, location, price, rating, onClick, index }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const rowIndex = Math.floor(index / 4); // Calculate row for staggered animation
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.classList.add('opacity-100', 'translate-y-0');
+          }, rowIndex * 200); // Delay based on row position
+          observer.unobserve(entry.target);
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '20px'
+      }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [rowIndex]);
+
   return (
     <div 
-      className="rounded-lg overflow-hidden shadow-md group cursor-pointer hover:shadow-xl transition-shadow duration-300"
+      ref={cardRef}
+      className="rounded-lg overflow-hidden shadow-md group cursor-pointer hover:shadow-xl 
+                 transition-all duration-700 opacity-0 translate-y-16"
       onClick={onClick}
+      style={{
+        transitionDelay: `${(index % 4) * 100}ms` // Stagger items within each row
+      }}
     >
       <div className="h-48 overflow-hidden">
         <img 
@@ -191,11 +222,11 @@ const TravelActivities = () => {
   };
   
   return (
-    <section id="travel-activities" className="py-12 px-6 md:px-6 max-w-8xl relative">
+    <section id="travel-activities" className="py-0 px-6 md:px-6 max-w-8xl relative mb-24">
       <h2 className="text-3xl font-bold text-center mb-10">Your Ultimate Travel Companion</h2>
       
       <div className="mb-6">
-        <div className="flex flex-wrap justify-between items-start mb-4">
+        <div className="flex flex-wrap justify-between items-start ">
           <div className="mb-4 md:mb-0">
             <label htmlFor="sort" className="text-sm font-medium">Sort by:</label>
             <select 
@@ -256,23 +287,19 @@ const TravelActivities = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-        {filteredActivities.map((activity) => (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
+        {filteredActivities.map((activity, index) => (
           <ActivityCard 
             key={activity.id}
-            id={activity.id}
-            title={activity.title}
-            location={activity.location}
-            image={activity.image}
-            price={activity.price}
-            availability={activity.availability}
-            rating={activity.rating}
+            {...activity}
+            index={index}
             onClick={() => handleActivityClick(activity.id, activity.title)}
           />
         ))}
       </div>
       
-      <div className={`fixed top-0 right-0 h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${showFilters ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* Filter sidebar with adjusted z-index */}
+      <div className={`fixed top-0 right-0 h-full w-80 bg-white shadow-xl z-30 transform transition-transform duration-300 ease-in-out ${showFilters ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-bold">Filters</h3>
@@ -399,7 +426,7 @@ const TravelActivities = () => {
       
       {showFilters && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black bg-opacity-50 z-20"
           onClick={toggleFilters}
         ></div>
       )}
