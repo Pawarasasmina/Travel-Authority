@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import image1 from '../../assets/home-images/event-images/1.jpg';
 import image2 from '../../assets/home-images/event-images/2.jpg';
 import image3 from '../../assets/home-images/event-images/3.jpg';
@@ -109,6 +109,7 @@ type SortOption = 'default' | 'price-low' | 'price-high' | 'rating' | 'availabil
 
 const TravelActivities = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [sortOption, setSortOption] = useState<SortOption>('default');
   const [showFilters, setShowFilters] = useState(false);
   const [filteredActivities, setFilteredActivities] = useState(ACTIVITIES);
@@ -120,6 +121,22 @@ const TravelActivities = () => {
     const slugTitle = title.toLowerCase().replace(/\s+/g, '-');
     navigate(`/activities/${id}/${slugTitle}`);
   };
+
+  // Read category from URL parameters
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const categoryParam = searchParams.get('category');
+    
+    if (categoryParam && CATEGORIES.includes(categoryParam)) {
+      setSelectedCategories([categoryParam]);
+      
+      // Scroll to activities section
+      const element = document.getElementById('travel-activities');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location.search]);
 
   useEffect(() => {
     let sorted = [...ACTIVITIES];
@@ -174,7 +191,7 @@ const TravelActivities = () => {
   };
   
   return (
-    <section className="py-12 px-6 md:px-6 max-w-8xl relative">
+    <section id="travel-activities" className="py-12 px-6 md:px-6 max-w-8xl relative">
       <h2 className="text-3xl font-bold text-center mb-10">Your Ultimate Travel Companion</h2>
       
       <div className="mb-6">
