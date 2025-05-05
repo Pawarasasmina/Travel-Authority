@@ -1,4 +1,3 @@
-
 import React from 'react';
 import offer1 from '../../assets/home-images/offers/offer1.png';
 import offer2 from '../../assets/home-images/offers/offer2.png';
@@ -32,39 +31,41 @@ const OfferCard: React.FC<OfferCardProps> = ({ image, title, discount, className
 };
 
 const SpecialOffers = () => {
-  const offerImages = [offer1, offer2, offer3, offer4,offer5,];
-
+  const baseImages = [offer1, offer2, offer3, offer4, offer5];
+  
   return (
-    <section className="py-12 max-w-8xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-        <OfferCard 
-
-          image={offerImages[0]} 
-          title=" Womens Day Offers" 
-          discount="50% OFF"
-          className="md:h-64"
-        />
-        <OfferCard 
-          image={offerImages[1]} 
-          title="SPECIAL OFFER" 
-          className="md:h-64"
-        />
-        <OfferCard 
-          image={offerImages[2]} 
-          title="SPECIAL OFFERS HOLIDAY PACKAGES" 
-          discount="30% off!" 
-          className="md:h-64"
-        />
-        <OfferCard 
-          image={offerImages[3]} 
-          title="Travel TIME" 
-          className="md:h-64"
-        />
-        <OfferCard 
-          image={offerImages[4]} 
-          title="Travel TIME" 
-          className="md:h-64"
-        />  
+    <section className="py-12 max-w-7xl mx-auto px-4 overflow-hidden">
+      <div className="relative w-full">
+        <div className="flex animate-scroll">
+          {/* First set of images */}
+          {baseImages.map((image, index) => (
+            <div 
+              key={`first-${index}`} 
+              className="w-1/4 flex-shrink-0 px-2"
+            >
+              <OfferCard 
+                image={image}
+                title={`Special Offer ${index + 1}`}
+                discount={index % 3 === 0 ? "30% OFF" : undefined}
+                className="h-[300px] w-full"
+              />
+            </div>
+          ))}
+          {/* Duplicate set for seamless loop */}
+          {baseImages.map((image, index) => (
+            <div 
+              key={`second-${index}`} 
+              className="w-1/4 flex-shrink-0 px-2"
+            >
+              <OfferCard 
+                image={image}
+                title={`Special Offer ${index + 1}`}
+                discount={index % 3 === 0 ? "30% OFF" : undefined}
+                className="h-[300px] w-full"
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
