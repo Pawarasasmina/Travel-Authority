@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import image1 from '../../assets/home-images/event-images/1.jpg';
 import image2 from '../../assets/home-images/event-images/2.jpg';
 import image3 from '../../assets/home-images/event-images/3.jpg';
@@ -109,6 +109,7 @@ type SortOption = 'default' | 'price-low' | 'price-high' | 'rating' | 'availabil
 
 const TravelActivities = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [sortOption, setSortOption] = useState<SortOption>('default');
   const [showFilters, setShowFilters] = useState(false);
   const [filteredActivities, setFilteredActivities] = useState(ACTIVITIES);
@@ -120,6 +121,22 @@ const TravelActivities = () => {
     const slugTitle = title.toLowerCase().replace(/\s+/g, '-');
     navigate(`/activities/${id}/${slugTitle}`);
   };
+
+  // Read category from URL parameters
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const categoryParam = searchParams.get('category');
+    
+    if (categoryParam && CATEGORIES.includes(categoryParam)) {
+      setSelectedCategories([categoryParam]);
+      
+      // Scroll to activities section
+      const element = document.getElementById('travel-activities');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location.search]);
 
   useEffect(() => {
     let sorted = [...ACTIVITIES];
@@ -174,7 +191,7 @@ const TravelActivities = () => {
   };
   
   return (
-    <section className="py-12 px-6 md:px-6 max-w-8xl relative">
+    <section id="travel-activities" className="py-12 px-6 md:px-6 max-w-8xl relative">
       <h2 className="text-3xl font-bold text-center mb-10">Your Ultimate Travel Companion</h2>
       
       <div className="mb-6">
@@ -207,34 +224,34 @@ const TravelActivities = () => {
         </div>
         
         <div className="mt-3 mb-5">
-          <div className="flex items-center mb-2">
-            <h4 className="text-sm font-medium">Categories:</h4>
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map(category => (
+                <button
+                  key={category}
+                  onClick={() => handleCategoryChange(category)}
+                  className={`px-3 py-1 text-sm rounded-full border ${
+                    selectedCategories.includes(category)
+                      ? 'bg-gray-600 text-white border-gray-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                  } transition-colors`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+
             {selectedCategories.length > 0 && (
               <button
                 onClick={() => setSelectedCategories([])}
-                className="ml-2 flex items-center px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full border border-gray-300 transition-colors duration-200 shadow-sm"
+                className="flex items-center px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full border border-gray-300 transition-colors duration-200 shadow-sm ml-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-0.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                Clear ({selectedCategories.length})
+                Clear filters ({selectedCategories.length})
               </button>
             )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map(category => (
-              <button
-                key={category}
-                onClick={() => handleCategoryChange(category)}
-                className={`px-3 py-1 text-sm rounded-full border ${
-                  selectedCategories.includes(category)
-                    ? 'bg-gray-600 text-white border-gray-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                } transition-colors`}
-              >
-                {category}
-              </button>
-            ))}
           </div>
         </div>
       </div>
