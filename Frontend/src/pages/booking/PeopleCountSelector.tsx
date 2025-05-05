@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import { useAlert } from '../../contexts/AlertContext';
+import PaymentModal from '../../components/PaymentModal';
 
 // Counter component for quantity selection
 const QuantityCounter = ({ 
@@ -66,6 +67,9 @@ const PeopleCountSelector = () => {
   // Add state for selected date only
   const [selectedDate, setSelectedDate] = useState<string>('');
   
+  // Add state for payment modal
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  
   // Price calculation based on package and people type
   const getPriceForType = (type: string) => {
     const priceMap = {
@@ -116,27 +120,16 @@ const PeopleCountSelector = () => {
       return;
     }
     
-    const confirmed = await showConfirm(
-      "Would you like to proceed to payment?",
-      "Confirm Booking",
-      "Yes, Continue",
-      "Not Yet"
-    );
-    
-    if (confirmed) {
-      navigate('/booking/payment', {
-        state: {
-          activityId,
-          activityTitle,
-          activityLocation,
-          packageType,
-          peopleCounts: counts,
-          totalPrice: calculateTotal(),
-          image,
-          bookingDate: selectedDate
-        }
-      });
-    }
+    // Show payment modal instead of confirmation
+    setShowPaymentModal(true);
+  };
+
+  // Handle payment confirmation
+  const handlePaymentConfirm = async (bookingData: any) => {
+    // Navigate to success page first
+    navigate('/payment-success', {
+      state: bookingData
+    });
   };
 
   // Handle back button
@@ -155,137 +148,70 @@ const PeopleCountSelector = () => {
   }
 
   return (
-    <div className="pt-[52px] max-w-6xl mx-auto px-4 py-8">
-      {/* Activity Header */}
-      <div className="flex items-start gap-4 mb-6">
-        <div className="w-24 h-24 rounded-lg overflow-hidden">
-          <img src={image} alt={activityTitle} className="w-full h-full object-cover" />
+    <div className="pt-[52px] max-w-5xl mx-auto px-4 py-6">
+      {/* Activity Header - Compact Layout */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white rounded-lg shadow-sm p-4">
+        {/* Image */}
+        <div className="md:w-1/3">
+          <div className="w-full h-[200px] rounded-lg overflow-hidden">
+            <img 
+              src={image} 
+              alt={activityTitle} 
+              className="w-full h-full object-cover" 
+            />
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold">{activityTitle}</h1>
-          <p className="text-gray-600">{activityLocation}</p>
-          <div className="mt-1 text-sm bg-orange-100 text-orange-700 px-2 py-1 rounded inline-block">
-            {packageType.charAt(0).toUpperCase() + packageType.slice(1)} Package
+        
+        {/* Details */}
+        <div className="md:w-2/3 space-y-3">
+          <div>
+            <h1 className="text-2xl font-bold">{activityTitle}</h1>
+            <div className="flex items-center text-gray-600 mt-1">
+              <svg className="h-4 w-4 text-orange-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+              <span>{activityLocation}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-4 text-sm">
+            <div className="flex items-center">
+              <svg className="h-4 w-4 text-orange-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>3-4 hours</span>
+            </div>
+            <div className="flex items-center">
+              <svg className="h-4 w-4 text-orange-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>1-15 people</span>
+            </div>
+            <div className="flex items-center">
+              <svg className="h-4 w-4 text-orange-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+              </svg>
+              <span>English, Sinhala</span>
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-2">
+            {description?.slice(0, 150)}...
+          </p>
+
+          <div className="flex items-center justify-between pt-2">
+            <span className="inline-block bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-medium">
+              {packageType.charAt(0).toUpperCase() + packageType.slice(1)} Package
+            </span>
+            <div className="text-right">
+              <div className="text-xs text-gray-500">Starting from</div>
+              <div className="text-lg font-bold text-orange-600">LKR {basePrice}</div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Activity Details */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Activity Details</h2>
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="md:w-2/3">
-            <div className="mb-4">
-              <h3 className="font-medium text-gray-700">About This Activity</h3>
-              <p className="text-gray-600 text-sm mt-1">
-                {description || "Experience this amazing adventure in one of Sri Lanka's most beautiful locations."}
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div>
-                <h3 className="font-medium text-gray-700">Duration</h3>
-                <p className="text-gray-600 text-sm">Approximately 3-4 hours</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-700">Group Size</h3>
-                <p className="text-gray-600 text-sm">1-15 people</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-700">Languages</h3>
-                <p className="text-gray-600 text-sm">English, Sinhala</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-700">Cancellation Policy</h3>
-                <p className="text-gray-600 text-sm">Free cancellation up to 24 hours before</p>
-              </div>
-            </div>
-          </div>
-          <div className="md:w-1/3 border-l pl-6">
-            <h3 className="font-medium text-gray-700 mb-3">Package Features</h3>
-            <ul className="text-sm text-gray-600 space-y-2">
-              {packageType === 'standard' && (
-                <>
-                  <li className="flex items-start">
-                    <svg className="h-4 w-4 text-green-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Standard transport to/from location</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg className="h-4 w-4 text-green-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Group guide with expert</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg className="h-4 w-4 text-green-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>All necessary equipment</span>
-                  </li>
-                </>
-              )}
-              {packageType === 'premium' && (
-                <>
-                  <li className="flex items-start">
-                    <svg className="h-4 w-4 text-green-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Premium transport with refreshments</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg className="h-4 w-4 text-green-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Small group with personalized guide</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg className="h-4 w-4 text-green-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Lunch and refreshments included</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg className="h-4 w-4 text-green-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Priority access at all locations</span>
-                  </li>
-                </>
-              )}
-              {packageType === 'family' && (
-                <>
-                  <li className="flex items-start">
-                    <svg className="h-4 w-4 text-green-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Family-friendly activities and pace</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg className="h-4 w-4 text-green-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Group discount (up to 4 people)</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg className="h-4 w-4 text-green-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Souvenir photos included</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg className="h-4 w-4 text-green-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Kid-friendly amenities available</span>
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
-        </div>
-      </div>
-
+      {/* Rest of the booking interface */}
       {/* Booking Section - Two Columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* People Selection */}
@@ -373,6 +299,21 @@ const PeopleCountSelector = () => {
         Note: Simply make changes to the people count to update the total price. 
         You can continue with your booking once you have selected the number of people and date.
       </div>
+
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onConfirm={handlePaymentConfirm}
+        totalAmount={calculateTotal()}
+        bookingDetails={{
+          activityTitle,
+          activityLocation,
+          packageType,
+          peopleCounts: counts,
+          bookingDate: selectedDate,
+          image
+        }}
+      />
     </div>
   );
 };

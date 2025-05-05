@@ -12,8 +12,10 @@ import PurchaseList from './pages/purchase-list';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ActivityDetail from './components/activities/ActivityDetail';
-import BookedTicketPage from './pages/BookedTicketPage';
+import BookedTicketPage from './pages/booked-ticket-page';
 import PeopleCountSelector from './pages/booking/PeopleCountSelector';
+import cetgorypage from './pages/categories';
+import PaymentSuccess from './pages/PaymentSuccess';
 
 // Component to conditionally render navbar based on route
 const AppContent = () => {
@@ -68,6 +70,7 @@ const AppContent = () => {
         <Route path="/purchase-list" element={<PurchaseList />} />
         <Route path="/activities/:id/:title" element={<ActivityDetail />} />
         <Route path="/booking/people-count" element={<PeopleCountSelector />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/bookings/:id" element={<BookedTicketPage />} />
       </Routes>
       {showFooter && <Footer />}

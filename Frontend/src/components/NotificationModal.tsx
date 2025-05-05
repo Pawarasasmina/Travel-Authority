@@ -1,5 +1,8 @@
 import React, { useEffect } from "react";
 import { X } from "lucide-react";
+import offer from "../assets/offers/offer1.jpg";
+import offer2 from "../assets/offers/offer2.jpg";
+import offer3 from "../assets/offers/offer3.jpg";
 
 // Sample notification data
 const todayNotifications = [
@@ -8,28 +11,28 @@ const todayNotifications = [
     title: "Special Offers",
     description: "20% discount from travel packages.",
     time: "2 hours ago",
-    icon: "https://via.placeholder.com/40",
+    icon: offer,
   },
   {
     id: 2,
     title: "Tour Travels",
     description: "New exciting destinations are waiting for you.",
     time: "4 hours ago",
-    icon: "https://via.placeholder.com/40",
+    icon: offer2,
   },
   {
     id: 3,
     title: "Southern Travels",
     description: "Special deal for Galle Camp planners.",
     time: "5 hours ago",
-    icon: "https://via.placeholder.com/40",
+    icon: offer3,
   },
   {
     id: 4,
     title: "Soda Tura Sri Lanka",
     description: "Explore the beautiful east of Sri Lanka.",
     time: "6 hours ago",
-    icon: "https://via.placeholder.com/40",
+    icon: offer,
   },
 ];
 
@@ -39,28 +42,28 @@ const yesterdayNotifications = [
     title: "Special Offers",
     description: "Limited spots left for New Year's Eve special packages.",
     time: "1 day ago",
-    icon: "https://via.placeholder.com/40",
+    icon: offer3,
   },
   {
     id: 6,
     title: "Southern Travels",
     description: "New destinations added to camping plans.",
     time: "1 day ago",
-    icon: "https://via.placeholder.com/40",
+    icon: offer2,
   },
   {
     id: 7,
     title: "Sigma Tour Sri Lanka",
     description: "Sign up for our newsletter to receive special offers.",
     time: "1 day ago",
-    icon: "https://via.placeholder.com/40",
+    icon: offer ,
   },
   {
     id: 8,
     title: "Southern Travels",
     description: "Upcoming events for Eastern Camp planners.",
     time: "1 day ago",
-    icon: "https://via.placeholder.com/40",
+    icon: offer3,
   },
 ];
 

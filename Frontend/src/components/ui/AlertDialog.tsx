@@ -25,31 +25,25 @@ const AlertDialog: React.FC<AlertDialogProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  // Use the same styling as seen in the provided example
   return ReactDOM.createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black opacity-40" onClick={type === 'confirm' ? onCancel : onConfirm}></div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="fixed inset-0 bg-black/50" onClick={type === 'confirm' ? onCancel : onConfirm}></div>
       
-      {/* Alert/Confirm Dialog */}
-      <div className="bg-white rounded-lg w-80 p-6 shadow-lg z-50 flex flex-col items-center">
+      <div className="bg-white rounded-lg w-80 py-6 px-4 shadow-xl z-50">
         <h2 className="text-xl font-semibold mb-6 text-center">{title}</h2>
-        <p className="mb-8 text-center">{message}</p>
         
-        <div className="flex w-full gap-4 justify-center">
+        <div className="flex justify-center gap-4">
           {type === 'confirm' && (
             <>
-              <Button
+              <Button 
                 onClick={onConfirm}
-                variant="primary"
-                className="w-24"
+                className="h-8 px-8 rounded-3xl bg-gradient-to-r from-[#FF7F50] to-[#F15A29] text-white hover:opacity-90"
               >
                 {confirmText}
               </Button>
               <Button
                 onClick={onCancel}
-                variant="outline"
-                className="w-24"
+                className="h-8 px-8 rounded-3xl bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
               >
                 {cancelText}
               </Button>
@@ -57,10 +51,9 @@ const AlertDialog: React.FC<AlertDialogProps> = ({
           )}
           
           {type === 'alert' && (
-            <Button
+            <Button 
               onClick={onConfirm}
-              variant="primary"
-              className="w-36"
+              className="h-10 px-8 rounded-3xl bg-gradient-to-r from-[#FF7F50] to-[#F15A29] text-white hover:opacity-90"
             >
               OK
             </Button>

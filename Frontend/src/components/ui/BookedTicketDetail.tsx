@@ -1,6 +1,7 @@
 import React from 'react';
 import { PurchaseItem } from './PurchaseCard';
 import Button from './Button';
+import { QRCodeSVG } from 'qrcode.react';
 
 // Extend PurchaseItem with additional details for the ticket page
 interface DetailedTicketInfo extends PurchaseItem {
@@ -48,6 +49,15 @@ const getStatusColor = (status: string) => {
 };
 
 const BookedTicketDetail: React.FC<BookedTicketDetailProps> = ({ ticket, onBack }) => {
+  // Generate QR code data
+  const qrCodeData = JSON.stringify({
+    ticketId: ticket.id,
+    eventTitle: ticket.title,
+    date: ticket.date,
+    persons: ticket.persons,
+    orderNumber: ticket.orderNumber
+  });
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       {/* Header with back button */}
@@ -189,15 +199,21 @@ const BookedTicketDetail: React.FC<BookedTicketDetailProps> = ({ ticket, onBack 
             </div>
           </div>
           
-          {/* QR Code placeholder */}
+          {/* QR Code section */}
           {ticket.status === "Confirmed" && (
             <div className="mb-8 flex flex-col items-center">
               <h3 className="text-xl font-semibold mb-4">Ticket QR Code</h3>
-              <div className="bg-gray-100 w-48 h-48 flex items-center justify-center mb-2">
-                {/* Replace with actual QR code component */}
-                <p className="text-gray-500">QR Code</p>
+              <div className="bg-white p-4 rounded-lg shadow-md">
+                <QRCodeSVG
+                  value={qrCodeData}
+                  size={180}
+                  level="H"
+                  includeMargin
+                  className="mb-2"
+                />
               </div>
-              <p className="text-sm text-gray-500">Scan this code at the venue</p>
+              <p className="text-sm text-gray-500 mt-2">Scan this code at the venue</p>
+              <p className="text-xs text-gray-400">Ticket ID: {ticket.id}</p>
             </div>
           )}
           
