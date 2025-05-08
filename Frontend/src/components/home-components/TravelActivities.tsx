@@ -241,6 +241,7 @@ const TravelActivities = () => {
               <option value="rating">Rating</option>
               <option value="availability">Availability</option>
             </select>
+            
           </div>
           
           <button 
