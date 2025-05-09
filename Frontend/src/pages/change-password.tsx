@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from 'react-router-dom';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import AuthLayout from '../components/layouts/AuthLayout';
@@ -13,9 +14,13 @@ interface ChangePasswordFormData {
 function ChangePasswordForm() {
   const { register, handleSubmit } = useForm<ChangePasswordFormData>();
 
+  const navigate = useNavigate();
+
   const onSubmit = (data: ChangePasswordFormData) => {
     if (data.newPassword === data.confirmPassword) {
       console.log("Password changed successfully:", data.newPassword);
+      onclick=() => navigate ('/login');
+      
     } else {
       console.error("Passwords do not match!");
     }
