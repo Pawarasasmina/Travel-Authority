@@ -81,7 +81,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen flex flex-col mt-12">
       {/* Header Background */}
-      <div className="h-64 bg-cover bg-center relative" 
+      <div className="h-64  inset-0  z-0 bg-cover bg-center relative" 
            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2144&auto=format&fit=crop')" }}>
         {/* Change Password Button */}
         <div 

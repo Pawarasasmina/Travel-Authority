@@ -68,7 +68,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ image, title, location, pri
         if (entry.isIntersecting) {
           setTimeout(() => {
             entry.target.classList.add('opacity-100', 'translate-y-0');
-          }, rowIndex * 200); // Delay based on row position
+          }, rowIndex * 100); // Delay based on row position
           observer.unobserve(entry.target);
         }
       },
@@ -92,7 +92,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ image, title, location, pri
                  transition-all duration-700 opacity-0 translate-y-16"
       onClick={onClick}
       style={{
-        transitionDelay: `${(index % 4) * 100}ms` // Stagger items within each row
+        transitionDelay: `${(index % 4) * 200}ms` // Stagger items within each row
       }}
     >
       <div className="h-48 overflow-hidden">
@@ -225,9 +225,9 @@ const TravelActivities = () => {
     <section id="travel-activities" className="py-0 px-6 md:px-6 max-w-8xl relative mb-24">
       <h2 className="text-3xl font-bold text-center mb-10">Your Ultimate Travel Companion</h2>
       
-      <div className="mb-6">
+      <div className="mb-0">
         <div className="flex flex-wrap justify-between items-start ">
-          <div className="mb-4 md:mb-0">
+          <div className="mb-2 md:mb-0">
             <label htmlFor="sort" className="text-sm font-medium">Sort by:</label>
             <select 
               id="sort"
@@ -243,11 +243,21 @@ const TravelActivities = () => {
             </select>
             
           </div>
-          
+          {/* Activity Count Display */}
+          <div className="text-center">
+            <p className="text-sm text-green-800">
+              <span className="font-medium">{filteredActivities.length}</span> 
+              <span className="ml-1">
+                {filteredActivities.length === 1 ? 'activity' : 'activities'} 
+                {selectedCategories.length > 0 && ' in ' + selectedCategories.join(', ')}
+              </span>
+            </p>
+          </div>
           <button 
             onClick={toggleFilters}
-            className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-800 transition flex items-center space-x-2"
+            className="bg-green-800 text-white px-4 py-2 rounded-md hover:bg-green-900 transition flex items-center space-x-2"
           >
+            
             <span>Filters</span>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -255,7 +265,7 @@ const TravelActivities = () => {
           </button>
         </div>
         
-        <div className="mt-3 mb-5">
+        <div className="mt-3 mb-0">
           <div className="flex justify-between items-center mb-2">
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map(category => (
@@ -264,8 +274,8 @@ const TravelActivities = () => {
                   onClick={() => handleCategoryChange(category)}
                   className={`px-3 py-1 text-sm rounded-full border ${
                     selectedCategories.includes(category)
-                      ? 'bg-gray-600 text-white border-gray-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                      ? 'bg-green-800 text-white border-green-800'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-green-50'
                   } transition-colors`}
                 >
                   {category}
@@ -276,15 +286,17 @@ const TravelActivities = () => {
             {selectedCategories.length > 0 && (
               <button
                 onClick={() => setSelectedCategories([])}
-                className="flex items-center px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full border border-gray-300 transition-colors duration-200 shadow-sm ml-2"
+                className="flex items-center px-2 py-0.5 text-xs bg-green-50 hover:bg-green-100 text-green-800 rounded-full border border-green-200 transition-colors duration-200 shadow-sm ml-2"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-0.5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-0.5 text-green-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
                 Clear filters ({selectedCategories.length})
               </button>
             )}
           </div>
+          
+          
         </div>
       </div>
       
@@ -302,6 +314,7 @@ const TravelActivities = () => {
       {/* Filter sidebar with adjusted z-index */}
       <div className={`fixed top-0 right-0 h-full w-80 bg-white shadow-xl z-30 transform transition-transform duration-300 ease-in-out ${showFilters ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="p-6">
+          
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-bold">Filters</h3>
             <button onClick={toggleFilters} className="text-gray-500 hover:text-gray-700">
@@ -338,9 +351,9 @@ const TravelActivities = () => {
               <span className="text-sm font-semibold text-gray-700">${priceRange[1]}</span>
             </div>
             <div className="relative mt-2 mb-4">
-              <div className="absolute inset-0 h-1 mt-3 bg-gray-200 rounded"></div>
+              <div className="absolute inset-0 h-1 mt-3 bg-green-100 rounded"></div>
               <div 
-                className="absolute h-1 mt-3 bg-gray-600 rounded" 
+                className="absolute h-1 mt-3 bg-green-800 rounded" 
                 style={{ 
                   left: `${(priceRange[0] / 100) * 100}%`, 
                   width: `${((priceRange[1] - priceRange[0]) / 100) * 100}%` 
@@ -352,7 +365,7 @@ const TravelActivities = () => {
                 max="100" 
                 value={priceRange[0]} 
                 onChange={(e) => handlePriceChange(e, 0)}
-                className="absolute w-full h-1 mt-3 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
+                className="absolute w-full h-1 mt-3 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-800 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
               />
               <input 
                 type="range" 
@@ -360,7 +373,7 @@ const TravelActivities = () => {
                 max="100" 
                 value={priceRange[1]} 
                 onChange={(e) => handlePriceChange(e, 1)}
-                className="absolute w-full h-1 mt-3 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-600 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
+                className="absolute w-full h-1 mt-3 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-800 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
               />
             </div>
             <div className="flex justify-between mt-6">
@@ -411,14 +424,14 @@ const TravelActivities = () => {
               setSortOption('default');
               setSelectedCategories([]);
             }}
-            className="w-full bg-gray-200 text-gray-800 py-2 rounded-md hover:bg-gray-300 transition mb-4"
+            className="w-full bg-green-50 text-green-800 py-2 rounded-md hover:bg-green-100 transition mb-4"
           >
             Reset Filters
           </button>
           
           <button 
             onClick={toggleFilters}
-            className="w-full bg-gray-600 text-white py-2 rounded-md hover:bg-gray-800 transition"
+            className="w-full bg-green-800 text-white py-2 rounded-md hover:bg-green-900 transition"
           >
             Apply Filters
           </button>
