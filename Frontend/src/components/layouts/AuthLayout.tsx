@@ -29,8 +29,18 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         transition={{ duration: 0.5 }}
         className="flex w-full max-w-[1100px] shadow-md bg-white rounded-[20px] max-md:flex-col max-md:max-w-[500px] max-sm:rounded-md relative"
       >
+        <motion.div 
+          initial={{ x: imagePosition === 'left' ? 100 : -100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className={`w-2/5 flex flex-col items-center px-4 py-6 max-md:w-full max-md:px-3 max-md:py-4 ${
+            imagePosition === 'right' ? 'order-first' : 'order-last'
+          }`}
+        >
+          {children}
+        </motion.div>
         <motion.img
-          initial={{ x: isLogin ? -100 : 100, opacity: 0 }}
+          initial={{ x: imagePosition === 'left' ? -100 : 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
           src={image}
@@ -38,17 +48,9 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
           className={`w-3/5 object-cover h-[700px] ${
             imagePosition === 'left' 
               ? 'rounded-l-[20px] max-md:rounded-t-lg' 
-              : 'rounded-r-[20px] max-md:rounded-b-lg max-md:order-first'
+              : 'rounded-r-[20px] max-md:rounded-b-lg'
           } max-md:w-full max-md:h-[150px]`}
         />
-        <motion.div 
-          initial={{ x: isLogin ? 100 : -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="w-2/5 flex flex-col items-center px-4 py-6 max-md:w-full max-md:px-3 max-md:py-4"
-        >
-          {children}
-        </motion.div>
       </motion.div>
     </div>
   );
