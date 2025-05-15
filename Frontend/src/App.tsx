@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Login from './pages/login';
 import Registration from './pages/signup';
-import Registration2 from './pages/signup2';
 import ForgotPassword from './pages/forgot-password';
 import ChangePassword from './pages/change-password';
 import AboutUs from './pages/about-us';
@@ -13,8 +12,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ActivityDetail from './components/activities/ActivityDetail';
 import BookedTicketPage from './pages/booked-ticket-page';
-import PeopleCountSelector from './pages/booking/PeopleCountSelector';
-import cetgorypage from './pages/categories';
+import PeopleCountSelector from './pages/PeopleCountSelector';
 import PaymentSuccess from './pages/PaymentSuccess';
 
 // Component to conditionally render navbar based on route
@@ -26,6 +24,7 @@ const AppContent = () => {
   const transparentNavbarRoutes = [
     '/activities', // For any activity detail page
     '/home',
+    
     
   ];
   
@@ -61,7 +60,6 @@ const AppContent = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/home" element={<Home/>}/>
         <Route path="/signup" element={<Registration />} />
-        <Route path="/signup2" element={<Registration2 />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/change-password" element={<ChangePassword/>} />
         <Route path="/aboutus" element={<AboutUs/>} />

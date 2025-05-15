@@ -39,6 +39,10 @@ const Profile = () => {
     navigate('/login');
   };
 
+  const handleChangePassword = () => {
+    navigate('/change-password');
+  };
+
   // Icons for the profile fields
   const icons = {
     name: (
@@ -75,15 +79,25 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col mt-12">
       {/* Header Background */}
-      <div className="h-64 bg-cover bg-center relative" 
+      <div className="h-64  inset-0  z-0 bg-cover bg-center relative" 
            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2144&auto=format&fit=crop')" }}>
+        {/* Change Password Button */}
+        <div 
+          className="absolute bottom-4 right-4 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-100 transition-colors"
+          onClick={handleChangePassword}
+          title="Change Password"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+          </svg>
+        </div>
       </div>
 
       {/* Profile Picture */}
       <div className="flex justify-center">
-        <div className="w-48 h-48 rounded-full bg-white p-1 absolute -mt-32">
+        <div className="w-48 h-48 rounded-full bg-white p-1 absolute -mt-32 relative">
           <img 
             src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=2080&auto=format&fit=crop" 
             alt="Profile" 

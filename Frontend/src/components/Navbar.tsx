@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import navbarBg from "../assets/navbar/navbar_bg.png";
 import { Bell, User } from "lucide-react";
 import NotificationModal from "./NotificationModal";
@@ -10,30 +10,24 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ transparent = false }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [prevScrollPos, setPrevScrollPos] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
   const [visible, setVisible] = useState(true);
+  const [prevScrollPos, setPrevScrollPos] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      // Get current scroll position
       const currentScrollPos = window.scrollY;
+      const isScrolled = currentScrollPos > 500;
       
-      // Set navbar visibility based on scroll direction
-      // Also, always show navbar when at the top of the page
-      setVisible(
-        (prevScrollPos > currentScrollPos) || // Scrolling up
-        currentScrollPos < 10 // At top of page
-      );
-      
-      // Update previous scroll position
+      // Show/hide navbar based on scroll direction
+      setVisible(prevScrollPos > currentScrollPos || currentScrollPos < 10);
       setPrevScrollPos(currentScrollPos);
+      setScrolled(isScrolled);
     };
 
-    // Add scroll event listener
     window.addEventListener('scroll', handleScroll);
-    
-    // Clean up event listener
     return () => window.removeEventListener('scroll', handleScroll);
   }, [prevScrollPos]);
 
@@ -41,19 +35,21 @@ const Navbar: React.FC<NavbarProps> = ({ transparent = false }) => {
     setShowNotifications(!showNotifications);
   };
 
-  // CSS classes for navbar visibility
-  const navbarVisibilityClass = visible 
-    ? 'translate-y-0 opacity-100' 
-    : '-translate-y-full opacity-0';
-
   return (
     <nav
-      className={`w-full z-50 transition-all duration-300 ease-in-out ${navbarVisibilityClass} ${transparent ? 'fixed top-0 left-0' : 'relative'}`}
+      className="fixed top-0 left-0 w-full z-50"
       style={{
         minHeight: '52px',
-        backgroundImage: transparent ? 'none' : `url(${navbarBg})`,
+        backgroundImage: transparent 
+          ? (scrolled ? 'none' : 'none')
+          : `url(${navbarBg})`,
+        backgroundColor: transparent && scrolled 
+          ? 'rgba(0, 0, 0, 0.8)' 
+          : 'transparent',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        transition: 'all 0.3s ease',
+        transform: `translateY(${visible ? '0' : '-100%'})`,
       }}
     >
       {/* Navbar content */}
@@ -65,9 +61,33 @@ const Navbar: React.FC<NavbarProps> = ({ transparent = false }) => {
         </div>
         <div className="flex-1" />
         <div className="hidden md:flex gap-9 items-center">
-          <a href="/home" className="text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition">Home</a>
-          <a href="/categories" className="text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition">Categories</a>
-          <a href="/purchase-list" className="text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition">Purchase List</a>
+          <NavLink 
+            to="/home" 
+            className={({ isActive }) => 
+              `text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition relative
+              ${isActive ? 'after:content-[""] after:absolute after:left-0 after:bottom-[-4px] after:h-[2px] after:w-full after:bg-orange-400' : ''}`
+            }
+          >
+            Home
+          </NavLink>
+          <NavLink 
+            to="/categories" 
+            className={({ isActive }) => 
+              `text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition relative
+              ${isActive ? 'after:content-[""] after:absolute after:left-0 after:bottom-[-4px] after:h-[2px] after:w-full after:bg-orange-400' : ''}`
+            }
+          >
+            Categories
+          </NavLink>
+          <NavLink 
+            to="/purchase-list" 
+            className={({ isActive }) => 
+              `text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition relative
+              ${isActive ? 'after:content-[""] after:absolute after:left-0 after:bottom-[-4px] after:h-[2px] after:w-full after:bg-orange-400' : ''}`
+            }
+          >
+            Purchase List
+          </NavLink>
         </div>
         <div className="flex items-center gap-4 ml-8">
           <div className="relative">

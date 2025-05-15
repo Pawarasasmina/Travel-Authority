@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useNavigate } from 'react-router-dom';
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import Input from '../components/ui/Input';
@@ -14,13 +15,15 @@ interface ForgotPasswordFormData {
 function ForgotPasswordForm() {
   const { register, handleSubmit } = useForm<ForgotPasswordFormData>();
   const [isCodeSent, setIsCodeSent] = useState(false);
+  const navigate = useNavigate();
 
   const onSubmit = (data: ForgotPasswordFormData) => {
     if (!isCodeSent) {
       console.log("Code sent to:", data.email);
       setIsCodeSent(true);
     } else {
-      console.log("Code entered:", data.code);
+      
+      onclick=() => navigate('/change-password')
     }
   };
 

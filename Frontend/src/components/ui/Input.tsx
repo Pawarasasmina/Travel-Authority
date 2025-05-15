@@ -15,7 +15,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <div className="flex items-center gap-4 border h-[55px] bg-white px-4 py-2 rounded-[10px] border-solid border-[#E0E0E0] shadow-[0_2px_4px_rgba(0,0,0,0.2)] max-sm:h-[50px]">
+        <div className="flex items-center gap-4 border h-[55px] bg-white px-4 py-2 rounded-[16px] border-solid border-[#E0E0E0] shadow-[0_2px_4px_rgba(0,0,0,0.2)] max-sm:h-[50px]">
           {icon && <div>{icon}</div>}
           <input
             ref={ref}

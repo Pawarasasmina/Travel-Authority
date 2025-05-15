@@ -26,36 +26,44 @@
   }
 }
 
-@keyframes scroll {
+
+
+
+@keyframes infinite-scroll {
   0% {
     transform: translateX(0);
   }
-  100% {
+  50% {
     transform: translateX(-50%);
   }
-}
-
-.animate-scroll {
-  animation: scroll 8s linear infinite;
-}
-
-@keyframes infinite-scroll {
-  from {
+  100% {
     transform: translateX(0);
-  }
-  to {
-    transform: translateX(-33.33%);
   }
 }
 
 .animate-infinite-scroll {
-  animation: infinite-scroll 5s linear infinite;
+  animation: infinite-scroll 25s linear infinite;
+  display: flex;
+  width: fit-content;
 }
 
 /* Optional: Pause animation on hover */
 .animate-infinite-scroll:hover {
   animation-play-state: paused;
 }
+
+/* Add smooth transition for hover effect */
+.animate-infinite-scroll > * {
+  
+  transition: transform 0.3s ease;
+}
+
+/* Add hover effect on individual cards */
+.animate-infinite-scroll > *:hover {
+  transform: scale(1.05);
+  z-index: 1;
+}
+
 
 @keyframes fadeInUp {
   from {

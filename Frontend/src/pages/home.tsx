@@ -14,7 +14,6 @@ const Home = () => {
         <SpecialOffers/>
         <TravelActivities />
       </div>
-   
     </div>
   );
 };
