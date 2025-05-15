@@ -12,7 +12,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ActivityDetail from './components/activities/ActivityDetail';
 import BookedTicketPage from './pages/booked-ticket-page';
-import PeopleCountSelector from './pages/booking/PeopleCountSelector';
+import PeopleCountSelector from './pages/PeopleCountSelector';
 import PaymentSuccess from './pages/PaymentSuccess';
 
 // Component to conditionally render navbar based on route

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Button from '../../components/ui/Button';
-import { useAlert } from '../../contexts/AlertContext';
-import PaymentModal from '../../components/PaymentModal';
+import Button from '../components/ui/Button';
+import { useAlert } from '../contexts/AlertContext';
+import PaymentModal from '../components/PaymentModal';
 
 // Counter component for quantity selection
 const QuantityCounter = ({ 
@@ -211,7 +211,7 @@ const PeopleCountSelector = () => {
         </div>
       </div>
 
-      {/* Rest of the booking interface */}
+   
       {/* Booking Section - Two Columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* People Selection */}
