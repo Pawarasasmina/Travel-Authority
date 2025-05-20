@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import offer from "../assets/offers/offer1.jpg";
 import offer2 from "../assets/offers/offer2.jpg";
 import offer3 from "../assets/offers/offer3.jpg";
@@ -72,6 +73,8 @@ interface NotificationModalProps {
 }
 
 const NotificationModal: React.FC<NotificationModalProps> = ({ onClose }) => {
+  const navigate = useNavigate();
+
   // Prevent body scrolling when modal is open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -85,6 +88,11 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ onClose }) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
+  };
+
+  const handleViewAll = () => {
+    onClose();
+    navigate('/notifications');
   };
 
   return (
@@ -154,9 +162,12 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ onClose }) => {
 
           {/* View all link */}
           <div className="p-3 flex justify-center">
-            <a href="#" className="text-orange-400 hover:text-orange-500 text-sm font-medium">
+            <button 
+              onClick={handleViewAll}
+              className="text-orange-400 hover:text-orange-500 text-sm font-medium"
+            >
               View All
-            </a>
+            </button>
           </div>
         </div>
       </div>

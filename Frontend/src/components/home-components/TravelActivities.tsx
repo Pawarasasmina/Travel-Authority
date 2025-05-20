@@ -312,7 +312,7 @@ const TravelActivities = () => {
       </div>
       
       {/* Filter sidebar with adjusted z-index */}
-      <div className={`fixed top-0 right-0 h-full w-80 bg-white shadow-xl z-30 transform transition-transform duration-300 ease-in-out ${showFilters ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed top-0 right-0 h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${showFilters ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="p-6">
           
           <div className="flex justify-between items-center mb-6">
