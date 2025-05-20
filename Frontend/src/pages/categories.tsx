@@ -50,7 +50,7 @@ const Categories = () => {
   };
 
   return (
-    <div className="pt-24 flex-grow bg-gray-50">
+    <div className="pt-24 flex-grow bg-white">
       <div className="max-w-7xl mx-auto px-6 py-12">
         <h1 className="text-5xl font-bold mb-4 text-center">Travel Categories</h1>
         <p className="text-xl mb-12 text-center text-gray-600 max-w-3xl mx-auto">
