@@ -14,6 +14,8 @@ import ActivityDetail from './components/activities/ActivityDetail';
 import BookedTicketPage from './pages/booked-ticket-page';
 import PeopleCountSelector from './pages/PeopleCountSelector';
 import PaymentSuccess from './pages/PaymentSuccess';
+import NotificationsPage from './pages/notifications';
+
 
 // Component to conditionally render navbar based on route
 const AppContent = () => {
@@ -70,6 +72,7 @@ const AppContent = () => {
         <Route path="/booking/people-count" element={<PeopleCountSelector />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/bookings/:id" element={<BookedTicketPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
       </Routes>
       {showFooter && <Footer />}
     </>
