@@ -16,6 +16,7 @@ import image13 from '../../assets/home-images/event-images/13.jpg';
 import image14 from '../../assets/home-images/event-images/14.jpg';
 import image15 from '../../assets/home-images/event-images/15.jpg';
 import image16 from '../../assets/home-images/event-images/16.jpg';
+import { fetchAllActivities } from '../../api/activityApi';
 
 // Define available categories
 const CATEGORIES = [
@@ -117,25 +118,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ image, title, location, pri
   );
 };
 
-export const ACTIVITIES = [
-  { id: 1, title: "White Water Rafting", location: "Kitulgala", image: image1, price: 45, availability: 10, rating: 4.5 },
-  { id: 2, title: "Uva Tea Factory Tour", location: "Haputale", image: image2, price: 25, availability: 25, rating: 4.2 },
-  { id: 3, title: "Birds Safari Tour", location: "Bundala", image: image3, price: 35, availability: 8, rating: 4.7 },
-  { id: 4, title: "Flying Ravana", location: "Ella", image: image4, price: 30, availability: 15, rating: 4.8 },
-  { id: 5, title: "Dolphin Watching", location: "Kalpitiya", image: image5, price: 55, availability: 12, rating: 4.6 },
-  { id: 6, title: "Paramotoring", location: "Bentota", image: image6, price: 60, availability: 5, rating: 4.9 },
-  { id: 7, title: "Forest Monastery", location: "Mihintale", image: image7, price: 15, availability: 30, rating: 4.3 },
-  { id: 8, title: "Hill Country Adventures", location: "Haputale", image: image8, price: 40, availability: 18, rating: 4.4 },
-  { id: 9, title: "Deep Sea Fishing", location: "Bentota", image: image9, price: 65, availability: 6, rating: 4.5 },
-  { id: 10, title: "Nine Arches Bridge", location: "Ella", image: image10, price: 20, availability: 40, rating: 4.7 },
-  { id: 11, title: "Fort Frederick", location: "Trincomalee", image: image11, price: 18, availability: 35, rating: 4.1 },
-  { id: 12, title: "Jungle Beach", location: "Unawatuna", image: image12, price: 22, availability: 30, rating: 4.6 },
-  { id: 13, title: "Galle Day Trip", location: "Galle", image: image13, price: 38, availability: 20, rating: 4.5 },
-  { id: 14, title: "Wilpattu Park Safari", location: "Kalpitiya", image: image14, price: 50, availability: 8, rating: 4.8 },
-  { id: 15, title: "Whale Watching", location: "Mirissa", image: image15, price: 75, availability: 15, rating: 4.9 },
-  { id: 16, title: "Cycle down to Hatton", location: "Nuwara Eliya", image: image16, price: 32, availability: 12, rating: 4.3 }
-];
-
+// Define SortOption type
 type SortOption = 'default' | 'price-low' | 'price-high' | 'rating' | 'availability';
 
 const TravelActivities = () => {
@@ -143,10 +126,22 @@ const TravelActivities = () => {
   const location = useLocation();
   const [sortOption, setSortOption] = useState<SortOption>('default');
   const [showFilters, setShowFilters] = useState(false);
-  const [filteredActivities, setFilteredActivities] = useState(ACTIVITIES);
+  interface Activity {
+    id: number;
+    title: string;
+    location: string;
+    price: number;
+    availability: number;
+    rating: number;
+    // Add other fields if needed
+  }
+  
+  const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
   const [ratingFilter, setRatingFilter] = useState<number>(0);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   const handleActivityClick = (id: number, title: string) => {
     const slugTitle = title.toLowerCase().replace(/\s+/g, '-');
@@ -169,8 +164,22 @@ const TravelActivities = () => {
     }
   }, [location.search]);
 
+  // Fetch activities from backend
   useEffect(() => {
-    let sorted = [...ACTIVITIES];
+    setLoading(true);
+    fetchAllActivities()
+      .then((data) => {
+        setFilteredActivities(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError('Failed to load activities');
+        setLoading(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    let sorted = [...filteredActivities];
     
     switch(sortOption) {
       case 'price-low':
@@ -186,7 +195,7 @@ const TravelActivities = () => {
         sorted = sorted.sort((a, b) => b.availability - a.availability);
         break;
       default:
-        sorted = [...ACTIVITIES];
+        sorted = [...filteredActivities];
     }
     
     sorted = sorted.filter(activity => 
@@ -300,16 +309,28 @@ const TravelActivities = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
-        {filteredActivities.map((activity, index) => (
-          <ActivityCard 
-            key={activity.id}
-            {...activity}
-            index={index}
-            onClick={() => handleActivityClick(activity.id, activity.title)}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className="text-center py-12">Loading activities...</div>
+      ) : error ? (
+        <div className="text-center text-red-500 py-12">{error}</div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
+          {filteredActivities.map((activity, index) => {
+            // Map activity.id to the correct image import
+            const images = [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10, image11, image12, image13, image14, image15, image16];
+            const image = images[(activity.id - 1) % images.length];
+            return (
+              <ActivityCard 
+                key={activity.id}
+                {...activity}
+                image={image}
+                index={index}
+                onClick={() => handleActivityClick(activity.id, activity.title)}
+              />
+            );
+          })}
+        </div>
+      )}
       
       {/* Filter sidebar with adjusted z-index */}
       <div className={`fixed top-0 right-0 h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${showFilters ? 'translate-x-0' : 'translate-x-full'}`}>
