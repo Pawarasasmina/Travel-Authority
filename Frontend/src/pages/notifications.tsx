@@ -13,6 +13,7 @@ interface Notification {
   icon: React.ElementType;
 }
 
+
 const NotificationsPage = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [filter, setFilter] = useState('all');
@@ -94,32 +95,32 @@ const NotificationsPage = () => {
   };
 
   return (
-    <div className="pt-20 min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="pt-16 min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:py-8">
         <div className="bg-white rounded-xl shadow-sm border">
           {/* Header */}
-          <div className="p-6 border-b">
-            <h1 className="text-3xl font-bold text-gray-800">Notifications</h1>
-            <p className="text-gray-600 mt-2">Stay updated with your travel activities and offers</p>
+          <div className="p-4 sm:p-6 border-b">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Notifications</h1>
+            <p className="text-gray-600 mt-2 text-sm sm:text-base">Stay updated with your travel activities and offers</p>
           </div>
 
-          {/* Tabs */}
-          <div className="border-b">
-            <div className="flex gap-8 px-6">
+          {/* Tabs - Horizontal scrollable on mobile */}
+          <div className="border-b overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 sm:gap-8 px-4 sm:px-6 min-w-max">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 py-4 px-2 border-b-2 transition-colors ${
+                  className={`flex items-center gap-2 py-3 sm:py-4 px-3 sm:px-2 border-b-2 transition-colors whitespace-nowrap text-sm sm:text-base ${
                     activeTab === tab.id
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  <tab.icon size={18} />
+                  <tab.icon size={16} className="sm:size-[18px]" />
                   <span className="font-medium">{tab.label}</span>
                   {tab.id === 'unread' && (
-                    <span className="bg-orange-100 text-orange-600 text-xs font-medium px-2 py-0.5 rounded-full">
+                    <span className="bg-orange-100 text-orange-600 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full">
                       3
                     </span>
                   )}
@@ -130,33 +131,31 @@ const NotificationsPage = () => {
 
           {/* Search and Filters */}
           <div className="p-4 border-b bg-gray-50">
-            <div className="flex flex-wrap gap-4 items-center justify-between">
-              <div className="flex gap-4">
-                <div className="relative">
-                  <select
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    className="appearance-none bg-gray-50 border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  >
-                    <option value="all">All Notifications</option>
-                    <option value="unread">Unread</option>
-                    <option value="offer">Offers</option>
-                    <option value="alert">Alerts</option>
-                    <option value="update">Updates</option>
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
-                </div>
-                
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
+              <div className="relative w-full sm:w-auto">
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="all">All Notifications</option>
+                  <option value="unread">Unread</option>
+                  <option value="offer">Offers</option>
+                  <option value="alert">Alerts</option>
+                  <option value="update">Updates</option>
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
               </div>
-              <div className="relative">
+              
+              <div className="relative flex-1 sm:max-w-xs">
                 <input
                   type="text"
                   placeholder="Search notifications..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full md:w-80 pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full pl-9 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               </div>
             </div>
           </div>
@@ -178,32 +177,32 @@ const NotificationsPage = () => {
               filterNotifications(notifications).map((notification) => (
                 <div
                   key={notification.id}
-                  className={`group p-6 hover:bg-gray-50 transition-colors ${
+                  className={`group p-4 sm:p-6 hover:bg-gray-50 transition-colors ${
                     !notification.isRead ? 'bg-orange-50/50' : ''
                   }`}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className={`p-2 rounded-full ${getTypeStyle(notification.type)} bg-opacity-10`}>
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className={`p-2 rounded-full ${getTypeStyle(notification.type)} bg-opacity-10 hidden sm:block`}>
                       <notification.icon size={20} />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row gap-3 sm:items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
                             {notification.title}
                           </h3>
-                          <p className="text-gray-600 mt-1">{notification.description}</p>
-                          <div className="flex items-center gap-4 mt-2">
-                            <span className="flex items-center gap-1 text-sm text-gray-500">
+                          <p className="text-gray-600 mt-1 text-sm line-clamp-2">{notification.description}</p>
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2">
+                            <span className="flex items-center gap-1 text-xs sm:text-sm text-gray-500">
                               <Clock size={14} />
-                              {notification.date} at {notification.time}
+                              {notification.date}
                             </span>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeStyle(notification.type)}`}>
                               {notification.type}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-2 mt-2 sm:mt-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           {!notification.isRead && (
                             <Button
                               variant="outline"

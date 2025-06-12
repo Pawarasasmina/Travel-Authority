@@ -97,76 +97,74 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ onClose }) => {
 
   return (
     <>
-      {/* Dark overlay */}
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 z-40"
         onClick={handleBackdropClick}
       />
       
-      <div className="absolute top-12 right-0 w-[350px] bg-white rounded-lg shadow-xl overflow-hidden z-50">
-        {/* Header with close button */}
-        <div className="p-3 border-b flex justify-between items-center">
-          <h3 className="font-semibold text-gray-800">Notifications</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X size={18} />
+      <div className="fixed md:absolute top-0 md:top-12 right-0 w-full md:w-[350px] h-full md:h-auto bg-white md:rounded-lg shadow-xl overflow-hidden z-50">
+        {/* Header */}
+        <div className="sticky top-0 z-10 p-4 md:p-3 border-b flex justify-between items-center bg-white">
+          <h3 className="font-semibold text-gray-800 text-lg md:text-base">Notifications</h3>
+          <button onClick={onClose} className="p-2 md:p-0 hover:bg-gray-100 md:hover:bg-transparent rounded-full md:rounded-none">
+            <X size={20} className="md:size-[18px]" />
           </button>
         </div>
 
-        {/* Notifications content with scrollable area */}
-        <div className="max-h-[400px] overflow-y-auto">
+        <div className="max-h-[calc(100vh-60px)] md:max-h-[400px] overflow-y-auto">
           {/* Today's notifications */}
-          <div className="p-3 border-b">
-            <h4 className="text-orange-400 font-semibold mb-2 text-sm">Today</h4>
-            <div className="space-y-3">
+          <div className="p-4 md:p-3 border-b">
+            <h4 className="text-orange-400 font-semibold mb-3 md:mb-2 text-sm">Today</h4>
+            <div className="space-y-4 md:space-y-3">
               {todayNotifications.map((notification) => (
-                <div key={notification.id} className="flex gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                <div key={notification.id} className="flex gap-4 md:gap-3 cursor-pointer hover:bg-gray-50 p-3 md:p-2 rounded-lg md:rounded">
                   <img 
                     src={notification.icon} 
                     alt={notification.title} 
-                    className="w-10 h-10 rounded object-cover"
+                    className="w-12 h-12 md:w-10 md:h-10 rounded-lg md:rounded object-cover"
                   />
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex justify-between">
-                      <h5 className="font-medium text-sm">{notification.title}</h5>
-                      <span className="text-gray-400 text-xs">{notification.time}</span>
+                      <h5 className="font-medium text-base md:text-sm truncate">{notification.title}</h5>
+                      <span className="text-gray-400 text-sm md:text-xs whitespace-nowrap ml-2">{notification.time}</span>
                     </div>
-                    <p className="text-xs text-gray-600">{notification.description}</p>
+                    <p className="text-sm md:text-xs text-gray-600 line-clamp-2">{notification.description}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Yesterday's notifications */}
-          <div className="p-3 border-b">
-            <h4 className="text-orange-400 font-semibold mb-2 text-sm">Yesterday</h4>
-            <div className="space-y-3">
+          {/* Yesterday's notifications - same structure as Today's */}
+          <div className="p-4 md:p-3 border-b">
+            <h4 className="text-orange-400 font-semibold mb-3 md:mb-2 text-sm">Yesterday</h4>
+            <div className="space-y-4 md:space-y-3">
               {yesterdayNotifications.map((notification) => (
-                <div key={notification.id} className="flex gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                <div key={notification.id} className="flex gap-4 md:gap-3 cursor-pointer hover:bg-gray-50 p-3 md:p-2 rounded-lg md:rounded">
                   <img 
                     src={notification.icon} 
                     alt={notification.title} 
-                    className="w-10 h-10 rounded object-cover"
+                    className="w-12 h-12 md:w-10 md:h-10 rounded-lg md:rounded object-cover"
                   />
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex justify-between">
-                      <h5 className="font-medium text-sm">{notification.title}</h5>
-                      <span className="text-gray-400 text-xs">{notification.time}</span>
+                      <h5 className="font-medium text-base md:text-sm truncate">{notification.title}</h5>
+                      <span className="text-gray-400 text-sm md:text-xs whitespace-nowrap ml-2">{notification.time}</span>
                     </div>
-                    <p className="text-xs text-gray-600">{notification.description}</p>
+                    <p className="text-sm md:text-xs text-gray-600 line-clamp-2">{notification.description}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* View all link */}
-          <div className="p-3 flex justify-center">
+          {/* View all button */}
+          <div className="sticky bottom-0 p-4 md:p-3 bg-white border-t">
             <button 
               onClick={handleViewAll}
-              className="text-orange-400 hover:text-orange-500 text-sm font-medium"
+              className="w-full py-3 md:py-2 bg-orange-50 text-orange-500 rounded-lg font-medium hover:bg-orange-100 transition-colors"
             >
-              View All
+              View All Notifications
             </button>
           </div>
         </div>
