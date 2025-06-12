@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.travelauthority.backend.dto.ChangePasswordDTO;
 import com.travelauthority.backend.dto.ResponseDTO;
 import com.travelauthority.backend.dto.UserDTO;
 import com.travelauthority.backend.service.UserService;
@@ -43,10 +44,12 @@ public class UserController {
     @PutMapping("/update/{id}")
     public ResponseDTO updateUser(@PathVariable int id, @RequestBody UserDTO userDTO) {
         return userService.updateUser(id, userDTO);
-    }
-
-    @DeleteMapping("/delete/{id}")
+    }    @DeleteMapping("/delete/{id}")
     public ResponseDTO deleteUser(@PathVariable int id) {
         return userService.deleteUser(id);
+    }
+      @PostMapping("/change-password/{id}")
+    public ResponseDTO changePassword(@PathVariable int id, @RequestBody ChangePasswordDTO changePasswordDTO) {
+        return userService.changePassword(id, changePasswordDTO.getCurrentPassword(), changePasswordDTO.getNewPassword());
     }
 }

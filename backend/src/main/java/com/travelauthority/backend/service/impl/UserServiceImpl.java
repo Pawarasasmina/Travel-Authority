@@ -21,8 +21,6 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
-
-
     @Override
     public ResponseDTO saveUser(UserDTO userDTO) {
 
@@ -31,8 +29,12 @@ public class UserServiceImpl implements UserService {
         try{
             User user = new User();
 
-            user.setName(userDTO.getName());
-            user.setAge(userDTO.getAge());
+            user.setFirstName(userDTO.getFirstName());
+            user.setLastName(userDTO.getLastName());
+            user.setEmail(userDTO.getEmail());
+            user.setPhoneNumber(userDTO.getPhoneNumber());
+            user.setNic(userDTO.getNic());
+            user.setPassword(userDTO.getPassword());
 
             userRepository.save(user); 
 
@@ -87,17 +89,21 @@ public class UserServiceImpl implements UserService {
             responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
             return responseDTO;
         }
-    }
-
-    @Override
+    }    @Override
     public ResponseDTO updateUser(int id, UserDTO userDTO) {
         ResponseDTO responseDTO = new ResponseDTO();
         try {
             Optional<User> existingUser = userRepository.findById(id);
             if (existingUser.isPresent()) {
                 User user = existingUser.get();
-                user.setName(userDTO.getName());
-                user.setAge(userDTO.getAge());
+                user.setFirstName(userDTO.getFirstName());
+                user.setLastName(userDTO.getLastName());
+                user.setEmail(userDTO.getEmail());
+                user.setPhoneNumber(userDTO.getPhoneNumber());
+                user.setNic(userDTO.getNic());
+                if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
+                    user.setPassword(userDTO.getPassword());
+                }
                 userRepository.save(user);
                 responseDTO.setData(user);
                 responseDTO.setMessage("User updated successfully");
@@ -113,9 +119,7 @@ public class UserServiceImpl implements UserService {
             responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
             return responseDTO;
         }
-    }
-
-    @Override
+    }    @Override
     public ResponseDTO deleteUser(int id) {
         ResponseDTO responseDTO = new ResponseDTO();
         try {
@@ -132,6 +136,54 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             log.error("Error deleting user: {}", e.getMessage());
             responseDTO.setMessage("Error deleting user");
+            responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
+            return responseDTO;
+        }
+    }
+      @Override
+    public ResponseDTO changePassword(int userId, String currentPassword, String newPassword) {
+        ResponseDTO responseDTO = new ResponseDTO();
+        try {
+            Optional<User> existingUser = userRepository.findById(userId);
+            if (existingUser.isPresent()) {
+                User user = existingUser.get();
+                
+                // Verify current password matches
+                if (!user.getPassword().equals(currentPassword)) {
+                    responseDTO.setMessage("Current password is incorrect");
+                    responseDTO.setStatus(HttpStatus.BAD_REQUEST.toString());
+                    return responseDTO;
+                }
+                
+                // Validate new password
+                if (newPassword == null || newPassword.trim().isEmpty()) {
+                    responseDTO.setMessage("New password cannot be empty");
+                    responseDTO.setStatus(HttpStatus.BAD_REQUEST.toString());
+                    return responseDTO;
+                }
+                
+                if (newPassword.length() < 6) {
+                    responseDTO.setMessage("Password must be at least 6 characters long");
+                    responseDTO.setStatus(HttpStatus.BAD_REQUEST.toString());
+                    return responseDTO;
+                }
+                
+                // Update password - Note: In a real application, the password should be hashed
+                user.setPassword(newPassword);
+                userRepository.save(user);
+                
+                responseDTO.setMessage("Password changed successfully");
+                responseDTO.setStatus(HttpStatus.OK.toString());
+                log.info("Password changed successfully for user ID: {}", userId);
+            } else {
+                responseDTO.setMessage("User not found");
+                responseDTO.setStatus(HttpStatus.NOT_FOUND.toString());
+                log.warn("Password change attempted for non-existent user ID: {}", userId);
+            }
+            return responseDTO;
+        } catch (Exception e) {
+            log.error("Error changing password for user ID {}: {}", userId, e.getMessage());
+            responseDTO.setMessage("Error changing password");
             responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
             return responseDTO;
         }
