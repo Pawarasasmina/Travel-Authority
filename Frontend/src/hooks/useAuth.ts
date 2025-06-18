@@ -7,8 +7,7 @@ import { debugLog } from '../utils/debug';
 export const useAuth = () => {
   const auth = useAuthContext();
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  
-  // Function to check and load user profile
+    // Function to check and load user profile
   const checkAndLoadProfile = useCallback(async () => {
     const token = localStorage.getItem('token');
     
@@ -21,7 +20,17 @@ export const useAuth = () => {
         
         if (response.status === "OK" && response.data) {
           debugLog('AUTH_HOOK', 'Setting user data from profile', response.data);
-          auth.login(response.data, token);
+          
+          // Ensure we're using the complete user data with all fields
+          const profileData = response.data;
+          debugLog('AUTH_HOOK', 'Profile data contains birthdate and gender:', {
+            hasBirthdate: !!profileData.birthdate,
+            hasGender: !!profileData.gender,
+            birthdateValue: profileData.birthdate,
+            genderValue: profileData.gender
+          });
+          
+          auth.login(profileData, token);
           return true;
         } else {
           debugLog('AUTH_HOOK', 'Invalid or no user data in profile response', response);

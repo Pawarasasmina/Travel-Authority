@@ -97,9 +97,7 @@ export const register = async (userData: RegisterData): Promise<ApiResponse> => 
             message: 'Network error occurred'
         };
     }
-};
-
-// Function to get the current user's profile using the token
+};  // Function to get the current user's profile using the token
 export const getUserProfile = async (): Promise<ApiResponse> => {
     try {
         debugLog('AUTH', 'Fetching user profile with auth token');
@@ -108,6 +106,12 @@ export const getUserProfile = async (): Promise<ApiResponse> => {
         const response = await api.get('/users/profile');
         
         debugLog('AUTH', 'User profile response', response.data);
+        
+        // Check if we have user data with birthdate and gender
+        if (response.data && response.data.data) {
+            debugLog('AUTH', 'Profile data includes:', Object.keys(response.data.data));
+        }
+        
         return response.data;
     } catch (error: any) {
         debugLog('AUTH', 'Get user profile error', error);
@@ -118,6 +122,80 @@ export const getUserProfile = async (): Promise<ApiResponse> => {
             data: null,
             status: 'ERROR',
             message: 'Failed to get user profile'
+        };
+    }
+};
+
+// Function to update user profile information
+export interface UpdateProfileData {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phoneNumber?: string;
+    birthdate?: string;
+    gender?: string;
+}
+
+export const updateUserProfile = async (userData: UpdateProfileData): Promise<ApiResponse> => {
+    try {
+        debugLog('AUTH', 'Updating user profile with data', userData);
+        debugLog('AUTH', 'Birthdate and gender values being updated:', {
+            birthdate: userData.birthdate,
+            gender: userData.gender
+        });
+        
+        // Get the user ID from local storage
+        const storedUser = localStorage.getItem('user');
+        if (!storedUser) {
+            debugLog('AUTH', 'No user found in localStorage');
+            return {
+                data: null,
+                status: 'ERROR',
+                message: 'User not authenticated'
+            };
+        }
+        
+        const user = JSON.parse(storedUser);
+        const userId = user.id;
+        
+        debugLog('AUTH', `Updating profile for user ID: ${userId}`);
+        
+        // Using the authenticated API instance
+        const response = await api.put(`/users/${userId}/profile`, userData);
+        
+        debugLog('AUTH', 'Update profile response', response.data);
+        debugLog('AUTH', 'Response data structure:', {
+            status: response.data.status,
+            message: response.data.message,
+            hasData: !!response.data.data,
+            dataKeys: response.data.data ? Object.keys(response.data.data) : []
+        });
+        
+        // Update the user in localStorage to reflect the changes
+        if (response.data.status === "OK" || response.data.status === "200 OK") {
+            const updatedUser = {
+                ...user,
+                ...(userData.firstName ? { firstName: userData.firstName } : {}),
+                ...(userData.lastName ? { lastName: userData.lastName } : {}),
+                ...(userData.email ? { email: userData.email } : {}),
+                ...(userData.phoneNumber ? { phoneNumber: userData.phoneNumber } : {}),
+                ...(userData.birthdate ? { birthdate: userData.birthdate } : {}),
+                ...(userData.gender ? { gender: userData.gender } : {})
+            };
+            debugLog('AUTH', 'Updating localStorage with new user data', updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
+        
+        return response.data;
+    } catch (error: any) {
+        debugLog('AUTH', 'Update profile error', error);
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            data: null,
+            status: 'ERROR',
+            message: 'Failed to update user profile'
         };
     }
 };

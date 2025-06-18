@@ -129,8 +129,7 @@ public class AuthServiceImpl implements AuthService {    @Autowired
                 responseDTO.setStatus(HttpStatus.UNAUTHORIZED.toString());
                 responseDTO.setMessage("Invalid email or password");
                 return responseDTO;
-            }
-              // Create response with user details (without password)
+            }            // Create response with user details (without password)
             Map<String, Object> userData = new HashMap<>();
             userData.put("id", user.getId());
             userData.put("firstName", user.getFirstName());
@@ -138,6 +137,13 @@ public class AuthServiceImpl implements AuthService {    @Autowired
             userData.put("email", user.getEmail());
             userData.put("phoneNumber", user.getPhoneNumber());
             userData.put("nic", user.getNic());
+            
+            // Ensure birthdate and gender are always included, even if null
+            userData.put("birthdate", user.getBirthdate());
+            userData.put("gender", user.getGender());
+            
+            // Log the birthdate and gender values being returned
+            log.info("Login returning user profile with birthdate: {} and gender: {}", user.getBirthdate(), user.getGender());
             
             // Generate a simple token (this should be replaced with JWT in production)
             String token = generateToken(user.getId(), user.getEmail());

@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import Login from './pages/login';
 import Registration from './pages/signup';
 import ForgotPassword from './pages/forgot-password';
@@ -17,6 +18,7 @@ import PeopleCountSelector from './pages/PeopleCountSelector';
 import PaymentSuccess from './pages/PaymentSuccess';
 import NotificationsPage from './pages/notifications';
 import ProtectedRoute from './components/ProtectedRoute';
+import { monitorUserData, fixUserData } from './utils/userDataMonitor';
 
 
 // Component to conditionally render navbar based on route
@@ -82,6 +84,17 @@ const AppContent = () => {
 };
 
 function App() {
+  // Initialize user data monitoring
+  useEffect(() => {
+    // Check and fix existing user data in localStorage
+    fixUserData();
+    
+    // Set up monitoring for user data changes
+    monitorUserData();
+    
+    console.log("User data monitoring initialized");
+  }, []);
+  
   return (
     <AuthProvider>
       <Router>
