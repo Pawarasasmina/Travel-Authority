@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import navbarBg from "../assets/navbar/navbar_bg.png";
-import { Bell, User } from "lucide-react";
+import { Bell, User, LogOut } from "lucide-react";
 import NotificationModal from "./NotificationModal";
+import { useAuth } from "../contexts/AuthContext";
 
 interface NavbarProps {
   transparent?: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ transparent = false }) => {
-  const navigate = useNavigate();
+const Navbar: React.FC<NavbarProps> = ({ transparent = false }) => {  const navigate = useNavigate();
   const location = useLocation();
+  const { logout, isAuthenticated, user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -101,14 +102,31 @@ const Navbar: React.FC<NavbarProps> = ({ transparent = false }) => {
               <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center text-[10px] text-white">3</span>
             </button>
             {showNotifications && <NotificationModal onClose={() => setShowNotifications(false)} />}
-          </div>
-          <button 
+          </div>          <button 
             className="text-white hover:text-orange-400 transition" 
             aria-label="User"
             onClick={() => navigate('/profile')}
           >
             <User size={22} />
           </button>
+          
+          {isAuthenticated && (
+            <div className="flex items-center gap-2">
+              <span className="text-white text-xs hidden md:block">
+                {user?.firstName}
+              </span>
+              <button 
+                className="text-white hover:text-red-400 transition" 
+                aria-label="Logout"
+                onClick={() => {
+                  logout();
+                  navigate('/login');
+                }}
+              >
+                <LogOut size={20} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </nav>

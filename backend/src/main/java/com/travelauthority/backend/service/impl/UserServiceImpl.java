@@ -21,20 +21,22 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
     @Override
     public ResponseDTO saveUser(UserDTO userDTO) {
 
         ResponseDTO responseDTO = new ResponseDTO();
 
-        try{
-            User user = new User();
+        try{            User user = new User();
 
             user.setFirstName(userDTO.getFirstName());
             user.setLastName(userDTO.getLastName());
             user.setEmail(userDTO.getEmail());
             user.setPhoneNumber(userDTO.getPhoneNumber());
             user.setNic(userDTO.getNic());
-            user.setPassword(userDTO.getPassword());
+            user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
 
             userRepository.save(user); 
 
@@ -98,11 +100,10 @@ public class UserServiceImpl implements UserService {
                 User user = existingUser.get();
                 user.setFirstName(userDTO.getFirstName());
                 user.setLastName(userDTO.getLastName());
-                user.setEmail(userDTO.getEmail());
-                user.setPhoneNumber(userDTO.getPhoneNumber());
+                user.setEmail(userDTO.getEmail());                user.setPhoneNumber(userDTO.getPhoneNumber());
                 user.setNic(userDTO.getNic());
                 if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
-                    user.setPassword(userDTO.getPassword());
+                    user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
                 }
                 userRepository.save(user);
                 responseDTO.setData(user);
@@ -147,9 +148,9 @@ public class UserServiceImpl implements UserService {
             Optional<User> existingUser = userRepository.findById(userId);
             if (existingUser.isPresent()) {
                 User user = existingUser.get();
-                
-                // Verify current password matches
-                if (!user.getPassword().equals(currentPassword)) {
+                  // Verify current password matches using BCrypt
+                if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+                    log.warn("Password change failed: incorrect current password for user ID: {}", userId);
                     responseDTO.setMessage("Current password is incorrect");
                     responseDTO.setStatus(HttpStatus.BAD_REQUEST.toString());
                     return responseDTO;
@@ -168,8 +169,8 @@ public class UserServiceImpl implements UserService {
                     return responseDTO;
                 }
                 
-                // Update password - Note: In a real application, the password should be hashed
-                user.setPassword(newPassword);
+                // Update password with proper encryption
+                user.setPassword(passwordEncoder.encode(newPassword));
                 userRepository.save(user);
                 
                 responseDTO.setMessage("Password changed successfully");

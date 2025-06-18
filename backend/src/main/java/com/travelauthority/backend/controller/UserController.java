@@ -48,7 +48,8 @@ public class UserController {
     public ResponseDTO deleteUser(@PathVariable int id) {
         return userService.deleteUser(id);
     }
-      @PostMapping("/change-password/{id}")
+    
+    @PostMapping("/change-password/{id}")
     public ResponseDTO changePassword(@PathVariable int id, @RequestBody ChangePasswordDTO changePasswordDTO) {
         return userService.changePassword(id, changePasswordDTO.getCurrentPassword(), changePasswordDTO.getNewPassword());
     }

@@ -8,6 +8,7 @@ import Home from './pages/home';
 import Categories from './pages/categories';
 import Profile from './pages/profile';
 import PurchaseList from './pages/purchase-list';
+import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ActivityDetail from './components/activities/ActivityDetail';
@@ -15,6 +16,7 @@ import BookedTicketPage from './pages/booked-ticket-page';
 import PeopleCountSelector from './pages/PeopleCountSelector';
 import PaymentSuccess from './pages/PaymentSuccess';
 import NotificationsPage from './pages/notifications';
+import ProtectedRoute from './components/ProtectedRoute';
 
 
 // Component to conditionally render navbar based on route
@@ -59,20 +61,20 @@ const AppContent = () => {
       {showNavbar && <Navbar transparent={shouldHaveTransparentNavbar} />}
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} /> 
-        <Route path="/login" element={<Login />} />
-        <Route path="/home" element={<Home/>}/>
+        <Route path="/login" element={<Login />} />      
+        <Route path="/home" element={<ProtectedRoute><Home/></ProtectedRoute>}/>
         <Route path="/signup" element={<Registration />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/change-password" element={<ChangePassword/>} />
         <Route path="/aboutus" element={<AboutUs/>} />
-        <Route path="/categories" element={<Categories/>} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/purchase-list" element={<PurchaseList />} />
-        <Route path="/activities/:id/:title" element={<ActivityDetail />} />
-        <Route path="/booking/people-count" element={<PeopleCountSelector />} />
-        <Route path="/payment-success" element={<PaymentSuccess />} />
-        <Route path="/bookings/:id" element={<BookedTicketPage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/categories" element={<ProtectedRoute><Categories/></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/purchase-list" element={<ProtectedRoute><PurchaseList /></ProtectedRoute>} />
+        <Route path="/activities/:id/:title" element={<ProtectedRoute><ActivityDetail /></ProtectedRoute>} />
+        <Route path="/booking/people-count" element={<ProtectedRoute><PeopleCountSelector /></ProtectedRoute>} />
+        <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+        <Route path="/bookings/:id" element={<ProtectedRoute><BookedTicketPage /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
       </Routes>
       {showFooter && <Footer />}
     </>
@@ -81,9 +83,11 @@ const AppContent = () => {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   );
 }
 
