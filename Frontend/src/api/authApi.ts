@@ -18,15 +18,6 @@ interface RegisterData {
     confirmPassword: string;
 }
 
-interface UpdateUserProfileData {
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    phoneNumber?: string;
-    birthdate?: string;
-    gender?: string;
-}
-
 interface ApiResponse {
     data: any;
     status: string;
@@ -182,60 +173,6 @@ export const changePassword = async (currentPassword: string, newPassword: strin
             data: null,
             status: 'ERROR',
             message: 'Failed to change password'
-        };
-    }
-};
-
-// Function to update user's profile
-export const updateUserProfile = async (userId: number, userData: UpdateUserProfileData): Promise<ApiResponse> => {
-    try {
-        debugLog('AUTH', 'Updating user profile', userData);
-        
-        // Using authenticated API instance
-        const response = await api.put(`/users/${userId}`, userData);
-        
-        debugLog('AUTH', 'Update profile response', response.data);
-        return response.data;
-    } catch (error: any) {
-        debugLog('AUTH', 'Update profile error', error);
-        if (error.response) {
-            return error.response.data;
-        }
-        return {
-            data: null,
-            status: 'ERROR',
-            message: 'Failed to update profile'
-        };
-    }
-};
-
-// Function to upload user's profile image
-export const uploadProfileImage = async (userId: number, file: File): Promise<ApiResponse> => {
-    try {
-        debugLog('AUTH', 'Uploading profile image');
-        
-        // Create form data
-        const formData = new FormData();
-        formData.append('profileImage', file);
-        
-        // Use authenticated API with multipart/form-data
-        const response = await api.post(`/users/${userId}/profile-image`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-        
-        debugLog('AUTH', 'Profile image upload response', response.data);
-        return response.data;
-    } catch (error: any) {
-        debugLog('AUTH', 'Profile image upload error', error);
-        if (error.response) {
-            return error.response.data;
-        }
-        return {
-            data: null,
-            status: 'ERROR',
-            message: 'Failed to upload profile image'
         };
     }
 };

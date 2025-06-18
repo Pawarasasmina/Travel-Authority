@@ -7,8 +7,6 @@ interface User {
     email: string;
     phoneNumber: string;
     nic: string;
-    birthdate?: string;
-    gender?: string;
 }
 
 interface AuthContextType {
