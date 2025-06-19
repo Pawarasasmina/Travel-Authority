@@ -18,4 +18,5 @@ public class UserDTO {
     private String nic;
     private String password;
     private String confirmPassword;
+    private String role;
 }

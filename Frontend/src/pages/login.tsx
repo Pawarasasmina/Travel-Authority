@@ -76,12 +76,19 @@ function LoginForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
-  
-  // Redirect already authenticated users to home
+    // Redirect already authenticated users based on role
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
-      debugLog('LOGIN', 'User already authenticated, redirecting to home');
-      navigate('/home');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const isAdmin = user?.role === 'ADMIN';
+      
+      if (isAdmin) {
+        debugLog('LOGIN', 'Admin user authenticated, redirecting to admin dashboard');
+        navigate('/admin/dashboard');
+      } else {
+        debugLog('LOGIN', 'Regular user authenticated, redirecting to home');
+        navigate('/home');
+      }
     }
   }, [isAuthenticated, authLoading, navigate]);
     const onSubmit = async (data: LoginFormData) => {
@@ -136,14 +143,23 @@ function LoginForm() {
             if (userData.token) delete userData.token;
             if (userData.accessToken) delete userData.accessToken;
           }
-          
-          // Call login with the user data and token
+            // Call login with the user data and token
           if (userData) {
             login(userData, token);
-            debugLog('LOGIN', 'Logged in successfully, navigating to home');
-            setTimeout(() => {
-              navigate('/home');
-            }, 500); // Give time for the state to update
+            
+            // Check user role for navigation
+            const isAdmin = userData.role === 'ADMIN';
+            if (isAdmin) {
+              debugLog('LOGIN', 'Admin user logged in, navigating to admin dashboard');
+              setTimeout(() => {
+                navigate('/admin/dashboard');
+              }, 500); // Give time for the state to update
+            } else {
+              debugLog('LOGIN', 'Regular user logged in, navigating to home');
+              setTimeout(() => {
+                navigate('/home');
+              }, 500); // Give time for the state to update
+            }
           } else {
             setErrorMessage("Could not extract user data from response");
           }

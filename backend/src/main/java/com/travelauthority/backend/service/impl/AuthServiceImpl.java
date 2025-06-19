@@ -72,14 +72,19 @@ public class AuthServiceImpl implements AuthService {    @Autowired
                 responseDTO.setMessage("Phone number already registered");
                 return responseDTO;
             }
-            
-            // Create user
+              // Create user
             User user = new User();
             user.setFirstName(userDTO.getFirstName());
             user.setLastName(userDTO.getLastName());
             user.setEmail(userDTO.getEmail());
             user.setPhoneNumber(userDTO.getPhoneNumber());
             user.setNic(userDTO.getNic());
+              // Set role if provided, otherwise default to USER
+            if (userDTO.getRole() != null && userDTO.getRole().equals("ADMIN")) {
+                user.setRole(User.Role.ADMIN);
+            } else {
+                user.setRole(User.Role.USER);
+            }
             
             // Encrypt password
             user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
@@ -123,13 +128,14 @@ public class AuthServiceImpl implements AuthService {    @Autowired
             }
             
             User user = userOptional.get();
-            
-            // Check password
+              // Check password
             if (!passwordEncoder.matches(authDTO.getPassword(), user.getPassword())) {
                 responseDTO.setStatus(HttpStatus.UNAUTHORIZED.toString());
                 responseDTO.setMessage("Invalid email or password");
                 return responseDTO;
-            }            // Create response with user details (without password)
+            }
+            
+            // Create response with user details (without password)
             Map<String, Object> userData = new HashMap<>();
             userData.put("id", user.getId());
             userData.put("firstName", user.getFirstName());
@@ -141,6 +147,9 @@ public class AuthServiceImpl implements AuthService {    @Autowired
             // Ensure birthdate and gender are always included, even if null
             userData.put("birthdate", user.getBirthdate());
             userData.put("gender", user.getGender());
+            
+            // Add the role to the user data
+            userData.put("role", user.getRole());
             
             // Log the birthdate and gender values being returned
             log.info("Login returning user profile with birthdate: {} and gender: {}", user.getBirthdate(), user.getGender());

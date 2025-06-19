@@ -17,7 +17,9 @@ import BookedTicketPage from './pages/booked-ticket-page';
 import PeopleCountSelector from './pages/PeopleCountSelector';
 import PaymentSuccess from './pages/PaymentSuccess';
 import NotificationsPage from './pages/notifications';
+import AdminDashboard from './pages/admin/dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 import { monitorUserData, fixUserData } from './utils/userDataMonitor';
 
 
@@ -60,8 +62,7 @@ const AppContent = () => {
   
   return (
     <>
-      {showNavbar && <Navbar transparent={shouldHaveTransparentNavbar} />}
-      <Routes>
+      {showNavbar && <Navbar transparent={shouldHaveTransparentNavbar} />}      <Routes>
         <Route path="/" element={<Navigate to="/login" />} /> 
         <Route path="/login" element={<Login />} />      
         <Route path="/home" element={<ProtectedRoute><Home/></ProtectedRoute>}/>
@@ -77,6 +78,9 @@ const AppContent = () => {
         <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
         <Route path="/bookings/:id" element={<ProtectedRoute><BookedTicketPage /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+        
+        {/* Admin Routes */}
+        <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       </Routes>
       {showFooter && <Footer />}
     </>

@@ -10,6 +10,7 @@ interface User {
     nic: string;
     birthdate?: string;
     gender?: string;
+    role: string; // 'USER' or 'ADMIN'
 }
 
 interface AuthContextType {
@@ -75,7 +76,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Explicitly handle birthdate and gender to preserve their values correctly
             // Handle all possible falsy values (null, undefined, empty string)
             birthdate: userData.birthdate || '',
-            gender: userData.gender || ''
+            gender: userData.gender || '',
+            // Set role with default to 'USER' if not defined
+            role: userData.role || 'USER'
         };
         
         // Log complete user data for debugging
