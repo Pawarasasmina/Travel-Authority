@@ -56,14 +56,25 @@ export interface UpdateProfileData {
 
 // Activity data
 export interface Activity {
-    id: number;
+    id?: number;
     title: string;
     description: string;
-    price: number;
     location: string;
-    category: string;
-    rating?: number;
-    images: string[];
+    image: string;
+    price: number;
+    availability: number;
+    rating: number;
+    duration?: string;
+    highlights?: string[];
+    categories?: string[];
+    additionalInfo?: string;
+    standardPackagePrice?: number;
+    premiumPackagePrice?: number;
+    familyPackagePrice?: number;
+    standardPackageDescription?: string;
+    premiumPackageDescription?: string;
+    familyPackageDescription?: string;
+    active?: boolean;
 }
 
 // Booking data

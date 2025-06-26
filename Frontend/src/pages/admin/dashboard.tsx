@@ -4,6 +4,7 @@ import { Users, Activity, CreditCard, Package, ChevronDown, ChevronUp, Search, M
 import { useAuth } from '../../hooks/useAuth';
 import * as adminApi from '../../api/adminApi';
 import { debugLog } from '../../utils/debug';
+import ActivityManagement from '../../components/admin/ActivityManagement';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -208,7 +209,8 @@ const AdminDashboard = () => {
               />
               <StatCard 
                 icon={<Activity size={24} className="text-blue-600" />} 
-                title="Active Activities" 
+                title="
+                ctivities" 
                 value={stats.totalActivities} 
                 trend={3} 
               />
@@ -358,12 +360,10 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
-        
-        {/* Activities Management */}
+          {/* Activities Management */}
         {activeTab === 'activities' && (
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Manage Activities</h2>
-            <p className="text-gray-600">This section is under development.</p>
+            <ActivityManagement />
           </div>
         )}
         
