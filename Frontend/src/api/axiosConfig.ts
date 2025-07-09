@@ -7,7 +7,7 @@ const api = axios.create({
   baseURL: 'http://localhost:8080/api/v1'
 });
 
-// Add a request interceptor to attach the JWT token
+// Add a request interceptor to attach the JWT token and user email
 api.interceptors.request.use(
   (config) => {
     // Get the token from localStorage
@@ -24,6 +24,21 @@ api.interceptors.request.use(
     } else {
       debugLog('API', `Request to ${config.url} without auth token (none found)`);
     }
+    
+    // Add user email header for authentication
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        if (userData.email) {
+          config.headers['X-User-Email'] = userData.email;
+          debugLog('API', `Added user email header: ${userData.email}`);
+        }
+      } catch (error) {
+        debugLog('API', 'Error parsing user data from localStorage', error);
+      }
+    }
+    
     return config;
   },
   (error) => {

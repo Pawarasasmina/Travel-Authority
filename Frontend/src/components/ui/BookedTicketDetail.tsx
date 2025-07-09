@@ -13,6 +13,12 @@ interface DetailedTicketInfo extends PurchaseItem {
   itinerary?: string;
   cancellationPolicy?: string;
   orderNumber?: string;
+  basePrice?: number;
+  serviceFee?: number;
+  tax?: number;
+  totalPrice?: number;
+  packageName?: string;
+  description?: string;
 }
 
 interface BookedTicketDetailProps {
@@ -137,21 +143,43 @@ const BookedTicketDetail: React.FC<BookedTicketDetailProps> = ({ ticket, onBack 
           <div className="mb-8">
             <h3 className="text-xl font-semibold border-b pb-2 mb-4">Price Details</h3>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex justify-between mb-2">
-                <span>Base Price</span>
-                <span>Rs. {((ticket.price / 1.1) * 0.9).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between mb-2">
-                <span>Service Fee</span>
-                <span>Rs. {((ticket.price / 1.1) * 0.1).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between mb-2">
-                <span>Taxes</span>
-                <span>Rs. {(ticket.price - (ticket.price / 1.1)).toFixed(2)}</span>
-              </div>
+              {ticket.basePrice && (
+                <div className="flex justify-between mb-2">
+                  <span>Base Price</span>
+                  <span>Rs. {ticket.basePrice.toLocaleString()}</span>
+                </div>
+              )}
+              {ticket.serviceFee && (
+                <div className="flex justify-between mb-2">
+                  <span>Service Fee</span>
+                  <span>Rs. {ticket.serviceFee.toLocaleString()}</span>
+                </div>
+              )}
+              {ticket.tax && (
+                <div className="flex justify-between mb-2">
+                  <span>Taxes</span>
+                  <span>Rs. {ticket.tax.toLocaleString()}</span>
+                </div>
+              )}
+              {!ticket.basePrice && !ticket.serviceFee && !ticket.tax && (
+                <>
+                  <div className="flex justify-between mb-2">
+                    <span>Base Price</span>
+                    <span>Rs. {((ticket.price / 1.1) * 0.9).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between mb-2">
+                    <span>Service Fee</span>
+                    <span>Rs. {((ticket.price / 1.1) * 0.1).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between mb-2">
+                    <span>Taxes</span>
+                    <span>Rs. {(ticket.price - (ticket.price / 1.1)).toFixed(2)}</span>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between font-bold text-lg pt-2 border-t">
                 <span>Total Amount</span>
-                <span className="text-[#FF7F50]">Rs. {ticket.price.toLocaleString()}</span>
+                <span className="text-[#FF7F50]">Rs. {(ticket.totalPrice || ticket.price).toLocaleString()}</span>
               </div>
             </div>
           </div>

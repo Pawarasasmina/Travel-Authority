@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import * as adminApi from '../../api/adminApi';
 import { debugLog } from '../../utils/debug';
 import ActivityManagement from '../../components/admin/ActivityManagement';
+import BookingManagement from '../../components/admin/BookingManagement';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -370,8 +371,7 @@ const AdminDashboard = () => {
         {/* Bookings Management */}
         {activeTab === 'bookings' && (
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Manage Bookings</h2>
-            <p className="text-gray-600">This section is under development.</p>
+            <BookingManagement />
           </div>
         )}
       </div>

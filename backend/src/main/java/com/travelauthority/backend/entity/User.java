@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,6 +18,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class User {
 
     public enum Role {
@@ -25,7 +27,7 @@ public class User {
 
     @Id 
     @GeneratedValue(strategy = GenerationType.IDENTITY)  
-    private int id;
+    private Integer id;
     private String firstName;
     private String lastName;
     
@@ -40,10 +42,22 @@ public class User {
     
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private Role role = Role.USER; // Default role
     
     // Helper methods
     public boolean isAdmin() {
         return role == Role.ADMIN;
+    }
+    
+    // Derived field for backward compatibility
+    public String getName() {
+        return firstName + " " + lastName;
+    }
+    
+    public int getAge() {
+        // Calculate age from birthdate if needed
+        // For now return 0 as placeholder
+        return 0;
     }
 }

@@ -426,12 +426,15 @@ const PeopleCountSelector = () => {
         onConfirm={handlePaymentConfirm}
         totalAmount={calculateTotal()}
         bookingDetails={{
+          activityId,
           activityTitle,
           activityLocation,
           packageType: packageName || 'Package',
+          packageId: packageData?.id,
           peopleCounts: counts,
           bookingDate: selectedDate,
-          image
+          image,
+          description
         }}
       />
     </div>

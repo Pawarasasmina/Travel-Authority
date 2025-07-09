@@ -206,3 +206,49 @@ export const saveActivity = async (activityData: any): Promise<ApiResponse> => {
         };
     }
 };
+
+// Get all bookings for admin
+export const getAllBookings = async (): Promise<ApiResponse> => {
+    try {
+        debugLog('ADMIN', 'Fetching all bookings');
+        
+        const response = await api.get(`${ADMIN_PATH}/bookings`);
+        
+        debugLog('ADMIN', 'All bookings response', response.data);
+        
+        return response.data;
+    } catch (error: any) {
+        debugLog('ADMIN', 'Error fetching all bookings', error);
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            data: null,
+            status: 'ERROR',
+            message: 'Failed to fetch bookings'
+        };
+    }
+};
+
+// Update booking status
+export const updateBookingStatus = async (bookingId: string, status: string): Promise<ApiResponse> => {
+    try {
+        debugLog('ADMIN', `Updating booking ${bookingId} status to ${status}`);
+        
+        const response = await api.put(`${ADMIN_PATH}/bookings/${bookingId}/status`, { status });
+        
+        debugLog('ADMIN', 'Update booking status response', response.data);
+        
+        return response.data;
+    } catch (error: any) {
+        debugLog('ADMIN', 'Error updating booking status', error);
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            data: null,
+            status: 'ERROR',
+            message: 'Failed to update booking status'
+        };
+    }
+};
