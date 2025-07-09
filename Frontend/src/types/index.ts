@@ -54,6 +54,20 @@ export interface UpdateProfileData {
     gender?: string;
 }
 
+// Package data
+export interface Package {
+    id?: number;
+    name: string;
+    description: string;
+    price: number; // Base price for backward compatibility
+    foreignAdultPrice: number;
+    foreignKidPrice: number;
+    localAdultPrice: number;
+    localKidPrice: number;
+    features: string[];
+    images: string[];
+}
+
 // Activity data
 export interface Activity {
     id?: number;
@@ -68,12 +82,7 @@ export interface Activity {
     highlights?: string[];
     categories?: string[];
     additionalInfo?: string;
-    standardPackagePrice?: number;
-    premiumPackagePrice?: number;
-    familyPackagePrice?: number;
-    standardPackageDescription?: string;
-    premiumPackageDescription?: string;
-    familyPackageDescription?: string;
+    packages?: Package[];
     active?: boolean;
 }
 
@@ -91,6 +100,7 @@ export interface Booking {
     persons: number;
     bookingTime: string;
     paymentMethod: string;
-    packageType: string;
+    packageId?: number;
+    packageName?: string;
     peopleCounts: Record<string, number>;
 }

@@ -156,15 +156,39 @@ export const saveActivity = async (activityData: any): Promise<ApiResponse> => {
     try {
         debugLog('ADMIN', 'Saving activity', activityData);
         
+        // Clean up the activity data to match backend DTO expectations
+        const cleanActivityData = {
+            ...activityData,
+            // Ensure numeric values are properly typed
+            price: Number(activityData.price) || 0,
+            availability: Number(activityData.availability) || 0,
+            rating: Number(activityData.rating) || 0,
+            // Ensure packages array is properly formatted with pricing tiers
+            packages: activityData.packages?.map((pkg: any) => ({
+                id: pkg.id || null,
+                name: pkg.name,
+                description: pkg.description || '',
+                price: Number(pkg.price) || 0,
+                foreignAdultPrice: Number(pkg.foreignAdultPrice) || 0,
+                foreignKidPrice: Number(pkg.foreignKidPrice) || 0,
+                localAdultPrice: Number(pkg.localAdultPrice) || 0,
+                localKidPrice: Number(pkg.localKidPrice) || 0,
+                features: pkg.features || []
+                // Temporarily remove images to test
+                // images: pkg.images || []
+            })) || [],
+            // Ensure boolean fields are properly typed
+            active: Boolean(activityData.active !== undefined ? activityData.active : true)
+        };
+        
         let response;
-        if (activityData.id) {
+        if (activityData.id && activityData.id > 0) {
             // Update existing activity
-            // Use the activity controller endpoint since that's what's available
-            response = await api.put(`/activity/update/${activityData.id}`, activityData);
+            response = await api.put(`/activity/update/${activityData.id}`, cleanActivityData);
         } else {
-            // Create new activity
-            // Use the activity controller endpoint since that's what's available
-            response = await api.post(`/activity/save`, activityData);
+            // Create new activity - remove id field for new activities
+            const { id, ...newActivityData } = cleanActivityData;
+            response = await api.post(`/activity/save`, newActivityData);
         }
         
         debugLog('ADMIN', 'Save activity response', response.data);
