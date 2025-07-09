@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchActivityById } from '../../api/activityApi';
 
@@ -8,7 +8,7 @@ const ActivityDetail = () => {
   const [activity, setActivity] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPackage, setSelectedPackage] = useState('standard');
+  const [selectedPackage, setSelectedPackage] = useState<number>(0);
 
   useEffect(() => {
     setLoading(true);
@@ -16,6 +16,10 @@ const ActivityDetail = () => {
     fetchActivityById(Number(id))
       .then((data) => {
         setActivity(data);
+        // Set first package as default selected
+        if (data?.packages && data.packages.length > 0) {
+          setSelectedPackage(0);
+        }
         setLoading(false);
       })
       .catch(() => {
@@ -24,42 +28,31 @@ const ActivityDetail = () => {
       });
   }, [id]);
 
-  // Helper to get numeric price
-  const getBasePrice = () => {
-    if (!activity) return 0;
-    if (typeof activity.price === 'number') return activity.price;
-    if (typeof activity.price === 'string') {
-      const parsed = parseInt(activity.price.replace(/[^\d]/g, ''));
-      return isNaN(parsed) ? 0 : parsed;
-    }
-    return 0;
+  // Get the currently selected package details
+  const getSelectedPackageDetails = () => {
+    if (!activity?.packages || activity.packages.length === 0) return null;
+    return activity.packages[selectedPackage] || activity.packages[0];
   };
 
-  // Get the price based on selected package
+  // Get the price for the selected package (defaulting to local adult price)
   const getSelectedPrice = () => {
-    if (!activity) return 'LKR 0';
-    const basePrice = getBasePrice();
-    switch(selectedPackage) {
-      case 'premium':
-        return `LKR ${basePrice + 1500}`;
-      case 'family':
-        return `LKR ${basePrice * 3}`;
-      default:
-        return `LKR ${basePrice}`;
-    }
+    const packageDetails = getSelectedPackageDetails();
+    if (!packageDetails) return 'LKR 0';
+    return `LKR ${packageDetails.priceLocalAdult}`;
   };
 
   // Handle booking button click
-  const handleBookNow = (packageType: string) => {
+  const handleBookNow = (packageIndex: number) => {
     if (!activity) return;
+    const packageDetails = activity.packages[packageIndex];
     navigate(`/booking/people-count`, {
       state: {
         activityId: activity.id,
         activityTitle: activity.title,
         location: activity.location,
-        packageType,
-        basePrice: getBasePrice(),
-        image: activity.image,
+        packageType: packageDetails.name,
+        packageDetails: packageDetails,
+        image: activity.images?.[0] || '',
         description: activity.description
       }
     });
@@ -83,7 +76,7 @@ const ActivityDetail = () => {
       {/* Hero Section with Background Image */}
       <div 
         className="relative h-96 bg-cover bg-center pt-[52px]" 
-        style={{backgroundImage: `url(${activity.image})`}}
+        style={{backgroundImage: `url(${activity.images?.[0] || 'https://via.placeholder.com/800x400'})`}}
       >
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="text-center text-white px-4">
@@ -119,25 +112,27 @@ const ActivityDetail = () => {
             <div className="bg-white shadow-md rounded-lg p-6 my-8 border border-gray-100">
               <h2 className="text-2xl font-bold mb-4 text-gray-800">Tour Includes:</h2>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {(activity.highlights && Array.isArray(activity.highlights) && activity.highlights.length > 0) ? (
-                  activity.highlights.map((highlight: string, index: number) => (
+                {(activity.keyPoints && Array.isArray(activity.keyPoints) && activity.keyPoints.length > 0) ? (
+                  activity.keyPoints.map((keyPoint: string, index: number) => (
                     <li key={index} className="flex items-start">
                       <svg className="h-5 w-5 text-green-500 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                       </svg>
-                      <span>{highlight}</span>
+                      <span>{keyPoint}</span>
                     </li>
                   ))
                 ) : (
-                  <li className="text-gray-400 italic">No highlights available.</li>
+                  <li className="text-gray-400 italic">No key points available.</li>
                 )}
               </ul>
             </div>
             
-            {/* Additional Information Section - Can add more content here */}
+            {/* Additional Information Section */}
             <div className="bg-gray-50 rounded-lg p-6 my-8">
               <h2 className="text-2xl font-bold mb-4 text-gray-800">Additional Information</h2>
-              <p className="text-gray-700">This activity is perfect for adventure seekers and nature lovers alike. Bring comfortable clothes and get ready for an unforgettable experience in Sri Lanka.</p>
+              <p className="text-gray-700">
+                {activity.additionalInfo || 'This activity is perfect for adventure seekers and nature lovers alike. Bring comfortable clothes and get ready for an unforgettable experience in Sri Lanka.'}
+              </p>
             </div>
           </div>
 
@@ -150,7 +145,9 @@ const ActivityDetail = () => {
                   <svg className="h-5 w-5 text-orange-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-gray-600">Duration: {activity.duration || '3-4 hours'}</span>
+                  <span className="text-gray-600">
+                    Duration: {getSelectedPackageDetails()?.averageTime || '3-4 hours'}
+                  </span>
                 </div>
                 <div className="flex items-center mb-2">
                   <svg className="h-5 w-5 text-orange-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -167,154 +164,92 @@ const ActivityDetail = () => {
                 </div>
                 <div className="text-right mt-1">
                   <span className="text-sm text-gray-500">
-                    {selectedPackage === 'standard' ? 'Standard Package' : 
-                     selectedPackage === 'premium' ? 'Premium Package' : 'Family Package'}
+                    {getSelectedPackageDetails()?.name || 'No package selected'}
                   </span>
                 </div>
               </div>
               
-              {/* Package Options - Card Style */}
+              {/* Package Options - Dynamic from Database */}
               <div className="my-6">
                 <h4 className="font-medium text-gray-700 mb-4">Available Packages:</h4>
                 
                 <div className="space-y-4">
-                  {/* Standard Package Card */}
-                  <div 
-                    onClick={() => setSelectedPackage('standard')}
-                    className={`bg-white rounded-lg overflow-hidden border cursor-pointer transition-all ${
-                      selectedPackage === 'standard' 
-                        ? 'border-orange-500 shadow-md ring-2 ring-orange-200' 
-                        : 'border-gray-200 shadow-sm hover:shadow-md'
-                    }`}
-                  >
-                    <div className="flex">
-                      <div className={`p-4 flex-1 ${selectedPackage === 'standard' ? 'bg-orange-50' : ''}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-bold text-lg">Standard Tour</h3>
-                          <span className="text-orange-500 font-bold">{getSelectedPrice()}</span>
+                  {activity.packages && activity.packages.length > 0 ? (
+                    activity.packages.map((pkg: any, index: number) => (
+                      <div 
+                        key={index}
+                        onClick={() => setSelectedPackage(index)}
+                        className={`bg-white rounded-lg overflow-hidden border cursor-pointer transition-all ${
+                          selectedPackage === index 
+                            ? 'border-orange-500 shadow-md ring-2 ring-orange-200' 
+                            : 'border-gray-200 shadow-sm hover:shadow-md'
+                        }`}
+                      >
+                        <div className="flex">
+                          <div className={`p-4 flex-1 ${selectedPackage === index ? 'bg-orange-50' : ''}`}>
+                            <div className="flex justify-between items-start mb-2">
+                              <h3 className="font-bold text-lg">{pkg.name}</h3>
+                              <div className="text-right">
+                                <span className="text-orange-500 font-bold">LKR {pkg.priceLocalAdult}</span>
+                                <div className="text-xs text-gray-500">Local Adult</div>
+                              </div>
+                            </div>
+                            
+                            {/* Pricing Details */}
+                            <div className="text-sm text-gray-600 mb-3">
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>Local Adult: LKR {pkg.priceLocalAdult}</div>
+                                <div>Local Kid: LKR {pkg.priceLocalKid}</div>
+                                <div>Foreign Adult: LKR {pkg.priceForeignAdult}</div>
+                                <div>Foreign Kid: LKR {pkg.priceForeignKid}</div>
+                              </div>
+                            </div>
+
+                            {/* Package Details */}
+                            <div className="mb-3">
+                              <div className="text-sm text-gray-600 mb-2">
+                                <span className="font-medium">Opening Time:</span> {pkg.openingTime}
+                              </div>
+                              <div className="text-sm text-gray-600 mb-2">
+                                <span className="font-medium">Duration:</span> {pkg.averageTime}
+                              </div>
+                            </div>
+
+                            {/* Package Includes */}
+                            <ul className="text-sm text-gray-600 space-y-1 mb-3">
+                              {pkg.keyIncludes && pkg.keyIncludes.length > 0 ? (
+                                pkg.keyIncludes.map((include: string, includeIndex: number) => (
+                                  <li key={includeIndex} className="flex items-start">
+                                    <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>{include}</span>
+                                  </li>
+                                ))
+                              ) : (
+                                <li className="text-gray-400 italic">No additional includes listed</li>
+                              )}
+                            </ul>
+                            
+                            <button 
+                              className="bg-orange-500 hover:bg-orange-600 text-white py-1.5 px-4 rounded-full text-sm font-medium transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleBookNow(index);
+                              }}
+                            >
+                              Book Now
+                            </button>
+                          </div>
+                          <div className="hidden sm:block w-24 bg-cover bg-center" style={{backgroundImage: `url(${activity.images?.[0] || 'https://via.placeholder.com/100'})`}}></div>
                         </div>
-                        <ul className="text-sm text-gray-600 space-y-1 mb-3">
-                          <li className="flex items-start">
-                            <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>Standard transport to/from location</span>
-                          </li>
-                          <li className="flex items-start">
-                            <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>Step-by-step guide with expert</span>
-                          </li>
-                          <li className="flex items-start">
-                            <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>All necessary equipment</span>
-                          </li>
-                        </ul>
-                        <button 
-                          className="bg-orange-500 hover:bg-orange-600 text-white py-1.5 px-4 rounded-full text-sm font-medium transition-colors"
-                          onClick={() => handleBookNow('standard')}
-                        >
-                          Book Now
-                        </button>
                       </div>
-                      <div className="hidden sm:block w-24 bg-cover bg-center" style={{backgroundImage: `url(${activity.image})`}}></div>
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500 py-8">
+                      No packages available for this activity
                     </div>
-                  </div>
-                  
-                  {/* Premium Package Card */}
-                  <div 
-                    onClick={() => setSelectedPackage('premium')}
-                    className={`bg-white rounded-lg overflow-hidden border cursor-pointer transition-all ${
-                      selectedPackage === 'premium' 
-                        ? 'border-orange-500 shadow-md ring-2 ring-orange-200' 
-                        : 'border-gray-200 shadow-sm hover:shadow-md'
-                    }`}
-                  >
-                    <div className="flex">
-                      <div className={`p-4 flex-1 ${selectedPackage === 'premium' ? 'bg-orange-50' : ''}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-bold text-lg">Premium Tour</h3>
-                          <span className="text-orange-500 font-bold">LKR {getBasePrice() + 1500}</span>
-                        </div>
-                        <ul className="text-sm text-gray-600 space-y-1 mb-3">
-                          <li className="flex items-start">
-                            <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>Premium transport with refreshments</span>
-                          </li>
-                          <li className="flex items-start">
-                            <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>Small group with personalized guide</span>
-                          </li>
-                          <li className="flex items-start">
-                            <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>Lunch and refreshments included</span>
-                          </li>
-                        </ul>
-                        <button 
-                          className="bg-orange-500 hover:bg-orange-600 text-white py-1.5 px-4 rounded-full text-sm font-medium transition-colors"
-                          onClick={() => handleBookNow('premium')}
-                        >
-                          Book Now
-                        </button>
-                      </div>
-                      <div className="hidden sm:block w-24 bg-cover bg-center" style={{backgroundImage: `url(${activity.image})`}}></div>
-                    </div>
-                  </div>
-                  
-                  {/* Family Package Card */}
-                  <div 
-                    onClick={() => setSelectedPackage('family')}
-                    className={`bg-white rounded-lg overflow-hidden border cursor-pointer transition-all ${
-                      selectedPackage === 'family' 
-                        ? 'border-orange-500 shadow-md ring-2 ring-orange-200' 
-                        : 'border-gray-200 shadow-sm hover:shadow-md'
-                    }`}
-                  >
-                    <div className="flex">
-                      <div className={`p-4 flex-1 ${selectedPackage === 'family' ? 'bg-orange-50' : ''}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-bold text-lg">Family Package</h3>
-                          <span className="text-orange-500 font-bold">LKR {getBasePrice() * 3}</span>
-                        </div>
-                        <ul className="text-sm text-gray-600 space-y-1 mb-3">
-                          <li className="flex items-start">
-                            <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>Family-friendly activities and pace</span>
-                          </li>
-                          <li className="flex items-start">
-                            <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>Group discount (up to 4 people)</span>
-                          </li>
-                          <li className="flex items-start">
-                            <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>Souvenir photos included</span>
-                          </li>
-                        </ul>
-                        <button 
-                          className="bg-orange-500 hover:bg-orange-600 text-white py-1.5 px-4 rounded-full text-sm font-medium transition-colors"
-                          onClick={() => handleBookNow('family')}
-                        >
-                          Book Now
-                        </button>
-                      </div>
-                      <div className="hidden sm:block w-24 bg-cover bg-center" style={{backgroundImage: `url(${activity.image})`}}></div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
               

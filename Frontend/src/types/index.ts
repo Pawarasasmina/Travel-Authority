@@ -60,21 +60,25 @@ export interface Activity {
     title: string;
     description: string;
     location: string;
-    image: string;
-    price: number;
-    availability: number;
-    rating: number;
-    duration?: string;
+    images: string[]; // CHANGED: support multiple images
+    keyPoints: string[]; // key points of the activity (add one by one)
     highlights?: string[];
     categories?: string[];
     additionalInfo?: string;
-    standardPackagePrice?: number;
-    premiumPackagePrice?: number;
-    familyPackagePrice?: number;
-    standardPackageDescription?: string;
-    premiumPackageDescription?: string;
-    familyPackageDescription?: string;
+    packages: ActivityPackage[]; // list of packages
     active?: boolean;
+}
+
+// ActivityPackage type
+export interface ActivityPackage {
+    name: string;
+    keyIncludes: string[]; // can add one by one
+    priceForeignAdult: number;
+    priceForeignKid: number;
+    priceLocalAdult: number;
+    priceLocalKid: number;
+    openingTime: string; // available time (opening time)
+    averageTime: string; // average time consume
 }
 
 // Booking data

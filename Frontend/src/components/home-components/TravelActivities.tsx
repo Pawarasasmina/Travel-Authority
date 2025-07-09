@@ -18,6 +18,12 @@ import image15 from '../../assets/home-images/event-images/15.jpg';
 import image16 from '../../assets/home-images/event-images/16.jpg';
 import { fetchAllActivities } from '../../api/activityApi';
 
+// Array of all imported images for fallback
+const images = [
+  image1, image2, image3, image4, image5, image6, image7, image8,
+  image9, image10, image11, image12, image13, image14, image15, image16
+];
+
 // Define available categories
 const CATEGORIES = [
   "Adventure",
@@ -130,9 +136,14 @@ const TravelActivities = () => {
     id: number;
     title: string;
     location: string;
-    price: number;
-    availability: number;
-    rating: number;
+    images?: string[];
+    image?: string;
+    keyPoints?: string[];
+    description?: string;
+    packages?: any[];
+    price?: number;
+    rating?: number;
+    availability?: number;
     // Add other fields if needed
   }
   
@@ -169,7 +180,15 @@ const TravelActivities = () => {
     setLoading(true);
     fetchAllActivities()
       .then((data) => {
-        setFilteredActivities(data);
+        // Map backend data to UI fields
+        const mapped = (data || []).map((activity: any) => ({
+          ...activity,
+          image: activity.images && activity.images.length > 0 ? activity.images[0] : '',
+          price: activity.packages && activity.packages.length > 0 ? activity.packages[0].priceLocalAdult : 0,
+          rating: activity.rating || 4.5, // fallback if not present
+          availability: activity.availability || 10 // fallback if not present
+        }));
+        setFilteredActivities(mapped);
         setLoading(false);
       })
       .catch((err) => {
@@ -183,25 +202,25 @@ const TravelActivities = () => {
     
     switch(sortOption) {
       case 'price-low':
-        sorted = sorted.sort((a, b) => a.price - b.price);
+        sorted = sorted.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
         break;
       case 'price-high':
-        sorted = sorted.sort((a, b) => b.price - a.price);
+        sorted = sorted.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
         break;
       case 'rating':
-        sorted = sorted.sort((a, b) => b.rating - a.rating);
+        sorted = sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
         break;
       case 'availability':
-        sorted = sorted.sort((a, b) => b.availability - a.availability);
+        sorted = sorted.sort((a, b) => (b.availability ?? 0) - (a.availability ?? 0));
         break;
       default:
         sorted = [...filteredActivities];
     }
     
     sorted = sorted.filter(activity => 
-      activity.price >= priceRange[0] && 
-      activity.price <= priceRange[1] &&
-      activity.rating >= ratingFilter &&
+      (activity.price ?? 0) >= priceRange[0] && 
+      (activity.price ?? 0) <= priceRange[1] &&
+      (activity.rating ?? 0) >= ratingFilter &&
       (selectedCategories.length === 0 || 
         ACTIVITY_CATEGORIES[activity.id].some(cat => selectedCategories.includes(cat)))
     );
@@ -316,14 +335,17 @@ const TravelActivities = () => {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
           {filteredActivities.map((activity, index) => {
-            // Map activity.id to the correct image import
-            const images = [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10, image11, image12, image13, image14, image15, image16];
-            const image = images[(activity.id - 1) % images.length];
+            const image = activity.image || (activity.images && activity.images[0]) || images[(activity.id - 1) % images.length];
             return (
               <ActivityCard 
                 key={activity.id}
-                {...activity}
+                id={activity.id}
+                title={activity.title}
+                location={activity.location}
                 image={image}
+                price={activity.price ?? 0}
+                rating={activity.rating ?? 0}
+                availability={activity.availability ?? 0}
                 index={index}
                 onClick={() => handleActivityClick(activity.id, activity.title)}
               />

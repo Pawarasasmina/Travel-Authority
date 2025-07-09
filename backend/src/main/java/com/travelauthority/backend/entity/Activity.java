@@ -2,6 +2,7 @@ package com.travelauthority.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.List;
 
 @Entity
 @Data
@@ -14,10 +15,14 @@ public class Activity {
 
     private String title;
     private String location;
-    private String image;
-    private double price;
-    private int availability;
-    private double rating;
+    @ElementCollection
+    private List<String> images;
+    @ElementCollection
+    private List<String> keyPoints;
     @Column(length = 2000)
     private String description;
+    private boolean active;
+
+    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ActivityPackage> packages;
 }

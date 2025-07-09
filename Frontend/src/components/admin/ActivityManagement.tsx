@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity as ActivityIcon, MoreVertical, Plus, Search, Trash2, Edit, Eye, X } from 'lucide-react';
+import { Activity as ActivityIcon, Plus, Search, Trash2, Edit, Eye, X } from 'lucide-react';
 import * as adminApi from '../../api/adminApi';
 import { debugLog } from '../../utils/debug';
 import { Activity } from '../../types';
@@ -209,7 +209,7 @@ const ActivityManagement: React.FC = () => {
                     Price
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Availability
+                    Packages
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Bookings
@@ -231,7 +231,7 @@ const ActivityManagement: React.FC = () => {
                           <div className="h-10 w-10 flex-shrink-0">
                             <img
                               className="h-10 w-10 rounded-md object-cover"
-                              src={activity.image || 'https://via.placeholder.com/100'}
+                              src={(activity.images && activity.images[0]) || 'https://via.placeholder.com/100'}
                               alt={activity.title}
                             />
                           </div>
@@ -249,10 +249,10 @@ const ActivityManagement: React.FC = () => {
                         {activity.location}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Rs. {activity.price}
+                        Rs. {activity.packages && activity.packages.length > 0 ? activity.packages[0].priceLocalAdult : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {activity.availability}
+                        {activity.packages && activity.packages.length > 0 ? `${activity.packages.length} packages` : 'No packages'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">

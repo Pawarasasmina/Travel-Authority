@@ -26,7 +26,7 @@ import { monitorUserData, fixUserData } from './utils/userDataMonitor';
 // Component to conditionally render navbar based on route
 const AppContent = () => {
   const location = useLocation();
-  const authRoutes = ['/login', '/signup', '/signup2', '/forgot-password', '/change-password', '/'];
+  const authRoutes = ['/login', '/signup', '/signup2', '/forgot-password','/change-password', '/'];
   
   // Pages that should have transparent navbar
   const transparentNavbarRoutes = [

@@ -1,8 +1,10 @@
 package com.travelauthority.backend.service.impl;
 
 import com.travelauthority.backend.dto.ActivityDTO;
+import com.travelauthority.backend.dto.ActivityPackageDTO;
 import com.travelauthority.backend.dto.ResponseDTO;
 import com.travelauthority.backend.entity.Activity;
+import com.travelauthority.backend.entity.ActivityPackage;
 import com.travelauthority.backend.repository.ActivityRepository;
 import com.travelauthority.backend.service.ActivityService;
 import lombok.extern.slf4j.Slf4j;
@@ -20,31 +22,63 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Autowired
     private ActivityRepository activityRepository;
+    @Autowired
+    private com.travelauthority.backend.repository.ActivityPackageRepository activityPackageRepository;
 
     private ActivityDTO toDTO(Activity activity) {
+        List<ActivityPackageDTO> packageDTOs = null;
+        if (activity.getPackages() != null) {
+            packageDTOs = activity.getPackages().stream().map(pkg -> new ActivityPackageDTO(
+                pkg.getId(),
+                pkg.getName(),
+                pkg.getKeyIncludes(),
+                pkg.getPriceForeignAdult(),
+                pkg.getPriceForeignKid(),
+                pkg.getPriceLocalAdult(),
+                pkg.getPriceLocalKid(),
+                pkg.getOpeningTime(),
+                pkg.getAverageTime()
+            )).collect(Collectors.toList());
+        }
         return new ActivityDTO(
             activity.getId(),
             activity.getTitle(),
             activity.getLocation(),
-            activity.getImage(),
-            activity.getPrice(),
-            activity.getAvailability(),
-            activity.getRating(),
-            activity.getDescription()
+            activity.getImages(),
+            activity.getKeyPoints(),
+            activity.getDescription(),
+            activity.isActive(),
+            packageDTOs
         );
     }
 
     private Activity toEntity(ActivityDTO dto) {
-        return new Activity(
-            dto.getId(),
-            dto.getTitle(),
-            dto.getLocation(),
-            dto.getImage(),
-            dto.getPrice(),
-            dto.getAvailability(),
-            dto.getRating(),
-            dto.getDescription()
-        );
+        Activity activity = new Activity();
+        activity.setId(dto.getId());
+        activity.setTitle(dto.getTitle());
+        activity.setLocation(dto.getLocation());
+        activity.setImages(dto.getImages());
+        activity.setKeyPoints(dto.getKeyPoints());
+        activity.setDescription(dto.getDescription());
+        activity.setActive(dto.isActive());
+        if (dto.getPackages() != null) {
+            List<ActivityPackage> packages = dto.getPackages().stream().map(pkgDto -> {
+                ActivityPackage pkg = new ActivityPackage();
+                pkg.setId(pkgDto.getId());
+                pkg.setName(pkgDto.getName());
+                pkg.setKeyIncludes(pkgDto.getKeyIncludes());
+                pkg.setPriceForeignAdult(pkgDto.getPriceForeignAdult());
+                pkg.setPriceForeignKid(pkgDto.getPriceForeignKid());
+                pkg.setPriceLocalAdult(pkgDto.getPriceLocalAdult());
+                pkg.setPriceLocalKid(pkgDto.getPriceLocalKid());
+                pkg.setOpeningTime(pkgDto.getOpeningTime());
+                pkg.setAverageTime(pkgDto.getAverageTime());
+                pkg.setActivity(activity);
+                return pkg;
+            }).collect(Collectors.toList());
+            activity.setPackages(packages);
+        }
+        return activity;
     }
 
     @Override
@@ -111,11 +145,10 @@ public class ActivityServiceImpl implements ActivityService {
                 Activity activity = existing.get();
                 activity.setTitle(activityDTO.getTitle());
                 activity.setLocation(activityDTO.getLocation());
-                activity.setImage(activityDTO.getImage());
-                activity.setPrice(activityDTO.getPrice());
-                activity.setAvailability(activityDTO.getAvailability());
-                activity.setRating(activityDTO.getRating());
+                activity.setImages(activityDTO.getImages());
+                activity.setKeyPoints(activityDTO.getKeyPoints());
                 activity.setDescription(activityDTO.getDescription());
+                activity.setActive(activityDTO.isActive());
                 activityRepository.save(activity);
                 responseDTO.setData(toDTO(activity));
                 responseDTO.setMessage("Activity updated successfully");

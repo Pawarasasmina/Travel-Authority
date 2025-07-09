@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { useAlert } from '../contexts/AlertContext';
 import PaymentModal from '../components/PaymentModal';
+import { fetchActivityById } from '../api/activityApi';
 
 // Counter component for quantity selection
 const QuantityCounter = ({ 
@@ -46,16 +47,43 @@ const PeopleCountSelector = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { showAlert, showConfirm } = useAlert();
-  const { 
-    activityId, 
-    activityTitle, 
-    location: activityLocation, 
-    packageType, 
-    basePrice,
+  const {
+    activityId,
+    activityTitle,
+    location: activityLocation,
+    packageType,
+    packageDetails,
     image,
-    description
+    description,
+    selectedPackage: selectedPackageFromNav
   } = location.state || {};
-  
+
+  // State for activity and package from backend
+  const [activity, setActivity] = useState<any>(null);
+  const [selectedPackage, setSelectedPackage] = useState<any>(selectedPackageFromNav || null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activityId) {
+      setLoading(true);
+      fetchActivityById(activityId)
+        .then((data) => {
+          setActivity(data);
+          // If package not passed, try to find by name
+          if (!selectedPackageFromNav && data && data.packages && packageType) {
+            const found = data.packages.find((pkg: any) => pkg.name === packageType);
+            setSelectedPackage(found || data.packages[0]);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          setError('Failed to load activity details');
+          setLoading(false);
+        });
+    }
+  }, [activityId, packageType, selectedPackageFromNav]);
+
   // Initialize people counts
   const [counts, setCounts] = useState({
     foreignAdult: 0,
@@ -70,33 +98,28 @@ const PeopleCountSelector = () => {
   // Add state for payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   
-  // Price calculation based on package and people type
+  // Price calculation based on real package
   const getPriceForType = (type: string) => {
-    const priceMap = {
-      foreignAdult: packageType === 'premium' ? basePrice * 1.2 : basePrice,
-      foreignKids: packageType === 'premium' ? basePrice * 0.8 : basePrice * 0.7,
-      localAdult: packageType === 'premium' ? basePrice * 0.9 : basePrice * 0.75,
-      localKids: packageType === 'premium' ? basePrice * 0.6 : basePrice * 0.5
-    };
-    
-    return `LKR ${priceMap[type as keyof typeof priceMap]}`;
+    if (!selectedPackage) return 'LKR 0';
+    // Use backend prices
+    switch (type) {
+      case 'foreignAdult': return `LKR ${selectedPackage.priceForeignAdult}`;
+      case 'foreignKids': return `LKR ${selectedPackage.priceForeignKid}`;
+      case 'localAdult': return `LKR ${selectedPackage.priceLocalAdult}`;
+      case 'localKids': return `LKR ${selectedPackage.priceLocalKid}`;
+      default: return 'LKR 0';
+    }
   };
 
   // Calculate total price
   const calculateTotal = () => {
-    const prices = {
-      foreignAdult: packageType === 'premium' ? basePrice * 1.2 : basePrice,
-      foreignKids: packageType === 'premium' ? basePrice * 0.8 : basePrice * 0.7,
-      localAdult: packageType === 'premium' ? basePrice * 0.9 : basePrice * 0.75,
-      localKids: packageType === 'premium' ? basePrice * 0.6 : basePrice * 0.5
-    };
-    
-    let total = 0;
-    for (const type in counts) {
-      total += prices[type as keyof typeof prices] * counts[type as keyof typeof counts];
-    }
-    
-    return `LKR ${total.toFixed(2)}`;
+    if (!selectedPackage) return 0;
+    return (
+      counts.foreignAdult * (selectedPackage.priceForeignAdult || 0) +
+      counts.foreignKids * (selectedPackage.priceForeignKid || 0) +
+      counts.localAdult * (selectedPackage.priceLocalAdult || 0) +
+      counts.localKids * (selectedPackage.priceLocalKid || 0)
+    );
   };
 
   // Handle count changes
@@ -137,7 +160,7 @@ const PeopleCountSelector = () => {
     navigate(-1);
   };
 
-  if (!activityId || !basePrice) {
+  if (!activityId) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="bg-red-100 text-red-700 p-4 rounded">
@@ -149,68 +172,61 @@ const PeopleCountSelector = () => {
 
   return (
     <div className="pt-[52px] max-w-5xl mx-auto px-4 py-6">
-      {/* Activity Header - Compact Layout */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white rounded-lg shadow-sm p-4">
-        {/* Image */}
-        <div className="md:w-1/3">
-          <div className="w-full h-[200px] rounded-lg overflow-hidden">
-            <img 
-              src={image} 
-              alt={activityTitle} 
-              className="w-full h-full object-cover" 
-            />
-          </div>
-        </div>
-        
-        {/* Details */}
-        <div className="md:w-2/3 space-y-3">
-          <div>
-            <h1 className="text-2xl font-bold">{activityTitle}</h1>
-            <div className="flex items-center text-gray-600 mt-1">
-              <svg className="h-4 w-4 text-orange-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
-              <span>{activityLocation}</span>
+      {loading ? (
+        <div className="text-center py-12">Loading package details...</div>
+      ) : error ? (
+        <div className="text-center text-red-500 py-12">{error}</div>
+      ) : (
+        <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white rounded-lg shadow-sm p-4">
+          {/* Image */}
+          <div className="md:w-1/3">
+            <div className="w-full h-[200px] rounded-lg overflow-hidden">
+              <img 
+                src={image} 
+                alt={activityTitle} 
+                className="w-full h-full object-cover" 
+              />
             </div>
           </div>
-
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center">
-              <svg className="h-4 w-4 text-orange-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>3-4 hours</span>
+          
+          {/* Details */}
+          <div className="md:w-2/3 space-y-3">
+            <div>
+              <h1 className="text-2xl font-bold">{activity?.title || activityTitle}</h1>
+              <div className="flex items-center text-gray-600 mt-1">
+                <svg className="h-4 w-4 text-orange-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                </svg>
+                <span>{activity?.location || activityLocation}</span>
+              </div>
             </div>
-            <div className="flex items-center">
-              <svg className="h-4 w-4 text-orange-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span>1-15 people</span>
-            </div>
-            <div className="flex items-center">
-              <svg className="h-4 w-4 text-orange-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-              </svg>
-              <span>English, Sinhala</span>
-            </div>
-          </div>
 
-          <p className="text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-2">
-            {description?.slice(0, 150)}...
-          </p>
-
-          <div className="flex items-center justify-between pt-2">
-            <span className="inline-block bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-medium">
-              {packageType.charAt(0).toUpperCase() + packageType.slice(1)} Package
-            </span>
-            <div className="text-right">
-              <div className="text-xs text-gray-500">Starting from</div>
-              <div className="text-lg font-bold text-orange-600">LKR {basePrice}</div>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <div className="flex items-center">
+                <svg className="h-4 w-4 text-orange-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{selectedPackage?.averageTime || '3-4 hours'}</span>
+              </div>
+              <div className="flex items-center">
+                <svg className="h-4 w-4 text-orange-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>{selectedPackage?.name || packageType}</span>
+              </div>
+            </div>
+            {/* Show key includes */}
+            <div className="mt-2">
+              <span className="font-semibold">Key Includes:</span>
+              <ul className="list-disc ml-6">
+                {(selectedPackage?.keyIncludes || []).map((inc: string, idx: number) => (
+                  <li key={idx}>{inc}</li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
-      </div>
-
+      )}
    
       {/* Booking Section - Two Columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -248,7 +264,7 @@ const PeopleCountSelector = () => {
           
           <div className="mt-6">
             <div className="text-right mb-4">
-              <div className="text-xl font-semibold">{calculateTotal()}</div>
+              <div className="text-xl font-semibold">{`LKR ${calculateTotal()}`}</div>
             </div>
           </div>
         </div>
@@ -304,7 +320,7 @@ const PeopleCountSelector = () => {
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
         onConfirm={handlePaymentConfirm}
-        totalAmount={calculateTotal()}
+        totalAmount={`LKR ${calculateTotal()}`}
         bookingDetails={{
           activityTitle,
           activityLocation,
