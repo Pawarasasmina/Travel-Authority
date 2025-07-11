@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -29,6 +30,7 @@ public class BookingResponseDTO {
     private String paymentMethod;
     private Long packageId;
     private String packageName;
+    private List<String> packageFeatures; // Added package features
     private Integer activityId;
     private Map<String, Integer> peopleCounts;
     private String description;
@@ -38,6 +40,9 @@ public class BookingResponseDTO {
     private String itinerary;
     private String cancellationPolicy;
     private String orderNumber;
+    
+    // QR code data for ticket verification
+    private String qrCodeData;
     
     // User information (for admin views)
     private String userEmail;

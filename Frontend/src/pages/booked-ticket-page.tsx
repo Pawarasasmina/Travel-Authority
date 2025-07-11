@@ -10,7 +10,7 @@ interface DetailedBookingInfo {
   location: string;
   image: string;
   date: string;
-  status: "Confirmed" | "Pending" | "Completed" | "Cancelled";
+  status: "Confirmed" | "Pending" | "Completed" | "Cancelled" | "CONFIRMED" | "PENDING" | "COMPLETED" | "CANCELLED";
   price: number;
   persons: number;
   bookingTime?: string;
@@ -26,7 +26,10 @@ interface DetailedBookingInfo {
   tax?: number;
   totalPrice?: number;
   packageName?: string;
+  packageFeatures?: string[];
   description?: string;
+  peopleCounts?: Record<string, number>;
+  qrCodeData?: string; // QR code data from backend
 }
 
 const BookedTicketPage: React.FC = () => {
@@ -73,7 +76,10 @@ const BookedTicketPage: React.FC = () => {
             tax: booking.tax,
             totalPrice: booking.totalPrice,
             packageName: booking.packageName,
-            description: booking.description
+            packageFeatures: booking.packageFeatures,
+            description: booking.description,
+            peopleCounts: booking.peopleCounts,
+            qrCodeData: booking.qrCodeData // Include QR code data from backend
           };
           
           setBookingData(formattedBooking);

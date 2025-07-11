@@ -2,6 +2,7 @@ package com.travelauthority.backend.controller;
 
 import com.travelauthority.backend.dto.BookingRequestDTO;
 import com.travelauthority.backend.dto.BookingResponseDTO;
+import com.travelauthority.backend.dto.QRVerificationRequestDTO;
 import com.travelauthority.backend.dto.ResponseDTO;
 import com.travelauthority.backend.entity.Booking;
 import com.travelauthority.backend.service.BookingService;
@@ -68,7 +69,8 @@ public class BookingController {
         } catch (Exception e) {
             log.error("Error retrieving bookings: ", e);
             return ResponseEntity.badRequest()
-                    .body(ResponseDTO.<List<BookingResponseDTO>>builder()
+                    .body(ResponseDTO.<List<BookingResponseDTO>>
+                            builder()
                             .success(false)
                             .message("Failed to retrieve bookings: " + e.getMessage())
                             .build());
@@ -149,6 +151,107 @@ public class BookingController {
                     .body(ResponseDTO.<BookingResponseDTO>builder()
                             .success(false)
                             .message("Failed to cancel booking: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // QR Code verification endpoint for admin
+    @PostMapping("/verify-qr")
+    public ResponseEntity<ResponseDTO<BookingResponseDTO>> verifyQRCode(
+            @RequestBody QRVerificationRequestDTO request,
+            @RequestHeader(value = "X-User-Email", required = false) String adminEmail) {
+        try {
+            log.info("QR Code verification endpoint called - adminEmail: {}", adminEmail);
+            log.info("QR Code verification request: {}", request);
+            log.info("QR Code data from request: {}", request != null ? request.getQrCodeData() : "null");
+            
+            BookingResponseDTO verificationResult = bookingService.verifyQRCode(request.getQrCodeData(), adminEmail);
+            
+            return ResponseEntity.ok(ResponseDTO.<BookingResponseDTO>builder()
+                    .success(true)
+                    .message("QR code verified successfully")
+                    .data(verificationResult)
+                    .build());
+        } catch (Exception e) {
+            log.error("Error verifying QR code: ", e);
+            return ResponseEntity.badRequest()
+                    .body(ResponseDTO.<BookingResponseDTO>builder()
+                            .success(false)
+                            .message("QR code verification failed: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // Mark booking as completed after QR verification
+    @PostMapping("/{bookingId}/complete")
+    public ResponseEntity<ResponseDTO<BookingResponseDTO>> markBookingAsCompleted(
+            @PathVariable String bookingId,
+            @RequestHeader(value = "X-User-Email", required = false) String adminEmail) {
+        try {
+            log.info("Request to mark booking {} as completed by admin: {}", bookingId, adminEmail);
+            
+            BookingResponseDTO completedBooking = bookingService.markBookingAsCompleted(bookingId, adminEmail);
+            
+            return ResponseEntity.ok(ResponseDTO.<BookingResponseDTO>builder()
+                    .success(true)
+                    .message("Booking marked as completed successfully")
+                    .data(completedBooking)
+                    .build());
+        } catch (Exception e) {
+            log.error("Error marking booking {} as completed: ", bookingId, e);
+            return ResponseEntity.badRequest()
+                    .body(ResponseDTO.<BookingResponseDTO>builder()
+                            .success(false)
+                            .message("Failed to mark booking as completed: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // Delete single booking
+    @DeleteMapping("/{bookingId}")
+    public ResponseEntity<ResponseDTO<String>> deleteBooking(
+            @PathVariable String bookingId,
+            @RequestHeader(value = "X-User-Email", required = false) String adminEmail) {
+        try {
+            log.info("Request to delete booking {} by admin: {}", bookingId, adminEmail);
+            
+            bookingService.deleteBooking(bookingId, adminEmail);
+            
+            return ResponseEntity.ok(ResponseDTO.<String>builder()
+                    .success(true)
+                    .message("Booking deleted successfully")
+                    .data("Booking " + bookingId + " has been deleted")
+                    .build());
+        } catch (Exception e) {
+            log.error("Error deleting booking {}: ", bookingId, e);
+            return ResponseEntity.badRequest()
+                    .body(ResponseDTO.<String>builder()
+                            .success(false)
+                            .message("Failed to delete booking: " + e.getMessage())
+                            .build());
+        }
+    }
+    
+    // Delete all bookings
+    @DeleteMapping("/all")
+    public ResponseEntity<ResponseDTO<String>> deleteAllBookings(
+            @RequestHeader(value = "X-User-Email", required = false) String adminEmail) {
+        try {
+            log.warn("Request to delete ALL bookings by admin: {}", adminEmail);
+            
+            bookingService.deleteAllBookings(adminEmail);
+            
+            return ResponseEntity.ok(ResponseDTO.<String>builder()
+                    .success(true)
+                    .message("All bookings deleted successfully")
+                    .data("All bookings have been deleted")
+                    .build());
+        } catch (Exception e) {
+            log.error("Error deleting all bookings: ", e);
+            return ResponseEntity.badRequest()
+                    .body(ResponseDTO.<String>builder()
+                            .success(false)
+                            .message("Failed to delete all bookings: " + e.getMessage())
                             .build());
         }
     }

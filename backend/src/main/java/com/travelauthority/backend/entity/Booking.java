@@ -95,6 +95,10 @@ public class Booking {
     @Column(unique = true)
     private String orderNumber;
 
+    // QR code data for ticket verification
+    @Column(length = 2000)
+    private String qrCodeData;
+
     public enum BookingStatus {
         PENDING,
         CONFIRMED,

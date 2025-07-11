@@ -9,6 +9,7 @@ interface ApiResponse {
     data: any;
     status: string;
     message: string;
+    success?: boolean; // Backend sometimes includes this field
 }
 
 // Get dashboard stats
@@ -249,6 +250,100 @@ export const updateBookingStatus = async (bookingId: string, status: string): Pr
             data: null,
             status: 'ERROR',
             message: 'Failed to update booking status'
+        };
+    }
+};
+
+// Verify QR Code
+export const verifyQRCode = async (qrCodeData: string): Promise<ApiResponse> => {
+    try {
+        debugLog('ADMIN', 'Verifying QR code', qrCodeData);
+        
+        const response = await api.post('/bookings/verify-qr', {
+            qrCodeData: qrCodeData
+        });
+        
+        debugLog('ADMIN', 'QR verification response', response.data);
+        
+        return response.data;
+    } catch (error: any) {
+        debugLog('ADMIN', 'Error verifying QR code', error);
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            data: null,
+            status: 'ERROR',
+            message: 'Failed to verify QR code'
+        };
+    }
+};
+
+// Mark booking as completed after QR verification
+export const markBookingAsCompleted = async (bookingId: string): Promise<ApiResponse> => {
+    try {
+        debugLog('ADMIN', `Marking booking ${bookingId} as completed`);
+        
+        const response = await api.post(`/bookings/${bookingId}/complete`);
+        
+        debugLog('ADMIN', 'Mark booking as completed response', response.data);
+        
+        return response.data;
+    } catch (error: any) {
+        debugLog('ADMIN', 'Error marking booking as completed', error);
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            data: null,
+            status: 'ERROR',
+            message: 'Failed to mark booking as completed'
+        };
+    }
+};
+
+// Delete single booking
+export const deleteBooking = async (bookingId: string): Promise<ApiResponse> => {
+    try {
+        debugLog('ADMIN', `Deleting booking ${bookingId}`);
+        
+        const response = await api.delete(`/bookings/${bookingId}`);
+        
+        debugLog('ADMIN', 'Delete booking response', response.data);
+        
+        return response.data;
+    } catch (error: any) {
+        debugLog('ADMIN', 'Error deleting booking', error);
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            data: null,
+            status: 'ERROR',
+            message: 'Failed to delete booking'
+        };
+    }
+};
+
+// Delete all bookings
+export const deleteAllBookings = async (): Promise<ApiResponse> => {
+    try {
+        debugLog('ADMIN', 'Deleting all bookings');
+        
+        const response = await api.delete('/bookings/all');
+        
+        debugLog('ADMIN', 'Delete all bookings response', response.data);
+        
+        return response.data;
+    } catch (error: any) {
+        debugLog('ADMIN', 'Error deleting all bookings', error);
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            data: null,
+            status: 'ERROR',
+            message: 'Failed to delete all bookings'
         };
     }
 };

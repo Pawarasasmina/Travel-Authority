@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Eye, Check, X, Clock, DollarSign } from 'lucide-react';
-import { getAllBookings, updateBookingStatus } from '../../api/adminApi';
+import { Search, Filter, Eye, Check, X, Clock, DollarSign, Trash2, AlertTriangle } from 'lucide-react';
+import { getAllBookings, updateBookingStatus, markBookingAsCompleted, deleteBooking, deleteAllBookings } from '../../api/adminApi';
 import { debugLog } from '../../utils/debug';
+import QRScanner from './QRScanner';
+import QRVerificationModal from './QRVerificationModal';
 
 interface Booking {
   id: string;
@@ -26,7 +28,23 @@ const BookingManagement: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  
+  // QR Scanner states
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [scannedQRData, setScannedQRData] = useState<any>(null);
+  const [verificationResult, setVerificationResult] = useState<{
+    isValid: boolean;
+    bookingDetails?: any;
+  }>({ isValid: false });
+  
+  // Delete states
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [bookingToDelete, setBookingToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchBookings();
@@ -102,6 +120,83 @@ const BookingManagement: React.FC = () => {
     }
   };
 
+  // QR Code scanning functions
+  const handleQRScan = () => {
+    setShowQRScanner(true);
+  };
+
+  const handleQRScanSuccess = async (scannedData: any) => {
+    try {
+      setScannedQRData(scannedData);
+      setShowQRScanner(false);
+
+      // Use backend verification result if available
+      if (scannedData.backendData) {
+        setVerificationResult({
+          isValid: true,
+          bookingDetails: scannedData.backendData
+        });
+      } else {
+        // Fallback to local verification (for compatibility)
+        const booking = bookings.find(b => b.id === scannedData.ticketId);
+        
+        if (booking) {
+          setVerificationResult({
+            isValid: true,
+            bookingDetails: booking
+          });
+        } else {
+          setVerificationResult({
+            isValid: false
+          });
+        }
+      }
+      
+      setShowVerificationModal(true);
+    } catch (err) {
+      console.error('Error processing QR scan:', err);
+      setError('Failed to process QR code scan');
+    }
+  };
+
+  const handleMarkAsUsed = async () => {
+    if (!scannedQRData) return;
+    
+    try {
+      debugLog('ADMIN_BOOKINGS', `Marking booking ${scannedQRData.ticketId} as completed`);
+      
+      // Use the new dedicated API endpoint instead of generic status update
+      const response = await markBookingAsCompleted(scannedQRData.ticketId);
+      
+      if (response.success) {
+        debugLog('ADMIN_BOOKINGS', 'Booking marked as completed successfully');
+        
+        // Show success message
+        setSuccessMessage(`Booking ${scannedQRData.ticketId} has been marked as completed`);
+        setTimeout(() => setSuccessMessage(null), 5000); // Clear after 5 seconds
+        
+        // Close modal and clear state
+        setShowVerificationModal(false);
+        setScannedQRData(null);
+        setVerificationResult({ isValid: false });
+        
+        // Refresh bookings to show updated status
+        await fetchBookings();
+      } else {
+        throw new Error(response.message || 'Failed to mark booking as completed');
+      }
+      
+    } catch (err: any) {
+      console.error('Error marking booking as used:', err);
+      setError('Failed to mark booking as completed: ' + (err.message || 'Unknown error'));
+    }
+  };
+
+  const handleQRScanForBooking = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setShowQRScanner(true);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'confirmed':
@@ -155,6 +250,69 @@ const BookingManagement: React.FC = () => {
     return counts || 'N/A';
   };
 
+  // Delete handlers
+  const handleDeleteBooking = (bookingId: string) => {
+    setBookingToDelete(bookingId);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteAllBookings = () => {
+    setShowDeleteAllConfirm(true);
+  };
+
+  const confirmDeleteBooking = async () => {
+    if (!bookingToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      debugLog('ADMIN_BOOKINGS', `Deleting booking ${bookingToDelete}`);
+      
+      const response = await deleteBooking(bookingToDelete);
+      
+      if (response.success) {
+        setSuccessMessage(`Booking ${bookingToDelete} has been deleted successfully`);
+        setTimeout(() => setSuccessMessage(null), 5000);
+        
+        // Refresh bookings list
+        await fetchBookings();
+      } else {
+        throw new Error(response.message || 'Failed to delete booking');
+      }
+    } catch (err: any) {
+      console.error('Error deleting booking:', err);
+      setError('Failed to delete booking: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+      setBookingToDelete(null);
+    }
+  };
+
+  const confirmDeleteAllBookings = async () => {
+    try {
+      setIsDeleting(true);
+      debugLog('ADMIN_BOOKINGS', 'Deleting all bookings');
+      
+      const response = await deleteAllBookings();
+      
+      if (response.success) {
+        setSuccessMessage('All bookings have been deleted successfully');
+        setTimeout(() => setSuccessMessage(null), 5000);
+        
+        // Refresh bookings list
+        await fetchBookings();
+      } else {
+        throw new Error(response.message || 'Failed to delete all bookings');
+      }
+    } catch (err: any) {
+      console.error('Error deleting all bookings:', err);
+      setError('Failed to delete all bookings: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteAllConfirm(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -179,12 +337,45 @@ const BookingManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-md p-4">
+          <p className="text-green-600 flex items-center">
+            <Check size={16} className="mr-2" />
+            {successMessage}
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h2 className="text-lg font-semibold">Manage Bookings</h2>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <DollarSign size={16} />
-          Total Revenue: LKR {bookings.reduce((sum, booking) => sum + booking.totalPrice, 0).toFixed(2)}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleQRScan}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zm13-2h1v3h-1v-3zm2 0h2v1h-2v-1zm0 2h1v2h-1v-2zm1 1h1v1h-1v-1zm-4-4h1v1h-1v-1zm2 0h2v1h-2v-1zm-2 2h2v1h-2v-1zm2-1h1v1h-1v-1z"/>
+            </svg>
+            Scan QR Code
+          </button>
+          
+          {bookings.length > 0 && (
+            <button
+              onClick={handleDeleteAllBookings}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              disabled={isDeleting}
+            >
+              <Trash2 size={16} />
+              {isDeleting ? 'Deleting...' : 'Delete All'}
+            </button>
+          )}
+          
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <DollarSign size={16} />
+            Total Revenue: LKR {bookings.reduce((sum, booking) => sum + booking.totalPrice, 0).toFixed(2)}
+          </div>
         </div>
       </div>
 
@@ -316,6 +507,19 @@ const BookingManagement: React.FC = () => {
                       >
                         <Eye size={16} />
                       </button>
+                      
+                      {booking.status === 'CONFIRMED' && (
+                        <button
+                          onClick={() => handleQRScanForBooking(booking)}
+                          className="text-green-600 hover:text-green-900"
+                          title="Scan QR Code"
+                        >
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zm13-2h1v3h-1v-3zm2 0h2v1h-2v-1zm0 2h1v2h-1v-2zm1 1h1v1h-1v-1zm-4-4h1v1h-1v-1zm2 0h2v1h-2v-1zm-2 2h2v1h-2v-1zm2-1h1v1h-1v-1z"/>
+                          </svg>
+                        </button>
+                      )}
+                      
                       <select
                         value={booking.status}
                         onChange={(e) => handleStatusChange(booking.id, e.target.value)}
@@ -326,6 +530,15 @@ const BookingManagement: React.FC = () => {
                         <option value="COMPLETED">Completed</option>
                         <option value="CANCELLED">Cancelled</option>
                       </select>
+
+                      {/* Delete button */}
+                      <button
+                        onClick={() => handleDeleteBooking(booking.id)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Delete Booking"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -415,6 +628,94 @@ const BookingManagement: React.FC = () => {
                     <label className="text-sm font-medium text-gray-700">Booked On</label>
                     <p className="text-sm text-gray-900">{formatDate(selectedBooking.bookingTime)}</p>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        isOpen={showQRScanner}
+        onClose={() => {
+          setShowQRScanner(false);
+          setSelectedBooking(null);
+        }}
+        onScanSuccess={handleQRScanSuccess}
+        expectedBookingId={selectedBooking?.id}
+      />
+
+      {/* QR Verification Modal */}
+      <QRVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => {
+          setShowVerificationModal(false);
+          setScannedQRData(null);
+          setVerificationResult({ isValid: false });
+        }}
+        scannedData={scannedQRData}
+        bookingDetails={verificationResult.bookingDetails}
+        isValid={verificationResult.isValid}
+        onMarkAsUsed={handleMarkAsUsed}
+      />
+
+      {/* Delete Confirmation Modals */}
+      {showDeleteConfirm && (
+        <>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowDeleteConfirm(false)} />
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-sm w-full">
+              <div className="p-6">
+                <h4 className="text-lg font-semibold mb-4">Confirm Deletion</h4>
+                <p className="text-sm text-gray-700 mb-4">
+                  Are you sure you want to delete this booking? This action cannot be undone.
+                </p>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="px-4 py-2 text-sm bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDeleteBooking}
+                    className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete Booking'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {showDeleteAllConfirm && (
+        <>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setShowDeleteAllConfirm(false)} />
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-sm w-full">
+              <div className="p-6">
+                <h4 className="text-lg font-semibold mb-4">Confirm Deletion</h4>
+                <p className="text-sm text-gray-700 mb-4">
+                  Are you sure you want to delete all bookings? This action cannot be undone.
+                </p>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowDeleteAllConfirm(false)}
+                    className="px-4 py-2 text-sm bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDeleteAllBookings}
+                    className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete All Bookings'}
+                  </button>
                 </div>
               </div>
             </div>
