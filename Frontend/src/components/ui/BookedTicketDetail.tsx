@@ -2,6 +2,7 @@ import React from 'react';
 import { PurchaseItem } from './PurchaseCard';
 import Button from './Button';
 import { QRCodeSVG } from 'qrcode.react';
+import { generateSimpleTicketPDF } from '../../utils/pdfGenerator';
 
 // Extend PurchaseItem with additional details for the ticket page
 interface DetailedTicketInfo extends PurchaseItem {
@@ -78,6 +79,22 @@ const BookedTicketDetail: React.FC<BookedTicketDetailProps> = ({ ticket, onBack 
     const fallbackData = JSON.stringify(baseData);
     console.log('Using fallback QR code data:', fallbackData);
     return fallbackData;
+  };
+
+  const handleDownloadTicket = async () => {
+    try {
+      await generateSimpleTicketPDF({
+        ...ticket,
+        orderNumber: ticket.orderNumber || `ORD-${ticket.id}`,
+        bookingTime: ticket.bookingTime || new Date().toISOString(),
+        paymentMethod: ticket.paymentMethod || 'Credit Card',
+        contactEmail: ticket.contactEmail || 'support@tickets.lk',
+        contactPhone: ticket.contactPhone || '+94 11 234 5678'
+      });
+    } catch (error) {
+      console.error('Error downloading ticket:', error);
+      alert('Failed to download ticket. Please try again.');
+    }
   };
 
   const qrCodeData = getQRCodeData();
@@ -338,6 +355,7 @@ const BookedTicketDetail: React.FC<BookedTicketDetailProps> = ({ ticket, onBack 
               <Button
                 variant="primary"
                 className="px-6 text-sm h-auto py-3 md:w-auto w-full"
+                onClick={handleDownloadTicket}
               >
                 Download Ticket
               </Button>

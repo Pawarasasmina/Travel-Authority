@@ -1,6 +1,7 @@
 import React from 'react';
 import Button from './Button';
 import { useNavigate } from 'react-router-dom';
+import { generateSimpleTicketPDF } from '../../utils/pdfGenerator';
 
 // Define the purchase item interface
 export interface PurchaseItem {
@@ -46,6 +47,22 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({ purchase, className = '' })
 
   const handleViewDetails = () => {
     navigate(`/bookings/${purchase.id}`);
+  };
+
+  const handleDownloadTicket = async () => {
+    try {
+      await generateSimpleTicketPDF({
+        ...purchase,
+        orderNumber: `ORD-${purchase.id}`,
+        bookingTime: new Date().toISOString(),
+        paymentMethod: 'Credit Card',
+        contactEmail: 'support@tickets.lk',
+        contactPhone: '+94 11 234 5678'
+      });
+    } catch (error) {
+      console.error('Error downloading ticket:', error);
+      alert('Failed to download ticket. Please try again.');
+    }
   };
 
   return (
@@ -99,6 +116,7 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({ purchase, className = '' })
             <Button
               variant="outline"
               className="px-6 text-sm h-auto py-3"
+              onClick={handleDownloadTicket}
             >
               Download Ticket
             </Button>
