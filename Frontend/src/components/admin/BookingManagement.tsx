@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Eye, Check, X, Clock, DollarSign, Trash2, AlertTriangle } from 'lucide-react';
+import { Search, Filter, Eye, Check, X, Clock, DollarSign, Trash2, AlertTriangle, Download } from 'lucide-react';
 import { getAllBookings, updateBookingStatus, markBookingAsCompleted, deleteBooking, deleteAllBookings } from '../../api/adminApi';
 import { debugLog } from '../../utils/debug';
 import QRScanner from './QRScanner';
 import QRVerificationModal from './QRVerificationModal';
+import { exportBookingsToExcel, exportFilteredBookingsToExcel } from '../../utils/excelExporter';
 
 interface Booking {
   id: string;
@@ -313,6 +314,43 @@ const BookingManagement: React.FC = () => {
     }
   };
 
+  // Excel export handlers
+  const handleExportAllBookings = async () => {
+    try {
+      const result = exportBookingsToExcel(bookings);
+      if (result.success) {
+        setSuccessMessage(`${result.recordCount} bookings exported successfully!`);
+        setTimeout(() => setSuccessMessage(null), 5000);
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      console.error('Error exporting bookings:', error);
+      setError('Failed to export bookings to Excel');
+    }
+  };
+
+  const handleExportFilteredBookings = async () => {
+    try {
+      const result = exportFilteredBookingsToExcel(
+        bookings,
+        {
+          searchTerm: searchTerm,
+          statusFilter: statusFilter
+        }
+      );
+      if (result.success) {
+        setSuccessMessage(`${result.recordCount} filtered bookings exported successfully!`);
+        setTimeout(() => setSuccessMessage(null), 5000);
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      console.error('Error exporting filtered bookings:', error);
+      setError('Failed to export filtered bookings to Excel');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -350,31 +388,60 @@ const BookingManagement: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h2 className="text-lg font-semibold">Manage Bookings</h2>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleQRScan}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zm13-2h1v3h-1v-3zm2 0h2v1h-2v-1zm0 2h1v2h-1v-2zm1 1h1v1h-1v-1zm-4-4h1v1h-1v-1zm2 0h2v1h-2v-1zm-2 2h2v1h-2v-1zm2-1h1v1h-1v-1z"/>
-            </svg>
-            Scan QR Code
-          </button>
-          
-          {bookings.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
-              onClick={handleDeleteAllBookings}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-              disabled={isDeleting}
+              onClick={handleQRScan}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              <Trash2 size={16} />
-              {isDeleting ? 'Deleting...' : 'Delete All'}
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zm13-2h1v3h-1v-3zm2 0h2v1h-2v-1zm0 2h1v2h-1v-2zm1 1h1v1h-1v-1zm-4-4h1v1h-1v-1zm2 0h2v1h-2v-1zm-2 2h2v1h-2v-1zm2-1h1v1h-1v-1z"/>
+              </svg>
+              <span className="hidden sm:inline">Scan QR Code</span>
+              <span className="sm:hidden">QR Scan</span>
             </button>
-          )}
+            
+            {bookings.length > 0 && (
+              <>
+                <button
+                  onClick={handleExportAllBookings}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                  title="Export all bookings to Excel"
+                >
+                  <Download size={16} />
+                  <span className="hidden sm:inline">Download All</span>
+                  <span className="sm:hidden">All</span>
+                </button>
+                
+                {(searchTerm || statusFilter !== 'ALL') && (
+                  <button
+                    onClick={handleExportFilteredBookings}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
+                    title="Export filtered bookings to Excel"
+                  >
+                    <Download size={16} />
+                    <span className="hidden sm:inline">Download Filtered</span>
+                    <span className="sm:hidden">Filtered</span>
+                  </button>
+                )}
+                
+                <button
+                  onClick={handleDeleteAllBookings}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  disabled={isDeleting}
+                >
+                  <Trash2 size={16} />
+                  <span className="hidden sm:inline">{isDeleting ? 'Deleting...' : 'Delete All'}</span>
+                  <span className="sm:hidden">{isDeleting ? 'Del...' : 'Delete'}</span>
+                </button>
+              </>
+            )}
+          </div>
           
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-gray-600 justify-center sm:justify-start">
             <DollarSign size={16} />
-            Total Revenue: LKR {bookings.reduce((sum, booking) => sum + booking.totalPrice, 0).toFixed(2)}
+            <span className="hidden sm:inline">Total Revenue: LKR {bookings.reduce((sum, booking) => sum + booking.totalPrice, 0).toFixed(2)}</span>
+            <span className="sm:hidden">LKR {bookings.reduce((sum, booking) => sum + booking.totalPrice, 0).toFixed(2)}</span>
           </div>
         </div>
       </div>
