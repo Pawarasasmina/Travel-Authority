@@ -68,7 +68,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       location: bookingDetails.activityLocation,
       image: bookingDetails.image,
       date: bookingDetails.bookingDate,
-      status: "Confirmed",
+      status: "Pending",
       price: finalTotal,
       serviceFee,
       tax,

@@ -53,7 +53,7 @@ export const generateSimpleTicketPDF = async (ticketData: TicketData): Promise<v
     
     pdf.setTextColor(255, 255, 255);
     pdf.setFontSize(24);
-    pdf.text('TICKETS.LK', pageWidth / 2, 20, { align: 'center' });
+    pdf.text('TRAVEL.LK', pageWidth / 2, 20, { align: 'center' });
     
     pdf.setFontSize(12);
     pdf.text('E-Ticket Confirmation', pageWidth / 2, 30, { align: 'center' });

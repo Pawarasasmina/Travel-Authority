@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity as ActivityIcon, MoreVertical, Plus, Search, Trash2, Edit, Eye, X } from 'lucide-react';
+import { Activity as ActivityIcon, Plus, Search, Trash2, Edit, Eye, X, Check } from 'lucide-react';
 import * as adminApi from '../../api/adminApi';
 import { debugLog } from '../../utils/debug';
 import { Activity } from '../../types';
@@ -24,6 +24,9 @@ const ActivityManagement: React.FC = () => {
   const [currentActivity, setCurrentActivity] = useState<AdminActivity | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [deleteInProgress, setDeleteInProgress] = useState<string | null>(null);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchActivities();
@@ -102,6 +105,7 @@ const ActivityManagement: React.FC = () => {
       setDeleteInProgress(null);
     }
   };
+
   const handleFormSubmit = async (activityData: Activity) => {
     try {
       // Show a loading indicator or disable form submission to prevent multiple submissions
@@ -127,10 +131,45 @@ const ActivityManagement: React.FC = () => {
     }
   };
 
+  const handleDeleteAll = () => {
+    if (activities.length === 0) {
+      alert('No activities to delete');
+      return;
+    }
+    setShowDeleteAllConfirm(true);
+  };
+
+  const confirmDeleteAll = async () => {
+    try {
+      setIsDeleting(true);
+      debugLog('ADMIN_ACTIVITIES', 'Deleting all activities');
+      
+      const response = await adminApi.deleteAllActivities();
+      
+      if (response.status === 'OK' || response.status === '200 OK') {
+        debugLog('ADMIN_ACTIVITIES', 'All activities deleted successfully', response);
+        setSuccessMessage('All activities have been deleted successfully');
+        setTimeout(() => setSuccessMessage(null), 5000);
+        
+        // Refresh the activities list
+        setRefreshKey(prevKey => prevKey + 1);
+      } else {
+        throw new Error(response.message || 'Failed to delete all activities');
+      }
+    } catch (err: any) {
+      console.error('Error deleting all activities:', err);
+      setError('Failed to delete all activities: ' + (err.message || 'Unknown error'));
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteAllConfirm(false);
+    }
+  };
+
   if (loading && activities.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black"></div>
       </div>
     );
   }
@@ -139,186 +178,278 @@ const ActivityManagement: React.FC = () => {
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center justify-center h-64">
-          <div className="text-red-500">{error}</div>
+          <div className="text-gray-700">{error}</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md">
-      {showForm ? (
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">
-              {currentActivity ? 'Edit Activity' : 'Add New Activity'}
-            </h2>
-            <button
-              onClick={handleFormClose}
-              className="p-2 hover:bg-gray-100 rounded-full"
-            >
-              <X size={20} />
-            </button>
-          </div>
-          <ActivityForm 
-            activity={currentActivity} 
-            onSubmit={handleFormSubmit} 
-            onCancel={handleFormClose} 
-          />
-        </div>
-      ) : (
-        <>
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <h2 className="text-lg font-semibold">Manage Activities</h2>
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {showForm ? (
+            <ActivityForm 
+              activity={currentActivity} 
+              onSubmit={handleFormSubmit} 
+              onCancel={handleFormClose} 
+            />
+          ) : (
+            <>
+              {/* Header Section */}
+              <div className="bg-black px-8 py-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-white/20 rounded-lg">
+                      <ActivityIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h1 className="text-2xl font-bold text-white">Activity Management</h1>
+                      <p className="text-gray-300">Manage and organize your travel activities</p>
+                    </div>
+                  </div>
+                  <div className="text-white text-right">
+                    <div className="text-3xl font-bold">{activities.length}</div>
+                    <div className="text-sm text-gray-300">Total Activities</div>
+                  </div>
+                </div>
+              </div>
 
-              <div className="flex w-full md:w-auto gap-2">
-                <div className="relative flex-grow md:w-64">
-                  <input
-                    type="text"
-                    placeholder="Search activities..."
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-full"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <div className="p-8">
+                {/* Action Bar */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                  <div className="flex-1 max-w-md">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search activities by title or location..."
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black transition-all duration-200 bg-white"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                      <Search className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleAddNew}
+                      className="flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
+                    >
+                      <Plus size={20} className="mr-2" />
+                      Add New Activity
+                    </button>
+                    
+                    {activities.length > 0 && (
+                      <button
+                        onClick={handleDeleteAll}
+                        className="flex items-center px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                        disabled={isDeleting}
+                      >
+                        <Trash2 size={20} className="mr-2" />
+                        {isDeleting ? 'Deleting...' : 'Delete All'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Success Message */}
+                {successMessage && (
+                  <div className="mb-6 p-4 bg-gray-100 border border-gray-400 text-gray-800 rounded-lg flex items-center">
+                    <Check className="w-5 h-5 mr-2" />
+                    {successMessage}
+                  </div>
+                )}
+                
+                {/* Error Message */}
+                {error && (
+                  <div className="mb-6 p-4 bg-gray-100 border border-gray-400 text-gray-800 rounded-lg flex items-center">
+                    <X className="w-5 h-5 mr-2" />
+                    {error}
+                  </div>
+                )}
+
+                {/* Activities Table */}
+                <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Activity
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Location
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Price
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Availability
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Bookings
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {filteredActivities.length > 0 ? (
+                          filteredActivities.map((activity) => (
+                            <tr key={activity.id} className="hover:bg-gray-50 transition-colors duration-200">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <div className="h-12 w-12 flex-shrink-0">
+                                    <img
+                                      className="h-12 w-12 rounded-lg object-cover border-2 border-gray-200"
+                                      src={activity.image || 'https://via.placeholder.com/100'}
+                                      alt={activity.title}
+                                    />
+                                  </div>
+                                  <div className="ml-4">
+                                    <div className="text-sm font-semibold text-gray-900">
+                                      {activity.title}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {activity.createdBy ? `Added by ${activity.createdBy.name}` : 'Unknown creator'}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900 font-medium">{activity.location}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-bold text-gray-700">Rs. {activity.price}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900 font-medium">{activity.availability}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900 font-medium">
+                                  {activity.bookings || 0} bookings
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  Rs. {activity.revenue || 0} revenue
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span
+                                  className={`inline-flex px-3 py-1 text-xs leading-5 font-semibold rounded-full ${
+                                    activity.active
+                                      ? "bg-gray-100 text-gray-800 border border-gray-300"
+                                      : "bg-gray-200 text-gray-600 border border-gray-400"
+                                  }`}
+                                >
+                                  {activity.active ? "Active" : "Inactive"}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div className="flex space-x-2">
+                                  <button
+                                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                                    title="View Activity"
+                                    onClick={() => window.open(`/activities/${activity.id}`, '_blank')}
+                                  >
+                                    <Eye size={18} />
+                                  </button>
+                                  <button
+                                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                                    title="Edit Activity"
+                                    onClick={() => handleEdit(activity)}
+                                  >
+                                    <Edit size={18} />
+                                  </button>
+                                  <button
+                                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                                    title="Delete Activity"
+                                    onClick={() => handleDelete(activity)}
+                                    disabled={activity.id !== undefined && deleteInProgress === activity.id.toString()}
+                                  >                            
+                                    {deleteInProgress === (activity.id ?? '').toString() ? (
+                                      <ActivityIcon className="animate-spin h-5 w-5" />
+                                    ) : (
+                                      <Trash2 size={18} />
+                                    )}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={7} className="px-6 py-12 text-center">
+                              <div className="flex flex-col items-center">
+                                <ActivityIcon className="w-12 h-12 text-gray-400 mb-4" />
+                                <h3 className="text-lg font-medium text-gray-900 mb-2">No activities found</h3>
+                                <p className="text-gray-500">
+                                  {searchTerm
+                                    ? "No activities match your search criteria"
+                                    : "Get started by creating your first activity"}
+                                </p>
+                                {!searchTerm && (
+                                  <button
+                                    onClick={handleAddNew}
+                                    className="mt-4 px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors duration-200"
+                                  >
+                                    Create Activity
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
-                <button
-                  onClick={handleAddNew}
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus size={18} className="mr-1" />
-                  Add New
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Activity
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Location
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Availability
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Bookings
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredActivities.length > 0 ? (
-                  filteredActivities.map((activity) => (
-                    <tr key={activity.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0">
-                            <img
-                              className="h-10 w-10 rounded-md object-cover"
-                              src={activity.image || 'https://via.placeholder.com/100'}
-                              alt={activity.title}
-                            />
+                {/* Delete All Confirmation Modal */}
+                {showDeleteAllConfirm && (
+                  <>
+                    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 backdrop-blur-sm" onClick={() => setShowDeleteAllConfirm(false)} />
+                    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+                      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+                        <div className="p-6">
+                          <div className="flex items-center mb-4">
+                            <div className="p-3 bg-gray-100 rounded-full mr-4">
+                              <Trash2 className="w-6 h-6 text-gray-800" />
+                            </div>
+                            <h4 className="text-xl font-semibold text-gray-900">Confirm Deletion</h4>
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {activity.title}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {activity.createdBy ? `Added by ${activity.createdBy.name}` : 'Unknown creator'}
-                            </div>
+                          <p className="text-gray-700 mb-6">
+                            Are you sure you want to delete all <span className="font-bold text-black">{activities.length}</span> activities? This action cannot be undone and will permanently remove all activity data.
+                          </p>
+                          <div className="flex justify-end gap-3">
+                            <button
+                              onClick={() => setShowDeleteAllConfirm(false)}
+                              className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-medium"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={confirmDeleteAll}
+                              className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors duration-200 font-medium"
+                              disabled={isDeleting}
+                            >
+                              {isDeleting ? 'Deleting...' : 'Delete All Activities'}
+                            </button>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {activity.location}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Rs. {activity.price}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {activity.availability}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {activity.bookings || 0} bookings
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Rs. {activity.revenue || 0} revenue
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${
-                              activity.active
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                        >
-                          {activity.active ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button
-                            className="text-blue-600 hover:text-blue-900"
-                            title="View Activity"
-                            onClick={() => window.open(`/activities/${activity.id}`, '_blank')}
-                          >
-                            <Eye size={18} />
-                          </button>
-                          <button
-                            className="text-indigo-600 hover:text-indigo-900"
-                            title="Edit Activity"
-                            onClick={() => handleEdit(activity)}
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            className="text-red-600 hover:text-red-900"
-                            title="Delete Activity"
-                            onClick={() => handleDelete(activity)}
-                            disabled={activity.id !== undefined && deleteInProgress === activity.id.toString()}
-                          >                            {deleteInProgress === (activity.id ?? '').toString() ? (
-                              <ActivityIcon className="animate-spin h-5 w-5" />
-                            ) : (
-                              <Trash2 size={18} />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                      {searchTerm
-                        ? "No activities found matching your search"
-                        : "No activities available"}
-                    </td>
-                  </tr>
+                      </div>
+                    </div>
+                  </>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

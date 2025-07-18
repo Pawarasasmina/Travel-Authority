@@ -48,7 +48,7 @@ public class BookingService {
             // Generate QR code data
             String qrCodeData = generateQRCodeData(bookingId, request.getActivityTitle(), 
                                                  request.getBookingDate(), request.getTotalPersons(), 
-                                                 orderNumber, "CONFIRMED");
+                                                 orderNumber, "PENDING");
             
             // Create booking entity
             Booking booking = Booking.builder()
@@ -58,7 +58,7 @@ public class BookingService {
                     .location(request.getActivityLocation())
                     .image(request.getImage())
                     .bookingDate(request.getBookingDate())
-                    .status(Booking.BookingStatus.CONFIRMED)
+                    .status(Booking.BookingStatus.PENDING)
                     .basePrice(request.getBasePrice())
                     .serviceFee(request.getServiceFee())
                     .tax(request.getTax())

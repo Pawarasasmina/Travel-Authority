@@ -38,4 +38,9 @@ public class ActivityController {
     public ResponseDTO deleteActivity(@PathVariable int id) {
         return activityService.deleteActivity(id);
     }
+
+    @DeleteMapping("/delete/all")
+    public ResponseDTO deleteAllActivities() {
+        return activityService.deleteAllActivities();
+    }
 }

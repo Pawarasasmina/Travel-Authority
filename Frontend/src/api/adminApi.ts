@@ -152,6 +152,29 @@ export const deleteActivity = async (activityId: number): Promise<ApiResponse> =
     }
 };
 
+// Delete all activities
+export const deleteAllActivities = async (): Promise<ApiResponse> => {
+    try {
+        debugLog('ADMIN', 'Deleting all activities');
+        
+        const response = await api.delete('/activity/delete/all');
+        
+        debugLog('ADMIN', 'Delete all activities response', response.data);
+        
+        return response.data;
+    } catch (error: any) {
+        debugLog('ADMIN', 'Error deleting all activities', error);
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            data: null,
+            status: 'ERROR',
+            message: 'Failed to delete all activities'
+        };
+    }
+};
+
 // Create or update activity
 export const saveActivity = async (activityData: any): Promise<ApiResponse> => {
     try {

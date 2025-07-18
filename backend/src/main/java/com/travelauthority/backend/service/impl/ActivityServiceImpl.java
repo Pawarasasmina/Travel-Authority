@@ -220,4 +220,27 @@ public class ActivityServiceImpl implements ActivityService {
         }
         return responseDTO;
     }
+
+    @Override
+    public ResponseDTO deleteAllActivities() {
+        ResponseDTO responseDTO = new ResponseDTO();
+        try {
+            long count = activityRepository.count();
+            if (count == 0) {
+                responseDTO.setMessage("No activities to delete");
+                responseDTO.setStatus(HttpStatus.OK.toString());
+                return responseDTO;
+            }
+            
+            activityRepository.deleteAll();
+            responseDTO.setMessage("All " + count + " activities deleted successfully");
+            responseDTO.setStatus(HttpStatus.OK.toString());
+            log.info("All {} activities deleted successfully", count);
+        } catch (Exception e) {
+            log.error("Error deleting all activities: {}", e.getMessage());
+            responseDTO.setMessage("Error deleting all activities: " + e.getMessage());
+            responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
+        }
+        return responseDTO;
+    }
 }

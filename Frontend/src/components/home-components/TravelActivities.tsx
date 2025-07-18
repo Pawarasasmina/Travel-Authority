@@ -1,21 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import image1 from '../../assets/home-images/event-images/1.jpg';
-import image2 from '../../assets/home-images/event-images/2.jpg';
-import image3 from '../../assets/home-images/event-images/3.jpg';
-import image4 from '../../assets/home-images/event-images/4.jpg';
-import image5 from '../../assets/home-images/event-images/5.jpg';
-import image6 from '../../assets/home-images/event-images//6.jpg';
-import image7 from '../../assets/home-images/event-images/7.jpg';
-import image8 from '../../assets/home-images/event-images/8.jpg';
-import image9 from '../../assets/home-images/event-images/9.jpg';
-import image10 from '../../assets/home-images/event-images/10.jpg';
-import image11 from '../../assets/home-images/event-images/11.jpg';
-import image12 from '../../assets/home-images/event-images/12.jpg';
-import image13 from '../../assets/home-images/event-images/13.jpg';
-import image14 from '../../assets/home-images/event-images/14.jpg';
-import image15 from '../../assets/home-images/event-images/15.jpg';
-import image16 from '../../assets/home-images/event-images/16.jpg';
+
 import { fetchAllActivities } from '../../api/activityApi';
 
 // Define available categories
@@ -128,6 +113,7 @@ const TravelActivities = () => {
   const [showFilters, setShowFilters] = useState(false);
   interface Activity {
     id: number;
+    image:string;
     title: string;
     location: string;
     price: number;
@@ -316,14 +302,12 @@ const TravelActivities = () => {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-8">
           {filteredActivities.map((activity, index) => {
-            // Map activity.id to the correct image import
-            const images = [image1, image2, image3, image4, image5, image6, image7, image8, image9, image10, image11, image12, image13, image14, image15, image16];
-            const image = images[(activity.id - 1) % images.length];
+          
             return (
               <ActivityCard 
                 key={activity.id}
                 {...activity}
-                image={image}
+                image={activity.image}
                 index={index}
                 onClick={() => handleActivityClick(activity.id, activity.title)}
               />

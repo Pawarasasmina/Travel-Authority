@@ -9,4 +9,5 @@ public interface ActivityService {
     ResponseDTO getActivityById(int id);
     ResponseDTO updateActivity(int id, ActivityDTO activityDTO);
     ResponseDTO deleteActivity(int id);
+    ResponseDTO deleteAllActivities();
 }

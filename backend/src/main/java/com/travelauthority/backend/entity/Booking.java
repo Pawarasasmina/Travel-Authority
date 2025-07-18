@@ -30,7 +30,7 @@ public class Booking {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private BookingStatus status = BookingStatus.CONFIRMED;
+    private BookingStatus status = BookingStatus.PENDING;
 
     @Column(nullable = false)
     private Double basePrice;
