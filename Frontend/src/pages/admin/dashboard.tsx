@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Activity, CreditCard, Package, ChevronDown, ChevronUp, Search, MoreVertical } from 'lucide-react';
+import { Users, Activity, CreditCard, Package, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import * as adminApi from '../../api/adminApi';
 import { debugLog } from '../../utils/debug';
 import ActivityManagement from '../../components/admin/ActivityManagement';
 import BookingManagement from '../../components/admin/BookingManagement';
+import UserManagement from '../../components/admin/UserManagement';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -16,9 +17,9 @@ const AdminDashboard = () => {
     totalActivities: 0,
     totalBookings: 0,
     totalRevenue: 0
-  });  const [users, setUsers] = useState<any[]>([]);
+  });
+  const [users, setUsers] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,14 +51,14 @@ const AdminDashboard = () => {
         debugLog('ADMIN_DASHBOARD', 'Failed to get dashboard stats', statsResponse);
       }
 
-      // Get users
+      // Get users for dashboard overview
       const usersResponse = await adminApi.getAllUsers();
       if (usersResponse.status === 'OK' || usersResponse.status === '200 OK') {
         const userData = usersResponse.data || [];
         setUsers(userData);
-        debugLog('ADMIN_DASHBOARD', 'Users loaded', userData);
+        debugLog('ADMIN_DASHBOARD', 'Users loaded for dashboard overview', userData);
       } else {
-        debugLog('ADMIN_DASHBOARD', 'Failed to get users', usersResponse);
+        debugLog('ADMIN_DASHBOARD', 'Failed to get users for dashboard overview', usersResponse);
       }
 
       // Get activities with bookings and revenue data
@@ -83,36 +84,7 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
-  const handleUserRoleChange = async (userId: number, role: string) => {
-    try {
-      debugLog('ADMIN_DASHBOARD', `Changing user ${userId} role to ${role}`);
-      
-      // Call API to update user role
-      const response = await adminApi.updateUserRole(userId, role);
-      
-      if (response.status === 'OK' || response.status === '200 OK') {
-        debugLog('ADMIN_DASHBOARD', 'User role updated successfully', response.data);
-        
-        // Update local state
-        setUsers(users.map(user => 
-          user.id === userId ? { ...user, role } : user
-        ));
-      } else {
-        debugLog('ADMIN_DASHBOARD', 'Failed to update user role', response);
-        setError(`Failed to update role: ${response.message}`);
-      }
-    } catch (err: any) {
-      debugLog('ADMIN_DASHBOARD', 'Error updating user role', err);
-      setError('Failed to update user role: ' + (err.message || 'Unknown error'));
-    }
-  };
-
-  // Filter users based on search term
-  const filteredUsers = users.filter(user => 
-    user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Removed user role management code as it's now handled by the UserManagement component
   // Render stats card
   const StatCard = ({ 
     icon, 
@@ -296,79 +268,8 @@ const AdminDashboard = () => {
 
         {/* Users Management */}
         {activeTab === 'users' && (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold">Manage Users</h2>
-              <div className="mt-4 relative">
-                <input 
-                  type="text" 
-                  placeholder="Search users..." 
-                  className="w-full p-3 pl-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Search className="absolute left-3 top-3.5 text-gray-400" size={18} />
-              </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredUsers.map(user => (
-                    <tr key={user.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{user.firstName} {user.lastName}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-gray-500">{user.email}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs rounded-full ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <select
-                            value={user.role}
-                            onChange={(e) => handleUserRoleChange(user.id, e.target.value)}
-                            className="mr-2 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            <option value="USER">User</option>
-                            <option value="ADMIN">Admin</option>
-                          </select>
-                          <button className="text-gray-400 hover:text-gray-600">
-                            <MoreVertical size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              
-              {filteredUsers.length === 0 && (
-                <div className="py-8 text-center text-gray-500">
-                  No users found matching your search.
-                </div>
-              )}
-            </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <UserManagement />
           </div>
         )}
           {/* Activities Management */}

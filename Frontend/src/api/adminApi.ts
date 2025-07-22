@@ -81,6 +81,52 @@ export const updateUserRole = async (userId: number, role: string): Promise<ApiR
     }
 };
 
+// Edit user details
+export const editUser = async (userId: number, userData: any): Promise<ApiResponse> => {
+    try {
+        debugLog('ADMIN', `Editing user ${userId}`, userData);
+        
+        const response = await api.put(`/user/update/${userId}`, userData);
+        
+        debugLog('ADMIN', 'Edit user response', response.data);
+        
+        return response.data;
+    } catch (error: any) {
+        debugLog('ADMIN', 'Error editing user', error);
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            data: null,
+            status: 'ERROR',
+            message: 'Failed to edit user'
+        };
+    }
+};
+
+// Delete user
+export const deleteUser = async (userId: number): Promise<ApiResponse> => {
+    try {
+        debugLog('ADMIN', `Deleting user ${userId}`);
+        
+        const response = await api.delete(`/user/delete/${userId}`);
+        
+        debugLog('ADMIN', 'Delete user response', response.data);
+        
+        return response.data;
+    } catch (error: any) {
+        debugLog('ADMIN', 'Error deleting user', error);
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            data: null,
+            status: 'ERROR',
+            message: 'Failed to delete user'
+        };
+    }
+};
+
 // Check if current user has admin access
 export const checkAdminAccess = async (): Promise<ApiResponse> => {
     try {
