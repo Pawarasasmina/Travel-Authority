@@ -5,7 +5,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.travelauthority.backend.dto.ResponseDTO;
+import com.travelauthority.backend.entity.Booking;
 import com.travelauthority.backend.entity.User;
+import com.travelauthority.backend.repository.ActivityRepository;
+import com.travelauthority.backend.repository.BookingRepository;
 import com.travelauthority.backend.repository.UserRepository;
 import com.travelauthority.backend.service.AdminService;
 
@@ -22,6 +25,12 @@ public class AdminServiceImpl implements AdminService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private ActivityRepository activityRepository;
+    
+    @Autowired
+    private BookingRepository bookingRepository;
 
     @Override
     public ResponseDTO getDashboardData(String token) {
@@ -42,7 +51,23 @@ public class AdminServiceImpl implements AdminService {
             long totalUsers = userRepository.count();
             dashboardData.put("totalUsers", totalUsers);
             
-            // Add more stats as needed
+            // Count total activities
+            long totalActivities = activityRepository.count();
+            dashboardData.put("totalActivities", totalActivities);
+            
+            // Count total bookings
+            long totalBookings = bookingRepository.count();
+            dashboardData.put("totalBookings", totalBookings);
+            
+            // Get total revenue
+            Double totalRevenue = bookingRepository.getTotalRevenue();
+            dashboardData.put("totalRevenue", totalRevenue != null ? totalRevenue : 0.0);
+            
+            // Count bookings by status
+            for (Booking.BookingStatus status : Booking.BookingStatus.values()) {
+                Long count = bookingRepository.countByStatus(status);
+                dashboardData.put("bookingsBy" + status.name(), count != null ? count : 0);
+            }
             
             responseDTO.setData(dashboardData);
             responseDTO.setStatus(HttpStatus.OK.toString());

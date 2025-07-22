@@ -296,17 +296,24 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ activity, onSubmit, onCance
       // Convert string values to proper types before submission
       const preparedData = {
         ...formData,
-        price: Number(formData.price),
-        availability: Number(formData.availability),
-        rating: Number(formData.rating),
+        price: Number(formData.price) || 0,
+        availability: Number(formData.availability) || 0,
+        rating: Number(formData.rating) || 0,
         packages: formData.packages?.map(pkg => ({
           ...pkg,
-          price: Number(pkg.price)
-        })),
+          id: pkg.id || undefined, // Use undefined instead of null to match Package type
+          price: Number(pkg.price) || 0,
+          foreignAdultPrice: Number(pkg.foreignAdultPrice) || 0,
+          foreignKidPrice: Number(pkg.foreignKidPrice) || 0,
+          localAdultPrice: Number(pkg.localAdultPrice) || 0,
+          localKidPrice: Number(pkg.localKidPrice) || 0,
+          features: pkg.features || [],
+          images: pkg.images || []
+        })) || [],
         active: formData.active !== undefined ? Boolean(formData.active) : true
       };
       
-      onSubmit(preparedData);
+      onSubmit(preparedData as Activity);
     }
   };
 

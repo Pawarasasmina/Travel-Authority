@@ -6,6 +6,7 @@ import com.travelauthority.backend.dto.ResponseDTO;
 import com.travelauthority.backend.entity.Activity;
 import com.travelauthority.backend.entity.Package;
 import com.travelauthority.backend.repository.ActivityRepository;
+import com.travelauthority.backend.repository.BookingRepository;
 import com.travelauthority.backend.repository.PackageRepository;
 import com.travelauthority.backend.service.ActivityService;
 import lombok.extern.slf4j.Slf4j;

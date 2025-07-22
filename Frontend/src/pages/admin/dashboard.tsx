@@ -39,6 +39,7 @@ const AdminDashboard = () => {
       const statsResponse = await adminApi.getDashboardStats();
       if (statsResponse.status === 'OK' || statsResponse.status === '200 OK') {
         const dashboardData = statsResponse.data || {};
+        debugLog('ADMIN_DASHBOARD', 'Dashboard stats received', dashboardData);
         setStats({
           totalUsers: dashboardData.totalUsers || 0,
           totalActivities: dashboardData.totalActivities || 0,
@@ -57,20 +58,23 @@ const AdminDashboard = () => {
         debugLog('ADMIN_DASHBOARD', 'Users loaded', userData);
       } else {
         debugLog('ADMIN_DASHBOARD', 'Failed to get users', usersResponse);
-        // Fallback to sample data
-        setUsers([
-          { id: 1, firstName: 'John', lastName: 'Doe', email: 'john@example.com', role: 'USER' },
-          { id: 2, firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com', role: 'USER' },
-          { id: 3, firstName: 'Admin', lastName: 'User', email: 'admin@gmail.com', role: 'ADMIN' },
-        ]);
       }
 
-      // For activities, we're still using sample data until an activities API endpoint is created
-      setActivities([
-        { id: 1, title: 'Sigiriya Rock Fortress', bookings: 48, revenue: 4800 },
-        { id: 2, title: 'Whale Watching', bookings: 32, revenue: 3200 },
-        { id: 3, title: 'Yala Safari', bookings: 28, revenue: 2500 },
-      ]);
+      // Get activities with bookings and revenue data
+      const activitiesResponse = await adminApi.getAdminActivities();
+      if (activitiesResponse.status === 'OK' || activitiesResponse.status === '200 OK') {
+        const activitiesData = activitiesResponse.data || [];
+        debugLog('ADMIN_DASHBOARD', 'Activities loaded', activitiesData);
+        
+        // Sort activities by revenue (highest first)
+        const sortedActivities = [...activitiesData].sort((a, b) => 
+          (b.revenue || 0) - (a.revenue || 0)
+        );
+        
+        setActivities(sortedActivities);
+      } else {
+        debugLog('ADMIN_DASHBOARD', 'Failed to get activities', activitiesResponse);
+      }
 
       setLoading(false);
     } catch (err: any) {
@@ -135,7 +139,7 @@ const AdminDashboard = () => {
       </div>
       <h3 className="text-gray-500 text-sm font-medium">{title}</h3>
       <p className="text-2xl font-bold mt-1">
-        {title.includes('Revenue') ? `$${value.toLocaleString()}` : value.toLocaleString()}
+        {title.includes('Revenue') ? `Rs. ${value.toLocaleString()}` : value.toLocaleString()}
       </p>
     </div>
   );
@@ -269,15 +273,21 @@ const AdminDashboard = () => {
                   </button>
                 </div>
                 <div className="space-y-4">
-                  {activities.slice(0, 3).map(activity => (
-                    <div key={activity.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-md">
-                      <div>
-                        <h3 className="font-medium text-gray-800">{activity.title}</h3>
-                        <p className="text-sm text-gray-500">{activity.bookings} bookings</p>
+                  {activities.length > 0 ? (
+                    activities.slice(0, 3).map(activity => (
+                      <div key={activity.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-md">
+                        <div>
+                          <h3 className="font-medium text-gray-800">{activity.title}</h3>
+                          <p className="text-sm text-gray-500">{activity.bookings || 0} bookings</p>
+                        </div>
+                        <span className="text-green-600 font-semibold">Rs. {activity.revenue || 0}</span>
                       </div>
-                      <span className="text-green-600 font-semibold">${activity.revenue}</span>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      No activities found
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>

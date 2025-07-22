@@ -189,7 +189,8 @@ export const saveActivity = async (activityData: any): Promise<ApiResponse> => {
             rating: Number(activityData.rating) || 0,
             // Ensure packages array is properly formatted with pricing tiers
             packages: activityData.packages?.map((pkg: any) => ({
-                id: pkg.id || null,
+                // If id is 0, undefined, or null, don't include it
+                ...(pkg.id && pkg.id > 0 ? { id: pkg.id } : {}),
                 name: pkg.name,
                 description: pkg.description || '',
                 price: Number(pkg.price) || 0,
@@ -197,9 +198,9 @@ export const saveActivity = async (activityData: any): Promise<ApiResponse> => {
                 foreignKidPrice: Number(pkg.foreignKidPrice) || 0,
                 localAdultPrice: Number(pkg.localAdultPrice) || 0,
                 localKidPrice: Number(pkg.localKidPrice) || 0,
-                features: pkg.features || []
-                // Temporarily remove images to test
-                // images: pkg.images || []
+                features: pkg.features || [],
+                // Include images if they exist
+                images: pkg.images || []
             })) || [],
             // Ensure boolean fields are properly typed
             active: Boolean(activityData.active !== undefined ? activityData.active : true)
@@ -208,10 +209,14 @@ export const saveActivity = async (activityData: any): Promise<ApiResponse> => {
         let response;
         if (activityData.id && activityData.id > 0) {
             // Update existing activity
-            response = await api.put(`/activity/update/${activityData.id}`, cleanActivityData);
+            // Create a copy without the ID to avoid potential backend issues with ID handling
+            const { id, ...updateData } = cleanActivityData;
+            debugLog('ADMIN', `Updating activity ${activityData.id} with data`, updateData);
+            response = await api.put(`/activity/update/${activityData.id}`, updateData);
         } else {
             // Create new activity - remove id field for new activities
             const { id, ...newActivityData } = cleanActivityData;
+            debugLog('ADMIN', 'Creating new activity with data', newActivityData);
             response = await api.post(`/activity/save`, newActivityData);
         }
         
@@ -221,12 +226,22 @@ export const saveActivity = async (activityData: any): Promise<ApiResponse> => {
     } catch (error: any) {
         debugLog('ADMIN', 'Error saving activity', error);
         if (error.response) {
-            return error.response.data;
+            // Log detailed error information
+            debugLog('ADMIN', 'Server error response', {
+                status: error.response.status,
+                statusText: error.response.statusText,
+                data: error.response.data
+            });
+            return {
+                data: null,
+                status: 'ERROR',
+                message: error.response.data?.message || `Error ${error.response.status}: ${error.response.statusText}`
+            };
         }
         return {
             data: null,
             status: 'ERROR',
-            message: 'Failed to save activity'
+            message: error.message || 'Failed to save activity'
         };
     }
 };

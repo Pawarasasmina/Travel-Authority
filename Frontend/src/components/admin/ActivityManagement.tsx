@@ -112,7 +112,14 @@ const ActivityManagement: React.FC = () => {
       setLoading(true);
       debugLog('ADMIN_ACTIVITIES', 'Saving activity data', activityData);
       
+      debugLog('ADMIN_ACTIVITIES', 'Processing save activity request', { 
+        id: activityData.id, 
+        title: activityData.title,
+        packages: activityData.packages?.length || 0
+      });
+      
       const response = await adminApi.saveActivity(activityData);
+      
       if (response.status === 'OK' || response.status === '200 OK' || response.status === 'CREATED') {
         debugLog('ADMIN_ACTIVITIES', 'Activity saved successfully', response.data);
         setShowForm(false);
@@ -121,6 +128,8 @@ const ActivityManagement: React.FC = () => {
         alert('Activity saved successfully!');
       } else {
         debugLog('ADMIN_ACTIVITIES', 'Failed to save activity', response);
+        setError('Failed to save activity: ' + (response.message || 'Server returned an error'));
+        setTimeout(() => setError(null), 5000);
         alert('Failed to save activity: ' + (response.message || 'Server returned an error'));
       }
     } catch (err: any) {
@@ -287,9 +296,7 @@ const ActivityManagement: React.FC = () => {
                           <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                             Availability
                           </th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Bookings
-                          </th>
+                         
                           <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                             Status
                           </th>
@@ -330,14 +337,7 @@ const ActivityManagement: React.FC = () => {
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-900 font-medium">{activity.availability}</div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900 font-medium">
-                                  {activity.bookings || 0} bookings
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  Rs. {activity.revenue || 0} revenue
-                                </div>
-                              </td>
+                              
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span
                                   className={`inline-flex px-3 py-1 text-xs leading-5 font-semibold rounded-full ${

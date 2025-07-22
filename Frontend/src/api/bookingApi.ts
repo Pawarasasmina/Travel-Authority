@@ -89,7 +89,25 @@ export const getUserBookings = async (status?: string): Promise<ApiResponse> => 
     try {
         debugLog('BOOKING', 'Fetching user bookings', { status });
         
-        const params = status ? { status } : {};
+        // Get user email from localStorage to ensure we're only getting the current user's bookings
+        let userEmail: string | undefined;
+        try {
+            const userJson = localStorage.getItem('user');
+            if (userJson) {
+                const userData = JSON.parse(userJson);
+                userEmail = userData.email;
+            }
+        } catch (err) {
+            debugLog('BOOKING', 'Error parsing user data', err);
+        }
+        
+        // Include user email in params if available, along with status
+        const params: Record<string, string> = {};
+        if (status) params.status = status;
+        if (userEmail) params.userEmail = userEmail;
+        
+        // The backend should be authenticating and filtering based on JWT token,
+        // but we're also sending the email as an extra precaution
         const response = await api.get(BOOKING_PATH, { params });
         
         debugLog('BOOKING', 'User bookings response', response.data);

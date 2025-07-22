@@ -55,11 +55,23 @@ const PurchaseList = () => {
           statusParam = statusMapping[filter];
         }
         
+        // This should only return the current user's bookings based on their authentication token
         const response = await getUserBookings(statusParam);
         
         if (response.success && response.data) {
           // Convert backend booking format to frontend format
-          const formattedBookings: PurchaseItem[] = response.data.map((booking: any) => ({
+          // First, filter out bookings that don't belong to the current user
+          const userEmail = JSON.parse(localStorage.getItem('user') || '{}').email;
+          
+          // Filter bookings by userEmail if available in the response data
+          const filteredBookings = response.data.filter((booking: any) => {
+            // If booking has userEmail field, make sure it matches the current user
+            // If it doesn't have a userEmail field, we'll assume it's for the current user
+            // since the backend should be filtering based on the auth token
+            return !booking.userEmail || booking.userEmail === userEmail;
+          });
+          
+          const formattedBookings: PurchaseItem[] = filteredBookings.map((booking: any) => ({
             id: booking.id,
             title: booking.title,
             location: booking.location,

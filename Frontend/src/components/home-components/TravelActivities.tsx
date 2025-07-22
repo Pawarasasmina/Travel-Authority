@@ -12,8 +12,8 @@ const CATEGORIES = [
   "Sightseeing"
 ];
 
-// Map activities to categories
-const ACTIVITY_CATEGORIES: { [key: number]: string[] } = {
+// Map of default categories for activities in case they don't have categories defined
+const DEFAULT_CATEGORIES: { [key: number]: string[] } = {
   1: ["Adventure"], // White Water Rafting
   2: ["Cultural"], // Uva Tea Factory Tour
   3: ["Wildlife"], // Birds Safari Tour
@@ -92,7 +92,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ image, title, location, pri
         <h3 className="font-bold text-gray-800">{title}</h3>
         <p className="text-xs text-gray-500">{location}</p>
         <div className="mt-2 flex justify-between items-center">
-          <span className="text-sm font-semibold text-green-600">${price}</span>
+          <span className="text-sm font-semibold text-green-600">Rs. {price}</span>
           <div className="flex items-center">
             <span className="text-yellow-500">★</span>
             <span className="text-xs ml-1">{rating.toFixed(1)}</span>
@@ -113,17 +113,23 @@ const TravelActivities = () => {
   const [showFilters, setShowFilters] = useState(false);
   interface Activity {
     id: number;
-    image:string;
+    image: string;
     title: string;
     location: string;
     price: number;
     availability: number;
     rating: number;
-    // Add other fields if needed
+    description?: string;
+    duration?: string;
+    additionalInfo?: string;
+    highlights?: string[];
+    categories?: string[];
+    active?: boolean;
+    packages?: any[];
   }
   
   const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [ratingFilter, setRatingFilter] = useState<number>(0);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -150,50 +156,87 @@ const TravelActivities = () => {
     }
   }, [location.search]);
 
+  // Store all activities fetched from API
+  const [allActivities, setAllActivities] = useState<Activity[]>([]);
+
   // Fetch activities from backend
   useEffect(() => {
     setLoading(true);
     fetchAllActivities()
       .then((data) => {
+        setAllActivities(data);
         setFilteredActivities(data);
         setLoading(false);
       })
       .catch((err) => {
+        console.error("Error fetching activities:", err);
         setError('Failed to load activities');
         setLoading(false);
       });
   }, []);
 
+  // Function to get categories for an activity
+  const getActivityCategories = (activity: Activity): string[] => {
+    // Use activity's categories if available, otherwise use default mapping or empty array
+    if (activity.categories && Array.isArray(activity.categories) && activity.categories.length > 0) {
+      return activity.categories;
+    }
+    return DEFAULT_CATEGORIES[activity.id || 0] || [];
+  };
+
+  // Apply filtering and sorting whenever filter parameters change
   useEffect(() => {
-    let sorted = [...filteredActivities];
+    if (allActivities.length === 0) return;
     
+    // Start with all activities
+    let sorted = [...allActivities];
+    
+    // Apply filtering
+    sorted = sorted.filter(activity => {
+      // Get activity categories
+      const activityCategories = getActivityCategories(activity);
+      
+      // Apply filters
+      return (
+        // Price range filter
+        activity.price >= priceRange[0] && 
+        activity.price <= priceRange[1] &&
+        // Rating filter
+        activity.rating >= ratingFilter &&
+        // Category filter - check if no categories selected or activity matches selected categories
+        (selectedCategories.length === 0 || 
+          activityCategories.some(cat => selectedCategories.includes(cat)))
+      );
+    });
+    
+    // Apply sorting
     switch(sortOption) {
       case 'price-low':
-        sorted = sorted.sort((a, b) => a.price - b.price);
+        sorted.sort((a, b) => a.price - b.price);
         break;
       case 'price-high':
-        sorted = sorted.sort((a, b) => b.price - a.price);
+        sorted.sort((a, b) => b.price - a.price);
         break;
       case 'rating':
-        sorted = sorted.sort((a, b) => b.rating - a.rating);
+        sorted.sort((a, b) => b.rating - a.rating);
         break;
       case 'availability':
-        sorted = sorted.sort((a, b) => b.availability - a.availability);
+        sorted.sort((a, b) => b.availability - a.availability);
         break;
-      default:
-        sorted = [...filteredActivities];
+      // default case uses the current order
     }
     
-    sorted = sorted.filter(activity => 
-      activity.price >= priceRange[0] && 
-      activity.price <= priceRange[1] &&
-      activity.rating >= ratingFilter &&
-      (selectedCategories.length === 0 || 
-        ACTIVITY_CATEGORIES[activity.id].some(cat => selectedCategories.includes(cat)))
-    );
-    
+    // Update filtered activities
     setFilteredActivities(sorted);
-  }, [sortOption, priceRange, ratingFilter, selectedCategories]);
+    
+    console.log('Applied filters:', {
+      priceRange,
+      ratingFilter,
+      selectedCategories,
+      sortOption,
+      resultCount: sorted.length
+    });
+  }, [allActivities, sortOption, priceRange, ratingFilter, selectedCategories]);
   
   const toggleFilters = () => {
     setShowFilters(!showFilters);
@@ -352,8 +395,8 @@ const TravelActivities = () => {
           <div className="mb-6">
             <h4 className="font-medium mb-3">Price Range</h4>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-gray-700">${priceRange[0]}</span>
-              <span className="text-sm font-semibold text-gray-700">${priceRange[1]}</span>
+              <span className="text-sm font-semibold text-gray-700">Rs. {priceRange[0]}</span>
+              <span className="text-sm font-semibold text-gray-700">Rs. {priceRange[1]}</span>
             </div>
             <div className="relative mt-2 mb-4">
               <div className="absolute inset-0 h-1 mt-3 bg-green-100 rounded"></div>
@@ -367,7 +410,8 @@ const TravelActivities = () => {
               <input 
                 type="range" 
                 min="0" 
-                max="100" 
+                max="10000" 
+                step="100"
                 value={priceRange[0]} 
                 onChange={(e) => handlePriceChange(e, 0)}
                 className="absolute w-full h-1 mt-3 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-800 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
@@ -375,7 +419,8 @@ const TravelActivities = () => {
               <input 
                 type="range" 
                 min="0" 
-                max="100" 
+                max="10000" 
+                step="100"
                 value={priceRange[1]} 
                 onChange={(e) => handlePriceChange(e, 1)}
                 className="absolute w-full h-1 mt-3 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-800 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
@@ -397,7 +442,7 @@ const TravelActivities = () => {
               <input 
                 type="number" 
                 min={priceRange[0]} 
-                max="100" 
+                max="10000" 
                 value={priceRange[1]}
                 onChange={(e) => {
                   const value = Math.max(Number(e.target.value), priceRange[0]);
@@ -424,7 +469,7 @@ const TravelActivities = () => {
           
           <button 
             onClick={() => {
-              setPriceRange([0, 100]);
+              setPriceRange([0, 10000]);
               setRatingFilter(0);
               setSortOption('default');
               setSelectedCategories([]);
@@ -435,7 +480,18 @@ const TravelActivities = () => {
           </button>
           
           <button 
-            onClick={toggleFilters}
+            onClick={() => {
+              // Just close the filter panel - filtering is already applied automatically via useEffect
+              toggleFilters();
+              
+              // Log the current filter state for debugging
+              console.log('Applied filters:', {
+                priceRange,
+                ratingFilter,
+                selectedCategories,
+                resultCount: filteredActivities.length
+              });
+            }}
             className="w-full bg-green-800 text-white py-2 rounded-md hover:bg-green-900 transition"
           >
             Apply Filters
