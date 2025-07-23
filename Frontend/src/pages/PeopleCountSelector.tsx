@@ -351,6 +351,31 @@ const PeopleCountSelector = () => {
               <div className="text-xl font-semibold">{calculateTotal()}</div>
             </div>
           </div>
+
+          {/* Important Information - Moved here from date selection section */}
+          <div className="bg-orange-50 p-4 rounded-lg border border-orange-100 mt-4">
+            <h4 className="font-medium text-orange-800 mb-2">Important Information</h4>
+            <ul className="text-sm text-orange-700 space-y-1">
+              <li className="flex items-start">
+                <svg className="h-4 w-4 text-orange-600 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Please arrive 15 minutes before
+              </li>
+              <li className="flex items-start">
+                <svg className="h-4 w-4 text-orange-600 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
+                </svg>
+                Bring comfortable clothing and sunscreen
+              </li>
+              <li className="flex items-start">
+                <svg className="h-4 w-4 text-orange-600 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Booking confirmation will be sent to your email
+              </li>
+            </ul>
+          </div>
         </div>
         
         {/* Date Selection - Simple Calendar */}
@@ -489,35 +514,6 @@ const PeopleCountSelector = () => {
                 <div className="border-t border-orange-200 my-3"></div>
               </div>
             )}
-            
-            {/* Important Information */}
-            <h4 className="font-medium text-orange-800 mb-2">Important Information</h4>
-            <ul className="text-sm text-orange-700 space-y-1">
-              <li className="flex items-start">
-                <svg className="h-4 w-4 text-orange-600 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Activity starting time: 9:00 AM local time
-              </li>
-              <li className="flex items-start">
-                <svg className="h-4 w-4 text-orange-600 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Please arrive 15 minutes before start time
-              </li>
-              <li className="flex items-start">
-                <svg className="h-4 w-4 text-orange-600 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
-                </svg>
-                Bring comfortable clothing and sunscreen
-              </li>
-              <li className="flex items-start">
-                <svg className="h-4 w-4 text-orange-600 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                Booking confirmation will be sent to your email
-              </li>
-            </ul>
           </div>
         </div>
       </div>
