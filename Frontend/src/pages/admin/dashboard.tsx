@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Activity, CreditCard, Package, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, Activity, CreditCard, Package, ChevronDown, ChevronUp, Tag } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import * as adminApi from '../../api/adminApi';
 import { debugLog } from '../../utils/debug';
 import ActivityManagement from '../../components/admin/ActivityManagement';
 import BookingManagement from '../../components/admin/BookingManagement';
 import UserManagement from '../../components/admin/UserManagement';
+import OfferManagement from '../../components/admin/OfferManagement';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -170,6 +171,12 @@ const AdminDashboard = () => {
             >
               Bookings
             </button>
+            <button 
+              onClick={() => setActiveTab('offers')}
+              className={`pb-4 px-2 font-medium ${activeTab === 'offers' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Offers
+            </button>
           </nav>
         </div>
 
@@ -283,6 +290,13 @@ const AdminDashboard = () => {
         {activeTab === 'bookings' && (
           <div className="bg-white rounded-lg shadow-md p-6">
             <BookingManagement />
+          </div>
+        )}
+        
+        {/* Offers Management */}
+        {activeTab === 'offers' && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <OfferManagement />
           </div>
         )}
       </div>
