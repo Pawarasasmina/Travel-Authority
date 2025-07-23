@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { useAlert } from '../contexts/AlertContext';
 import PaymentModal from '../components/PaymentModal';
+import { checkAvailability } from '../api/activityApi';
 
 // Counter component for quantity selection
 const QuantityCounter = ({ 
@@ -71,6 +72,16 @@ const PeopleCountSelector = () => {
   // Add state for payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   
+  // Add state for availability check
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [availabilityData, setAvailabilityData] = useState<{
+    available: boolean;
+    bookedCount: number;
+    totalAvailability: number;
+    availableSpots: number;
+    message?: string;
+  } | null>(null);
+  
   // Price calculation based on package data from database
   const getPriceForType = (type: string) => {
     if (packageData) {
@@ -124,6 +135,42 @@ const PeopleCountSelector = () => {
     return `LKR ${total.toFixed(2)}`;
   };
 
+  // Check availability when date changes
+  const checkDateAvailability = async (date: string) => {
+    if (!date || !activityId) return;
+    
+    setIsCheckingAvailability(true);
+    try {
+      const response = await checkAvailability(activityId, packageData?.id, date);
+      
+      if (response.success) {
+        setAvailabilityData(response.data);
+        
+        // If the date is not available, show an alert
+        if (!response.data.available) {
+          await showAlert(
+            response.data.message || 
+            `This package is fully booked on this date. Maximum availability is ${response.data.totalAvailability} people and ${response.data.bookedCount} are already booked.`, 
+            "Not Available"
+          );
+          setSelectedDate(''); // Reset the date
+        }
+      } else {
+        throw new Error(response.message || "Failed to check availability");
+      }
+    } catch (error: any) {
+      console.error('Error checking availability:', error);
+      await showAlert(
+        error.message || "There was an error checking date availability. Please try again.",
+        "Error"
+      );
+    } finally {
+      setIsCheckingAvailability(false);
+    }
+  };
+
+  // Note: Date change handler is directly in the onChange of the input
+
   // Handle count changes
   const handleCountChange = (type: string, value: number) => {
     setCounts(prev => ({
@@ -143,6 +190,34 @@ const PeopleCountSelector = () => {
     if (!selectedDate) {
       await showAlert("Please select a date for your booking", "Date Required");
       return;
+    }
+    
+    // Check availability one more time before proceeding to payment
+    try {
+      setIsCheckingAvailability(true);
+      const response = await checkAvailability(activityId, packageData?.id, selectedDate);
+      
+      if (response.success) {
+        // Check if the requested number of people exceeds the available capacity
+        if (!response.data.available || totalPeople > response.data.availableSpots) {
+          await showAlert(
+            `Sorry, this package only has ${response.data.availableSpots} spots available for this date. Please reduce the number of people or choose another date.`, 
+            "Capacity Exceeded"
+          );
+          return;
+        }
+      } else {
+        throw new Error(response.message || "Failed to check availability");
+      }
+    } catch (error: any) {
+      console.error('Error checking availability:', error);
+      await showAlert(
+        error.message || "There was an error checking availability. Please try again.",
+        "Error"
+      );
+      return;
+    } finally {
+      setIsCheckingAvailability(false);
     }
     
     // Show payment modal instead of confirmation
@@ -288,14 +363,56 @@ const PeopleCountSelector = () => {
             <input 
               type="date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => {
+                const newDate = e.target.value;
+                setSelectedDate(newDate);
+                if (newDate) {
+                  checkDateAvailability(newDate);
+                }
+              }}
               className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+              min={new Date().toISOString().split('T')[0]} // Prevents selecting past dates
             />
           </div>
           
-          <div className="text-sm text-gray-500 mb-6">
-            Note: Choose a date for your activity.
+          <div className="flex items-center justify-between text-sm text-gray-500 mb-6">
+            <div>Note: Choose a date for your activity.</div>
+            {isCheckingAvailability && (
+              <div className="flex items-center text-orange-600">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Checking availability...
+              </div>
+            )}
           </div>
+          
+          {availabilityData && selectedDate && availabilityData.available && (
+            <div className={`p-3 rounded-md mb-6 ${
+              availabilityData.availableSpots > 5
+                ? "bg-green-50 border border-green-200"
+                : "bg-yellow-50 border border-yellow-200"
+            }`}>
+              <div className="flex items-center">
+                <svg className={`w-5 h-5 mr-2 ${
+                  availabilityData.availableSpots > 5
+                    ? "text-green-500"
+                    : "text-yellow-500"
+                }`} fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <p className="font-medium">
+                    {availabilityData.availableSpots} spots available
+                  </p>
+                  <p className="text-sm">
+                    {availabilityData.bookedCount} of {availabilityData.totalAvailability} already booked
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Package Features & Important Information */}
           <div className="bg-orange-50 p-4 rounded-lg border border-orange-100 mt-4">
@@ -410,8 +527,22 @@ const PeopleCountSelector = () => {
         <Button variant="outline" className="px-6" onClick={handleBack}>
           Back
         </Button>
-        <Button className="px-10" onClick={handleContinue}>
-          Check Out Now
+        <Button 
+          className="px-10" 
+          onClick={handleContinue} 
+          disabled={isCheckingAvailability}
+        >
+          {isCheckingAvailability ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing...
+            </>
+          ) : (
+            "Check Out Now"
+          )}
         </Button>
       </div>
       

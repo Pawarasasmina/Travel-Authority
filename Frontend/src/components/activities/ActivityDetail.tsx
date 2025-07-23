@@ -131,7 +131,7 @@ const ActivityDetail = () => {
             {/* Additional Information Section - Can add more content here */}
             <div className="bg-gray-50 rounded-lg p-6 my-8">
               <h2 className="text-2xl font-bold mb-4 text-gray-800">Additional Information</h2>
-              <p className="text-gray-700">This activity is perfect for adventure seekers and nature lovers alike. Bring comfortable clothes and get ready for an unforgettable experience in Sri Lanka.</p>
+              <p className="text-gray-700">{activity.additionalInfo}</p>
             </div>
           </div>
 

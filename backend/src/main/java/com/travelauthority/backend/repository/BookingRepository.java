@@ -39,4 +39,7 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
     // Get revenue by activity
     @Query("SELECT SUM(b.totalPrice) FROM Booking b WHERE b.activityId = :activityId AND (b.status = 'CONFIRMED' OR b.status = 'COMPLETED')")
     Double getRevenueByActivity(@Param("activityId") Integer activityId);
+    
+    // Find bookings by activity ID and booking date
+    List<Booking> findByActivityIdAndBookingDate(Integer activityId, String bookingDate);
 }

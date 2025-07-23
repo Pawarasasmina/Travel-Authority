@@ -1,8 +1,11 @@
 package com.travelauthority.backend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.travelauthority.backend.dto.AvailabilityCheckRequestDTO;
+import com.travelauthority.backend.dto.AvailabilityCheckResponseDTO;
 import com.travelauthority.backend.dto.BookingRequestDTO;
 import com.travelauthority.backend.dto.BookingResponseDTO;
+import com.travelauthority.backend.dto.ResponseDTO;
 import com.travelauthority.backend.entity.Booking;
 import com.travelauthority.backend.entity.Package;
 import com.travelauthority.backend.entity.User;
@@ -11,6 +14,7 @@ import com.travelauthority.backend.repository.PackageRepository;
 import com.travelauthority.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,9 +35,31 @@ public class BookingService {
     private final PackageRepository packageRepository;
     private final ObjectMapper objectMapper;
     
+    @Autowired
+    private AvailabilityService availabilityService;
+    
     @Transactional
     public BookingResponseDTO createBooking(BookingRequestDTO request, String userEmail) {
         try {
+            // Check availability before creating a booking
+            AvailabilityCheckRequestDTO availabilityRequest = new AvailabilityCheckRequestDTO();
+            availabilityRequest.setActivityId(request.getActivityId());
+            availabilityRequest.setDate(request.getBookingDate());
+            availabilityRequest.setRequestedCount(request.getTotalPersons());
+            
+            ResponseDTO<AvailabilityCheckResponseDTO> availabilityResponse = 
+                    availabilityService.checkAvailability(availabilityRequest);
+            
+            if (!availabilityResponse.getSuccess() || !availabilityResponse.getData().isAvailable()) {
+                String errorMessage = "Unable to create booking: ";
+                if (availabilityResponse.getData() != null && availabilityResponse.getData().getMessage() != null) {
+                    errorMessage += availabilityResponse.getData().getMessage();
+                } else {
+                    errorMessage += "Not enough availability for the selected date";
+                }
+                throw new RuntimeException(errorMessage);
+            }
+            
             // Find the user
             User user = userRepository.findByEmail(userEmail)
                     .orElseThrow(() -> new RuntimeException("User not found"));
