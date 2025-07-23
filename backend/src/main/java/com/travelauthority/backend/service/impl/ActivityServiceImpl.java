@@ -174,6 +174,25 @@ public class ActivityServiceImpl implements ActivityService {
         }
         return responseDTO;
     }
+    
+    @Override
+    public ResponseDTO<List<ActivityDTO>> getActiveActivities() {
+        ResponseDTO<List<ActivityDTO>> responseDTO = new ResponseDTO<>();
+        try {
+            List<Activity> activities = activityRepository.findByActiveTrue();
+            List<ActivityDTO> dtos = activities.stream().map(this::toDTO).collect(Collectors.toList());
+            responseDTO.setData(dtos);
+            responseDTO.setMessage("Active activities retrieved successfully");
+            responseDTO.setStatus(HttpStatus.OK.toString());
+            responseDTO.setSuccess(true);
+        } catch (Exception e) {
+            log.error("Error retrieving active activities: {}", e.getMessage());
+            responseDTO.setMessage("Error retrieving active activities");
+            responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
+            responseDTO.setSuccess(false);
+        }
+        return responseDTO;
+    }
 
     @Override
     public ResponseDTO<ActivityDTO> getActivityById(int id) {

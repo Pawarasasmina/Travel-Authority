@@ -31,6 +31,11 @@ public class ActivityController {
     public ResponseDTO<List<ActivityDTO>> getAllActivities() {
         return activityService.getAllActivities();
     }
+    
+    @GetMapping("/active")
+    public ResponseDTO<List<ActivityDTO>> getActiveActivities() {
+        return activityService.getActiveActivities();
+    }
 
     @GetMapping("/{id}")
     public ResponseDTO<ActivityDTO> getActivityById(@PathVariable int id) {

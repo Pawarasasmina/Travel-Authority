@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-import { fetchAllActivities } from '../../api/activityApi';
+import { fetchActiveActivities } from '../../api/activityApi';
 
 // Define available categories
 const CATEGORIES = [
@@ -159,10 +159,10 @@ const TravelActivities = () => {
   // Store all activities fetched from API
   const [allActivities, setAllActivities] = useState<Activity[]>([]);
 
-  // Fetch activities from backend
+  // Fetch active activities from backend
   useEffect(() => {
     setLoading(true);
-    fetchAllActivities()
+    fetchActiveActivities()
       .then((data) => {
         setAllActivities(data);
         setFilteredActivities(data);
