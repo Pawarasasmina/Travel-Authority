@@ -22,14 +22,22 @@ public class AvailabilityController {
     @GetMapping("/check-availability")
     public ResponseDTO<AvailabilityCheckResponseDTO> checkAvailability(
             @RequestParam Integer activityId,
-            @RequestParam(required = false) Integer packageId,
+            @RequestParam(required = false) Long packageId,
             @RequestParam String date) {
         
         log.info("Checking availability - activityId: {}, packageId: {}, date: {}", activityId, packageId, date);
         
+        // Debug info about the packageId
+        if (packageId == null) {
+            log.info("PackageId is null, will check general activity availability");
+        } else {
+            log.info("PackageId is specified: {}", packageId);
+        }
+        
         AvailabilityCheckRequestDTO request = new AvailabilityCheckRequestDTO();
         request.setActivityId(activityId);
         request.setDate(date);
+        request.setPackageId(packageId);
         // For this check, we're just checking if there's any availability
         request.setRequestedCount(1);
         

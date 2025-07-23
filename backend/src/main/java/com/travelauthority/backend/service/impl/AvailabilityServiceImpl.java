@@ -38,8 +38,8 @@ public class AvailabilityServiceImpl implements AvailabilityService {
         ResponseDTO<AvailabilityCheckResponseDTO> responseDTO = new ResponseDTO<>();
         
         try {
-            log.info("Checking availability for activity: {}, date: {}, requestedCount: {}", 
-                    request.getActivityId(), request.getDate(), request.getRequestedCount());
+            log.info("Checking availability for activity: {}, package: {}, date: {}, requestedCount: {}", 
+                    request.getActivityId(), request.getPackageId(), request.getDate(), request.getRequestedCount());
             
             // Validate input
             if (request.getActivityId() == null || request.getDate() == null) {
@@ -85,52 +85,129 @@ public class AvailabilityServiceImpl implements AvailabilityService {
             
             // Calculate the total number of people already booked for this date
             int totalBookedCount = 0;
-            for (Booking booking : bookings) {
-                // Only count bookings that are not cancelled
-                if (booking.getStatus() != Booking.BookingStatus.CANCELLED) {
-                    totalBookedCount += booking.getTotalPersons();
+            
+            // Debug information about the request
+            log.info("Processing availability check with packageId: {}", request.getPackageId());
+            
+            // If a package ID is specified, filter bookings for that specific package
+            if (request.getPackageId() != null && request.getPackageId() > 0) {
+                for (Booking booking : bookings) {
+                    // Only count bookings that are not cancelled and for this package
+                    if (booking.getStatus() != Booking.BookingStatus.CANCELLED && 
+                        booking.getPackageId() != null && 
+                        booking.getPackageId().equals(request.getPackageId())) {
+                        totalBookedCount += booking.getTotalPersons();
+                    }
                 }
+                
+                // Find package in the activity's packages
+                com.travelauthority.backend.entity.Package selectedPackage = null;
+                for (com.travelauthority.backend.entity.Package pkg : activity.getPackages()) {
+                    if (pkg.getId().equals(request.getPackageId())) {
+                        selectedPackage = pkg;
+                        break;
+                    }
+                }
+                
+                if (selectedPackage == null) {
+                    log.warn("Package with ID {} not found for activity {}", request.getPackageId(), activity.getId());
+                    responseDTO.setStatus(HttpStatus.NOT_FOUND.toString());
+                    responseDTO.setMessage("Package not found for this activity");
+                    responseDTO.setSuccess(false);
+                    return responseDTO;
+                }
+                
+                log.info("Found package: {}, with availability: {}", selectedPackage.getName(), selectedPackage.getAvailability());
+                
+                // Use the package-specific availability
+                int packageAvailability = selectedPackage.getAvailability();
+                int availableSpots = Math.max(0, packageAvailability - totalBookedCount);
+                
+                // Check if there's enough availability for the requested count
+                boolean isAvailable = true;
+                String message = "Available";
+                
+                if (request.getRequestedCount() != null && request.getRequestedCount() > availableSpots) {
+                    isAvailable = false;
+                    message = "Not enough availability for the requested number of people in this package";
+                }
+                
+                // If all spots are booked, set availability to false
+                if (availableSpots <= 0) {
+                    isAvailable = false;
+                    message = "This package is fully booked for the selected date";
+                }
+                
+                // Create response
+                AvailabilityCheckResponseDTO availabilityResponse = AvailabilityCheckResponseDTO.builder()
+                        .available(isAvailable)
+                        .activityId(activity.getId())
+                        .date(request.getDate())
+                        .totalAvailability(packageAvailability)
+                        .bookedCount(totalBookedCount)
+                        .availableSpots(availableSpots)
+                        .message(message)
+                        .build();
+                
+                log.info("Package availability check result: available={}, totalAvailability={}, bookedCount={}, availableSpots={}", 
+                        isAvailable, packageAvailability, totalBookedCount, availableSpots);
+                
+                responseDTO.setData(availabilityResponse);
+                responseDTO.setStatus(HttpStatus.OK.toString());
+                responseDTO.setMessage("Package availability checked successfully");
+                responseDTO.setSuccess(true);
+                
+                log.info("Package availability check result for activity: {}, package: {}, date: {}: available={}, spots={}", 
+                        activity.getId(), request.getPackageId(), request.getDate(), isAvailable, availableSpots);
+            } else {
+                // If no package is specified, use the activity's general availability
+                for (Booking booking : bookings) {
+                    // Only count bookings that are not cancelled
+                    if (booking.getStatus() != Booking.BookingStatus.CANCELLED) {
+                        totalBookedCount += booking.getTotalPersons();
+                    }
+                }
+                
+                // Get the activity's total availability
+                int totalAvailability = activity.getAvailability();
+                
+                // Calculate available spots
+                int availableSpots = Math.max(0, totalAvailability - totalBookedCount);
+                
+                // Check if there's enough availability for the requested count
+                boolean isAvailable = true;
+                String message = "Available";
+                
+                if (request.getRequestedCount() != null && request.getRequestedCount() > availableSpots) {
+                    isAvailable = false;
+                    message = "Not enough availability for the requested number of people";
+                }
+                
+                // If all spots are booked, set availability to false
+                if (availableSpots <= 0) {
+                    isAvailable = false;
+                    message = "This activity is fully booked for the selected date";
+                }
+                
+                // Create response
+                AvailabilityCheckResponseDTO availabilityResponse = AvailabilityCheckResponseDTO.builder()
+                        .available(isAvailable)
+                        .activityId(activity.getId())
+                        .date(request.getDate())
+                        .totalAvailability(totalAvailability)
+                        .bookedCount(totalBookedCount)
+                        .availableSpots(availableSpots)
+                        .message(message)
+                        .build();
+                
+                responseDTO.setData(availabilityResponse);
+                responseDTO.setStatus(HttpStatus.OK.toString());
+                responseDTO.setMessage("Activity availability checked successfully");
+                responseDTO.setSuccess(true);
+                
+                log.info("Activity availability check result for activity: {}, date: {}: available={}, totalAvailability={}, bookedCount={}, availableSpots={}", 
+                        activity.getId(), request.getDate(), isAvailable, totalAvailability, totalBookedCount, availableSpots);
             }
-            
-            // Get the activity's total availability
-            int totalAvailability = activity.getAvailability();
-            
-            // Calculate available spots
-            int availableSpots = Math.max(0, totalAvailability - totalBookedCount);
-            
-            // Check if there's enough availability for the requested count
-            boolean isAvailable = true;
-            String message = "Available";
-            
-            if (request.getRequestedCount() != null && request.getRequestedCount() > availableSpots) {
-                isAvailable = false;
-                message = "Not enough availability for the requested number of people";
-            }
-            
-            // If all spots are booked, set availability to false
-            if (availableSpots <= 0) {
-                isAvailable = false;
-                message = "This activity is fully booked for the selected date";
-            }
-            
-            // Create response
-            AvailabilityCheckResponseDTO availabilityResponse = AvailabilityCheckResponseDTO.builder()
-                    .available(isAvailable)
-                    .activityId(activity.getId())
-                    .date(request.getDate())
-                    .totalAvailability(totalAvailability)
-                    .bookedCount(totalBookedCount)
-                    .availableSpots(availableSpots)
-                    .message(message)
-                    .build();
-            
-            responseDTO.setData(availabilityResponse);
-            responseDTO.setStatus(HttpStatus.OK.toString());
-            responseDTO.setMessage("Availability checked successfully");
-            responseDTO.setSuccess(true);
-            
-            log.info("Availability check result for activity: {}, date: {}: available={}, spots={}", 
-                    activity.getId(), request.getDate(), isAvailable, availableSpots);
             
         } catch (Exception e) {
             log.error("Error checking availability: ", e);

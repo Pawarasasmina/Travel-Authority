@@ -13,6 +13,7 @@ public class PackageDTO {
     private String name;
     private String description;
     private Double price; // Base price for backward compatibility
+    private Integer availability;
     private Double foreignAdultPrice;
     private Double foreignKidPrice;
     private Double localAdultPrice;

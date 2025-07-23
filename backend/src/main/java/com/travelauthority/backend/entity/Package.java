@@ -26,6 +26,11 @@ public class Package {
     @Column(nullable = false)
     private Double price; // Base price for backward compatibility
 
+    // Package-specific availability count
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer availability = 0;
+
     // Specific pricing for different person types
     @Column(nullable = true)
     private Double foreignAdultPrice;

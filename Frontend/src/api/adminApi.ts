@@ -226,6 +226,11 @@ export const saveActivity = async (activityData: any): Promise<ApiResponse> => {
     try {
         debugLog('ADMIN', 'Saving activity', activityData);
         
+        // Debug log for packages' availability
+        activityData.packages?.forEach((pkg: any) => {
+            console.log(`[adminApi] Package ${pkg.name} - Availability before mapping: ${pkg.availability}, type: ${typeof pkg.availability}`);
+        });
+        
         // Clean up the activity data to match backend DTO expectations
         const cleanActivityData = {
             ...activityData,
@@ -240,6 +245,8 @@ export const saveActivity = async (activityData: any): Promise<ApiResponse> => {
                 name: pkg.name,
                 description: pkg.description || '',
                 price: Number(pkg.price) || 0,
+                // Fix: Add availability field to packages
+                availability: typeof pkg.availability === 'number' ? pkg.availability : 10,
                 foreignAdultPrice: Number(pkg.foreignAdultPrice) || 0,
                 foreignKidPrice: Number(pkg.foreignKidPrice) || 0,
                 localAdultPrice: Number(pkg.localAdultPrice) || 0,
@@ -251,6 +258,11 @@ export const saveActivity = async (activityData: any): Promise<ApiResponse> => {
             // Ensure boolean fields are properly typed
             active: Boolean(activityData.active !== undefined ? activityData.active : true)
         };
+        
+        // Debug log for packages after mapping
+        cleanActivityData.packages?.forEach((pkg: any) => {
+            console.log(`[adminApi] Package ${pkg.name} - Availability after mapping: ${pkg.availability}, type: ${typeof pkg.availability}`);
+        });
         
         let response;
         if (activityData.id && activityData.id > 0) {

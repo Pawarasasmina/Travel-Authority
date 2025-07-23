@@ -60,6 +60,7 @@ export interface Package {
     name: string;
     description: string;
     price: number; // Base price for backward compatibility
+    availability?: number; // Number of spots available for this specific package
     foreignAdultPrice: number;
     foreignKidPrice: number;
     localAdultPrice: number;

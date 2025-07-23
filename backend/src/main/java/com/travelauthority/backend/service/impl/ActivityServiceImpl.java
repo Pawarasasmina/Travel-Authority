@@ -57,6 +57,7 @@ public class ActivityServiceImpl implements ActivityService {
             .name(pkg.getName())
             .description(pkg.getDescription())
             .price(pkg.getPrice())
+            .availability(pkg.getAvailability())
             .foreignAdultPrice(pkg.getForeignAdultPrice())
             .foreignKidPrice(pkg.getForeignKidPrice())
             .localAdultPrice(pkg.getLocalAdultPrice())
@@ -70,12 +71,21 @@ public class ActivityServiceImpl implements ActivityService {
     private Package packageFromDTO(PackageDTO dto, Activity activity) {
         // Log the package details for debugging
         log.debug("Converting package DTO to entity: {}", dto);
+        log.info("Package {} availability: {}, type: {}", 
+                 dto.getName(), 
+                 dto.getAvailability(), 
+                 dto.getAvailability() != null ? dto.getAvailability().getClass().getSimpleName() : "null");
+        
+        // Calculate the availability value to use
+        Integer availabilityValue = dto.getAvailability() != null ? dto.getAvailability() : 0;
+        log.info("Using availability value: {} for package {}", availabilityValue, dto.getName());
         
         // Create a builder with null checks for all fields
         Package.PackageBuilder builder = Package.builder()
             .name(dto.getName() != null ? dto.getName() : "")
             .description(dto.getDescription())
             .price(dto.getPrice() != null ? dto.getPrice() : 0.0)
+            .availability(availabilityValue) // Use calculated value
             .foreignAdultPrice(dto.getForeignAdultPrice())
             .foreignKidPrice(dto.getForeignKidPrice())
             .localAdultPrice(dto.getLocalAdultPrice())
@@ -141,8 +151,23 @@ public class ActivityServiceImpl implements ActivityService {
     public ResponseDTO<ActivityDTO> saveActivity(ActivityDTO activityDTO) {
         ResponseDTO<ActivityDTO> responseDTO = new ResponseDTO<>();
         try {
+            // Debug logging for packages before conversion
+            if (activityDTO.getPackages() != null) {
+                for (PackageDTO pkg : activityDTO.getPackages()) {
+                    log.info("Received package DTO: {} with availability: {}", pkg.getName(), pkg.getAvailability());
+                }
+            }
+            
             Activity activity = toEntity(activityDTO);
             activity.setId(0); // Ensure new entity
+            
+            // Debug logging after conversion to entity
+            if (activity.getPackages() != null) {
+                for (Package pkg : activity.getPackages()) {
+                    log.info("Converted package entity: {} with availability: {}", pkg.getName(), pkg.getAvailability());
+                }
+            }
+            
             Activity savedActivity = activityRepository.save(activity);
             responseDTO.setData(toDTO(savedActivity));
             responseDTO.setMessage("Activity saved successfully");

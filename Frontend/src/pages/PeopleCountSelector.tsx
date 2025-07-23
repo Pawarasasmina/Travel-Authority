@@ -146,6 +146,9 @@ const PeopleCountSelector = () => {
       if (response.success) {
         setAvailabilityData(response.data);
         
+        // Debug information
+        console.log('Availability data:', response.data);
+        
         // If the date is not available, show an alert
         if (!response.data.available) {
           await showAlert(

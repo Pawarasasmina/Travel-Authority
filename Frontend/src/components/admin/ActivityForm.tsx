@@ -40,6 +40,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ activity, onSubmit, onCance
     name: '',
     description: '',
     price: 0,
+    availability: 0,
     foreignAdultPrice: 0,
     foreignKidPrice: 0,
     localAdultPrice: 0,
@@ -83,8 +84,8 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ activity, onSubmit, onCance
   const handlePackageChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    // Handle numeric fields for pricing
-    if (['price', 'foreignAdultPrice', 'foreignKidPrice', 'localAdultPrice', 'localKidPrice'].includes(name)) {
+    // Handle numeric fields for pricing and availability
+    if (['price', 'foreignAdultPrice', 'foreignKidPrice', 'localAdultPrice', 'localKidPrice', 'availability'].includes(name)) {
       setCurrentPackage({
         ...currentPackage,
         [name]: parseFloat(value) || 0
@@ -169,6 +170,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ activity, onSubmit, onCance
         name: '',
         description: '',
         price: 0,
+        availability: 0,
         foreignAdultPrice: 0,
         foreignKidPrice: 0,
         localAdultPrice: 0,
@@ -277,6 +279,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ activity, onSubmit, onCance
       formData.packages.forEach((pkg, index) => {
         if (!pkg.name?.trim()) newErrors[`package_${index}_name`] = 'Package name is required';
         if (pkg.price <= 0) newErrors[`package_${index}_price`] = 'Package price must be greater than 0';
+        if (pkg.availability === undefined || pkg.availability < 0) {
+          newErrors[`package_${index}_availability`] = 'Package availability cannot be negative';
+        }
       });
     }
     
@@ -293,23 +298,36 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ activity, onSubmit, onCance
     e.preventDefault();
     
     if (validateForm()) {
+      // Log original packages for debugging
+      console.log('Original packages before submission:', formData.packages);
+      
+      formData.packages?.forEach(pkg => {
+        console.log(`Package ${pkg.name} - Original availability value: ${pkg.availability}, type: ${typeof pkg.availability}`);
+      });
+      
       // Convert string values to proper types before submission
       const preparedData = {
         ...formData,
         price: Number(formData.price) || 0,
         availability: Number(formData.availability) || 0,
         rating: Number(formData.rating) || 0,
-        packages: formData.packages?.map(pkg => ({
-          ...pkg,
-          id: pkg.id || undefined, // Use undefined instead of null to match Package type
-          price: Number(pkg.price) || 0,
-          foreignAdultPrice: Number(pkg.foreignAdultPrice) || 0,
-          foreignKidPrice: Number(pkg.foreignKidPrice) || 0,
-          localAdultPrice: Number(pkg.localAdultPrice) || 0,
-          localKidPrice: Number(pkg.localKidPrice) || 0,
-          features: pkg.features || [],
-          images: pkg.images || []
-        })) || [],
+        packages: formData.packages?.map(pkg => {
+          // Log each package's availability for debugging
+          console.log(`Package "${pkg.name}" - availability: ${pkg.availability}`);
+          
+          return {
+            ...pkg,
+            id: pkg.id || undefined, // Use undefined instead of null to match Package type
+            price: Number(pkg.price) || 0,
+            availability: typeof pkg.availability === 'number' ? pkg.availability : 10, // Ensure we have a default availability but preserve 0
+            foreignAdultPrice: Number(pkg.foreignAdultPrice) || 0,
+            foreignKidPrice: Number(pkg.foreignKidPrice) || 0,
+            localAdultPrice: Number(pkg.localAdultPrice) || 0,
+            localKidPrice: Number(pkg.localKidPrice) || 0,
+            features: pkg.features || [],
+            images: pkg.images || []
+          };
+        }) || [],
         active: formData.active !== undefined ? Boolean(formData.active) : true
       };
       
@@ -378,6 +396,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ activity, onSubmit, onCance
               </div>
               <h3 className="text-xl font-semibold text-gray-800">Basic Information</h3>
             </div>
+            
+           
+            
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Title and Location */}
@@ -516,6 +537,9 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ activity, onSubmit, onCance
                       />
                       <Users className="absolute left-2.5 top-3.5 w-4 h-4 text-gray-400" />
                     </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Note: Each package can have its own availability limit
+                    </p>
                     {errors.availability && <p className="mt-1 text-xs text-red-600">{errors.availability}</p>}
                   </div>
 
@@ -801,6 +825,25 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ activity, onSubmit, onCance
                       placeholder="For backward compatibility"
                     />
                   </div>
+                  
+                  {/* Package Availability */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Package Availability (Spots) *
+                    </label>
+                    <input
+                      type="number"
+                      name="availability"
+                      value={currentPackage.availability}
+                      onChange={handlePackageChange}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-all duration-200 bg-white"
+                      placeholder="Number of spots available"
+                      min="0"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Maximum number of people who can book this specific package
+                    </p>
+                  </div>
                 </div>
 
                 {/* Package Features */}
@@ -1041,7 +1084,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ activity, onSubmit, onCance
             )}
           </div>
 
-          {/* Activity Status */}
+          {/* Activity Status 
           <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -1067,7 +1110,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ activity, onSubmit, onCance
                 </span>
               </label>
             </div>
-          </div>
+          </div> */}
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">

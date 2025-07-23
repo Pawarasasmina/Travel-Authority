@@ -39,15 +39,14 @@ export const checkAvailability = async (activityId: number, packageId: number | 
   try {
     debugLog('ACTIVITY', 'Checking availability', { activityId, packageId, date });
     
-    const res = await api.get(`${BASE_URL}/check-availability`, { 
+        const res = await api.get(`${BASE_URL}/check-availability`, { 
       params: { 
         activityId, 
-        packageId: packageId || 0,  // Use 0 if packageId is undefined
+        // Only include packageId if it exists
+        ...(packageId ? { packageId } : {}),
         date 
       } 
-    });
-    
-    debugLog('ACTIVITY', 'Availability response', res.data);
+    });    debugLog('ACTIVITY', 'Availability response', res.data);
     return res.data;
   } catch (error: any) {
     debugLog('ACTIVITY', 'Error checking availability', error);
