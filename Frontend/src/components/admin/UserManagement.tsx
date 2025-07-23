@@ -205,7 +205,12 @@ const UserManagement: React.FC = () => {
                   <h1 className="text-2xl font-bold text-white">User Management</h1>
                   <p className="text-gray-300">Manage and organize system users</p>
                 </div>
+                
               </div>
+              <div className="text-white text-right">
+                    <div className="text-3xl font-bold">{filteredUsers.length}</div>
+                    <div className="text-sm text-gray-300">Total Users</div>
+                  </div>
             </div>
           </div>
 

@@ -235,10 +235,11 @@ const QRVerificationModal: React.FC<QRVerificationModalProps> = ({
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
+          <div className="flex justify-end gap-4 mt-6 pt-6 border-t">
             <Button
               variant="outline"
               onClick={onClose}
+              className="px-6 py-2"
             >
               Close
             </Button>
@@ -248,7 +249,7 @@ const QRVerificationModal: React.FC<QRVerificationModalProps> = ({
                 <Button
                   variant="secondary"
                   disabled
-                  className="bg-gray-400 cursor-not-allowed"
+                  className="bg-gray-400 cursor-not-allowed px-6 py-2"
                 >
                   Already Completed
                 </Button>
@@ -256,7 +257,7 @@ const QRVerificationModal: React.FC<QRVerificationModalProps> = ({
                 <Button
                   variant="primary"
                   onClick={onMarkAsUsed}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 px-6 py-2"
                 >
                   Mark as Completed
                 </Button>

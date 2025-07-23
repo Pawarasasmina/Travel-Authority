@@ -1,42 +1,76 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PurchaseCard, { PurchaseItem } from '../components/ui/PurchaseCard';
-import { getUserBookings } from '../api/bookingApi';
+import { getUserBookings, cancelBooking } from '../api/bookingApi';
+import { useAlert } from "../contexts/AlertContext";
 
 const PurchaseList = () => {
+  const { showAlert } = useAlert();
   const [filter, setFilter] = useState<string>("All");
   const [purchaseData, setPurchaseData] = useState<PurchaseItem[]>([]);
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Function to handle booking cancellation
+  const handleCancelBooking = async (bookingId: string): Promise<void> => {
+    try {
+      const response = await cancelBooking(bookingId);
+      
+      if (response.success) {
+        // Update the UI to reflect the cancellation
+        setPurchaseData(prevData => 
+          prevData.map(item => 
+            item.id === bookingId ? { ...item, status: "CANCELLED" } : item
+          )
+        );
+        
+        // Refresh the status counts
+        fetchStatusCounts();
+        
+        // Show success message
+        await showAlert("Booking cancelled successfully", "Success");
+      } else {
+        throw new Error(response.message || "Failed to cancel booking");
+      }
+    } catch (error: any) {
+      console.error('Error cancelling booking:', error);
+      await showAlert(
+        error.message || "There was an error cancelling your booking. Please try again.",
+        "Error"
+      );
+      throw error; // Re-throw to be caught by the component
+    }
+  };
 
   // Fetch status counts for filter buttons
-  useEffect(() => {
-    const fetchStatusCounts = async () => {
-      try {
-        const backendStatuses = ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"];
-        const frontendStatuses = ["Pending", "Confirmed", "Completed", "Cancelled"];
-        const counts: Record<string, number> = {};
-        
-        // Fetch all bookings to get total count
-        const allResponse = await getUserBookings();
-        counts["All"] = allResponse.success && allResponse.data ? allResponse.data.length : 0;
-        
-        // Fetch counts for each status
-        for (let i = 0; i < backendStatuses.length; i++) {
-          const backendStatus = backendStatuses[i];
-          const frontendStatus = frontendStatuses[i];
-          const response = await getUserBookings(backendStatus);
-          counts[frontendStatus] = response.success && response.data ? response.data.length : 0;
-        }
-        
-        setStatusCounts(counts);
-      } catch (err) {
-        console.error('Error fetching status counts:', err);
+  const fetchStatusCounts = useCallback(async () => {
+    try {
+      const backendStatuses = ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"];
+      const frontendStatuses = ["Pending", "Confirmed", "Completed", "Cancelled"];
+      const counts: Record<string, number> = {};
+      
+      // Fetch all bookings to get total count
+      const allResponse = await getUserBookings();
+      counts["All"] = allResponse.success && allResponse.data ? allResponse.data.length : 0;
+      
+      // Fetch counts for each status
+      for (let i = 0; i < backendStatuses.length; i++) {
+        const backendStatus = backendStatuses[i];
+        const frontendStatus = frontendStatuses[i];
+        const response = await getUserBookings(backendStatus);
+        counts[frontendStatus] = response.success && response.data ? response.data.length : 0;
       }
-    };
+      
+      setStatusCounts(counts);
+    } catch (err) {
+      console.error('Error fetching status counts:', err);
+    }
+  }, []);  // Empty dependency array
 
+  // Initial fetch of status counts
+  useEffect(() => {
     fetchStatusCounts();
-  }, []); // Run once on component mount
+  }, [fetchStatusCounts]);
 
   // Fetch bookings from backend
   useEffect(() => {
@@ -171,7 +205,11 @@ const PurchaseList = () => {
               </div>
             ) : (
               purchaseData.map(purchase => (
-                <PurchaseCard key={purchase.id} purchase={purchase} />
+                <PurchaseCard 
+                  key={purchase.id} 
+                  purchase={purchase} 
+                  onCancelBooking={handleCancelBooking} 
+                />
               ))
             )}
           </div>

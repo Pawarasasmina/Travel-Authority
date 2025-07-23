@@ -2,8 +2,10 @@ import * as XLSX from 'xlsx';
 
 interface BookingData {
   id: string;
-  activityTitle: string;
-  activityLocation: string;
+  title: string;
+  location: string;
+  activityTitle?: string; // Added for compatibility with BookingManagement component
+  activityLocation?: string; // Added for compatibility with BookingManagement component
   userName?: string;
   userEmail?: string;
   bookingDate: string;
@@ -49,8 +51,8 @@ export const exportBookingsToExcel = (bookings: BookingData[], filename?: string
 
       return {
         'Booking ID': booking.id,
-        'Activity Title': booking.activityTitle,
-        'Activity Location': booking.activityLocation,
+        'Activity Title': booking.title || booking.activityTitle || 'N/A',
+        'Activity Location': booking.location || booking.activityLocation || 'N/A',
         'Customer Name': booking.userName || 'N/A',
         'Customer Email': booking.userEmail || 'N/A',
         'Booking Date': formatDateForExcel(booking.bookingTime),
@@ -136,7 +138,8 @@ export const exportFilteredBookingsToExcel = (
     if (filters.searchTerm) {
       const searchTerm = filters.searchTerm.toLowerCase();
       filteredBookings = filteredBookings.filter(booking =>
-        booking.activityTitle.toLowerCase().includes(searchTerm) ||
+        (booking.title?.toLowerCase().includes(searchTerm) || 
+        booking.activityTitle?.toLowerCase().includes(searchTerm)) ||
         booking.userEmail?.toLowerCase().includes(searchTerm) ||
         booking.userName?.toLowerCase().includes(searchTerm) ||
         booking.id.toLowerCase().includes(searchTerm)

@@ -23,4 +23,5 @@ public class ActivityDTO {
     private List<String> categories;
     private List<PackageDTO> packages;
     private Boolean active;
+    private String createdBy;
 }

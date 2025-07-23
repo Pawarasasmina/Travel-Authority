@@ -177,7 +177,7 @@ const AdminDashboard = () => {
         {activeTab === 'dashboard' && (
           <div>
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+           {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <StatCard 
                 icon={<Users size={24} className="text-blue-600" />} 
                 title="Total Users" 
@@ -203,7 +203,7 @@ const AdminDashboard = () => {
                 value={stats.totalRevenue} 
                 trend={12} 
               />
-            </div>
+            </div>*/}
 
             {/* Recent Activity Overview */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -252,7 +252,7 @@ const AdminDashboard = () => {
                           <h3 className="font-medium text-gray-800">{activity.title}</h3>
                           <p className="text-sm text-gray-500">{activity.bookings || 0} bookings</p>
                         </div>
-                        <span className="text-green-600 font-semibold">Rs. {activity.revenue || 0}</span>
+                        <span className="text-green-600 font-semibold">Rs. {activity.price || 0}</span>
                       </div>
                     ))
                   ) : (

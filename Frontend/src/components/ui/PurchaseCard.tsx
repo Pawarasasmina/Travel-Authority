@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Button from './Button';
 import { useNavigate } from 'react-router-dom';
 import { generateSimpleTicketPDF } from '../../utils/pdfGenerator';
@@ -18,6 +18,7 @@ export interface PurchaseItem {
 interface PurchaseCardProps {
   purchase: PurchaseItem;
   className?: string;
+  onCancelBooking?: (bookingId: string) => Promise<void>;
 }
 
 // Helper function to get status color
@@ -42,11 +43,27 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('en-US', options);
 };
 
-const PurchaseCard: React.FC<PurchaseCardProps> = ({ purchase, className = '' }) => {
+const PurchaseCard: React.FC<PurchaseCardProps> = ({ purchase, className = '', onCancelBooking }) => {
   const navigate = useNavigate();
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const handleViewDetails = () => {
     navigate(`/bookings/${purchase.id}`);
+  };
+
+  const handleCancelBooking = async () => {
+    if (!onCancelBooking) return;
+    
+    if (window.confirm('Are you sure you want to cancel this booking?')) {
+      setIsCancelling(true);
+      try {
+        await onCancelBooking(purchase.id);
+      } catch (error) {
+        console.error('Error cancelling booking:', error);
+      } finally {
+        setIsCancelling(false);
+      }
+    }
   };
 
   const handleDownloadTicket = async () => {
@@ -138,8 +155,12 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({ purchase, className = '' })
           )}
           
           {(purchase.status.toUpperCase() === "CONFIRMED" || purchase.status.toUpperCase() === "PENDING") && (
-            <button className="text-gray-500 hover:text-red-500 text-sm">
-              Cancel Booking
+            <button 
+              className="text-gray-500 hover:text-red-500 text-sm" 
+              onClick={handleCancelBooking}
+              disabled={isCancelling}
+            >
+              {isCancelling ? 'Cancelling...' : 'Cancel Booking'}
             </button>
           )}
         </div>

@@ -120,12 +120,16 @@ const ActivityManagement: React.FC = () => {
       
       const response = await adminApi.saveActivity(activityData);
       
-      if (response.status === 'OK' || response.status === '200 OK' || response.status === 'CREATED') {
+      debugLog('ADMIN_ACTIVITIES', 'Response status:', response.status);
+      
+      if (response.status === 'OK' || response.status === '200 OK' || response.status === 'CREATED' || 
+          response.status === '201 CREATED' || response.success === true) {
         debugLog('ADMIN_ACTIVITIES', 'Activity saved successfully', response.data);
         setShowForm(false);
+        // Set success message in the UI
+        setSuccessMessage(`Activity "${activityData.title}" saved successfully!`);
+        setTimeout(() => setSuccessMessage(null), 5000);
         setRefreshKey(prevKey => prevKey + 1); // Trigger re-fetch
-        // Show success message
-        alert('Activity saved successfully!');
       } else {
         debugLog('ADMIN_ACTIVITIES', 'Failed to save activity', response);
         setError('Failed to save activity: ' + (response.message || 'Server returned an error'));
@@ -322,9 +326,13 @@ const ActivityManagement: React.FC = () => {
                                     <div className="text-sm font-semibold text-gray-900">
                                       {activity.title}
                                     </div>
-                                    <div className="text-sm text-gray-500">
-                                      {activity.createdBy ? `Added by ${activity.createdBy.name}` : 'Unknown creator'}
-                                    </div>
+                                   {/*} <div className="text-sm text-gray-500">
+                                      {typeof activity.createdBy === 'string' && activity.createdBy 
+                                        ? `Added by ${activity.createdBy}` 
+                                        : activity.createdBy?.name 
+                                          ? `Added by ${activity.createdBy.name}` 
+                                          : 'Unknown creator'}
+                                    </div> */}
                                   </div>
                                 </div>
                               </td>

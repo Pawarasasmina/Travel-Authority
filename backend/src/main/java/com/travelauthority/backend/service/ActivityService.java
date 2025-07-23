@@ -3,11 +3,13 @@ package com.travelauthority.backend.service;
 import com.travelauthority.backend.dto.ActivityDTO;
 import com.travelauthority.backend.dto.ResponseDTO;
 
+import java.util.List;
+
 public interface ActivityService {
-    ResponseDTO saveActivity(ActivityDTO activityDTO);
-    ResponseDTO getAllActivities();
-    ResponseDTO getActivityById(int id);
-    ResponseDTO updateActivity(int id, ActivityDTO activityDTO);
-    ResponseDTO deleteActivity(int id);
-    ResponseDTO deleteAllActivities();
+    ResponseDTO<ActivityDTO> saveActivity(ActivityDTO activityDTO);
+    ResponseDTO<List<ActivityDTO>> getAllActivities();
+    ResponseDTO<ActivityDTO> getActivityById(int id);
+    ResponseDTO<ActivityDTO> updateActivity(int id, ActivityDTO activityDTO);
+    ResponseDTO<Void> deleteActivity(int id);
+    ResponseDTO<Void> deleteAllActivities();
 }

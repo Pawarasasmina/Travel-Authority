@@ -22,6 +22,9 @@ public class Activity {
     private int availability;
     private double rating;
     
+    // Track the creator of the activity
+    private String createdBy;
+    
     @Column(length = 2000)
     private String description;
     
