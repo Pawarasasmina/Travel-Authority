@@ -23,4 +23,8 @@ public class Offer {
     @Column(nullable = false)
     @Builder.Default
     private Boolean active = true;
+    
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean selectedForHomepage = false;
 }

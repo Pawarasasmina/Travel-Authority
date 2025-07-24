@@ -150,6 +150,52 @@ export const checkAdminAccess = async (): Promise<ApiResponse> => {
     }
 };
 
+// Check if current user has travel activity owner access
+export const checkTravelOwnerAccess = async (): Promise<ApiResponse> => {
+    try {
+        debugLog('ADMIN', 'Checking travel owner access');
+        
+        const response = await api.get(`${ADMIN_PATH}/check-owner`);
+        
+        debugLog('ADMIN', 'Travel owner access check response', response.data);
+        
+        return response.data;
+    } catch (error: any) {
+        debugLog('ADMIN', 'Error checking travel owner access', error);
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            data: null,
+            status: 'ERROR',
+            message: 'Failed to check travel owner access'
+        };
+    }
+};
+
+// Get travel owner dashboard stats
+export const getTravelOwnerStats = async (): Promise<ApiResponse> => {
+    try {
+        debugLog('ADMIN', 'Fetching travel owner dashboard stats');
+        
+        const response = await api.get(`${ADMIN_PATH}/owner/dashboard`);
+        
+        debugLog('ADMIN', 'Travel owner dashboard stats response', response.data);
+        
+        return response.data;
+    } catch (error: any) {
+        debugLog('ADMIN', 'Error fetching travel owner dashboard stats', error);
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            data: null,
+            status: 'ERROR',
+            message: 'Failed to fetch travel owner dashboard stats'
+        };
+    }
+};
+
 // Get admin activities
 export const getAdminActivities = async (): Promise<ApiResponse> => {
     try {

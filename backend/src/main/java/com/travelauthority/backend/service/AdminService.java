@@ -24,4 +24,18 @@ public interface AdminService {
      * @return ResponseDTO with access status
      */
     ResponseDTO checkAdminAccess(String token);
+    
+    /**
+     * Check if a user has travel activity owner access
+     * @param token Authentication token
+     * @return ResponseDTO with access status
+     */
+    ResponseDTO checkTravelActivityOwnerAccess(String token);
+    
+    /**
+     * Get dashboard data for travel activity owner users
+     * @param token Authentication token
+     * @return ResponseDTO with dashboard data
+     */
+    ResponseDTO getTravelOwnerDashboardData(String token);
 }

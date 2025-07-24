@@ -91,6 +91,32 @@ public class AdminController {
         }
     }
     
+    @GetMapping("/check-owner")
+    public ResponseEntity<ResponseDTO> checkTravelActivityOwnerAccess(@RequestHeader("Authorization") String authHeader) {
+        log.info("Checking travel activity owner access");
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
+        ResponseDTO response = adminService.checkTravelActivityOwnerAccess(token);
+        
+        if (response.getStatus().equals(HttpStatus.OK.toString())) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.valueOf(Integer.parseInt(response.getStatus().split(" ")[0]))).body(response);
+        }
+    }
+    
+    @GetMapping("/owner/dashboard")
+    public ResponseEntity<ResponseDTO> getTravelOwnerDashboardData(@RequestHeader("Authorization") String authHeader) {
+        log.info("Travel activity owner dashboard data request received");
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
+        ResponseDTO response = adminService.getTravelOwnerDashboardData(token);
+        
+        if (response.getStatus().equals(HttpStatus.OK.toString())) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.valueOf(Integer.parseInt(response.getStatus().split(" ")[0]))).body(response);
+        }
+    }
+    
     @GetMapping("/bookings")
     public ResponseEntity<ResponseDTO<List<BookingResponseDTO>>> getAllBookings() {
         log.info("Admin request to get all bookings");

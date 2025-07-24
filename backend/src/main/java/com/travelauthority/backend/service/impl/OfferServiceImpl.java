@@ -89,6 +89,52 @@ public class OfferServiceImpl implements OfferService {
             return responseDTO;
         }
     }
+    
+    @Override
+    public ResponseDTO<List<OfferDTO>> getOffersByOwner(String ownerEmail) {
+        ResponseDTO<List<OfferDTO>> responseDTO = new ResponseDTO<>();
+        
+        try {
+            List<Offer> offers = offerRepository.findByCreatedBy(ownerEmail);
+            List<OfferDTO> offerDTOs = offers.stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+            
+            responseDTO.setStatus(HttpStatus.OK.toString());
+            responseDTO.setMessage("Owner offers retrieved successfully");
+            responseDTO.setData(offerDTOs);
+            
+            return responseDTO;
+        } catch (Exception e) {
+            log.error("Error retrieving owner offers: {}", e.getMessage());
+            responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
+            responseDTO.setMessage("Error retrieving owner offers: " + e.getMessage());
+            return responseDTO;
+        }
+    }
+    
+    @Override
+    public ResponseDTO<List<OfferDTO>> getSelectedOffers() {
+        ResponseDTO<List<OfferDTO>> responseDTO = new ResponseDTO<>();
+        
+        try {
+            List<Offer> offers = offerRepository.findBySelectedForHomepageTrue();
+            List<OfferDTO> offerDTOs = offers.stream()
+                    .map(this::mapToDTO)
+                    .collect(Collectors.toList());
+            
+            responseDTO.setStatus(HttpStatus.OK.toString());
+            responseDTO.setMessage("Selected homepage offers retrieved successfully");
+            responseDTO.setData(offerDTOs);
+            
+            return responseDTO;
+        } catch (Exception e) {
+            log.error("Error retrieving selected homepage offers: {}", e.getMessage());
+            responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
+            responseDTO.setMessage("Error retrieving selected homepage offers: " + e.getMessage());
+            return responseDTO;
+        }
+    }
 
     @Override
     public ResponseDTO<OfferDTO> getOfferById(int id) {
@@ -144,6 +190,11 @@ public class OfferServiceImpl implements OfferService {
                 existingOffer.setActive(offerDTO.getActive());
             }
             
+            // Update selectedForHomepage status if provided
+            if (offerDTO.getSelectedForHomepage() != null) {
+                existingOffer.setSelectedForHomepage(offerDTO.getSelectedForHomepage());
+            }
+            
             Offer updatedOffer = offerRepository.save(existingOffer);
             
             responseDTO.setStatus(HttpStatus.OK.toString());
@@ -155,6 +206,39 @@ public class OfferServiceImpl implements OfferService {
             log.error("Error updating offer: {}", e.getMessage());
             responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
             responseDTO.setMessage("Error updating offer: " + e.getMessage());
+            return responseDTO;
+        }
+    }
+    
+    @Override
+    public ResponseDTO<OfferDTO> toggleHomepageSelection(int id, boolean selected) {
+        ResponseDTO<OfferDTO> responseDTO = new ResponseDTO<>();
+        
+        try {
+            Optional<Offer> offerOptional = offerRepository.findById(id);
+            
+            if (offerOptional.isEmpty()) {
+                responseDTO.setStatus(HttpStatus.NOT_FOUND.toString());
+                responseDTO.setMessage("Offer not found with ID: " + id);
+                return responseDTO;
+            }
+            
+            Offer existingOffer = offerOptional.get();
+            existingOffer.setSelectedForHomepage(selected);
+            
+            Offer updatedOffer = offerRepository.save(existingOffer);
+            
+            responseDTO.setStatus(HttpStatus.OK.toString());
+            responseDTO.setMessage(selected 
+                ? "Offer selected for homepage successfully" 
+                : "Offer removed from homepage successfully");
+            responseDTO.setData(mapToDTO(updatedOffer));
+            
+            return responseDTO;
+        } catch (Exception e) {
+            log.error("Error toggling homepage selection: {}", e.getMessage());
+            responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
+            responseDTO.setMessage("Error toggling homepage selection: " + e.getMessage());
             return responseDTO;
         }
     }
@@ -211,6 +295,7 @@ public class OfferServiceImpl implements OfferService {
                 .image(offer.getImage())
                 .discount(offer.getDiscount())
                 .active(offer.getActive())
+                .selectedForHomepage(offer.getSelectedForHomepage())
                 .createdBy(offer.getCreatedBy())
                 .build();
     }
@@ -222,6 +307,7 @@ public class OfferServiceImpl implements OfferService {
                 .image(offerDTO.getImage())
                 .discount(offerDTO.getDiscount())
                 .active(offerDTO.getActive() != null ? offerDTO.getActive() : true)
+                .selectedForHomepage(offerDTO.getSelectedForHomepage() != null ? offerDTO.getSelectedForHomepage() : false)
                 .createdBy(offerDTO.getCreatedBy())
                 .build();
     }

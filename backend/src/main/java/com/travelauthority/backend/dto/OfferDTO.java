@@ -12,5 +12,6 @@ public class OfferDTO {
     private String image;
     private String discount;
     private Boolean active;
+    private Boolean selectedForHomepage;
     private String createdBy;
 }

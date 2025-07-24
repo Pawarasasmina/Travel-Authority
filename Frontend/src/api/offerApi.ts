@@ -40,6 +40,22 @@ export const getAllOffers = async (): Promise<ApiResponse> => {
         };
     }
 };
+        
+// Get offers by owner email
+export const getOffersByOwner = async (email: string): Promise<any[]> => {
+    try {
+        debugLog('OFFERS', `Fetching offers for owner: ${email}`);
+        
+        const response = await api.get(`${OFFERS_PATH}/owner/${email}`);
+        
+        debugLog('OFFERS', 'Owner offers response', response.data);
+        
+        return response.data.data || [];
+    } catch (error: any) {
+        debugLog('OFFERS', 'Error fetching owner offers', error);
+        return [];
+    }
+};
 
 // Get active offers
 export const getActiveOffers = async (): Promise<ApiResponse> => {

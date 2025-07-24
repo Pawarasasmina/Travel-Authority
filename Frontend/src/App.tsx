@@ -18,8 +18,10 @@ import PeopleCountSelector from './pages/PeopleCountSelector';
 import PaymentSuccess from './pages/PaymentSuccess';
 import NotificationsPage from './pages/notifications';
 import AdminDashboard from './pages/admin/dashboard';
+import TravelOwnerDashboard from './pages/admin/travel-owner-dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import TravelOwnerRoute from './components/TravelOwnerRoute';
 import { monitorUserData, fixUserData } from './utils/userDataMonitor';
 
 
@@ -81,6 +83,9 @@ const AppContent = () => {
         
         {/* Admin Routes */}
         <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        
+        {/* Travel Activity Owner Routes */}
+        <Route path="/owner/dashboard" element={<TravelOwnerRoute><TravelOwnerDashboard /></TravelOwnerRoute>} />
       </Routes>
       {showFooter && <Footer />}
     </>

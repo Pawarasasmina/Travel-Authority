@@ -322,6 +322,7 @@ const UserManagement: React.FC = () => {
                                 >
                                   <option value="USER">User</option>
                                   <option value="ADMIN">Admin</option>
+                                  <option value="TRAVEL_ACTIVITY_OWNER">Travel Activity Owner</option>
                                 </select>
                                 <button 
                                   onClick={() => handleEdit(user)}
@@ -394,6 +395,7 @@ const UserManagement: React.FC = () => {
                           >
                             <option value="USER">User</option>
                             <option value="ADMIN">Admin</option>
+                            <option value="TRAVEL_ACTIVITY_OWNER">Travel Activity Owner</option>
                           </select>
                           <div className="flex items-center space-x-2">
                             <button 

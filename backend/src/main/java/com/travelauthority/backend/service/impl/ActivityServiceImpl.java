@@ -346,4 +346,46 @@ public class ActivityServiceImpl implements ActivityService {
         }
         return responseDTO;
     }
+    
+    @Override
+    public ResponseDTO<List<ActivityDTO>> getActivitiesByOwner(String ownerEmail) {
+        ResponseDTO<List<ActivityDTO>> responseDTO = new ResponseDTO<>();
+        try {
+            log.info("Retrieving activities for owner: {}", ownerEmail);
+            List<Activity> activities = activityRepository.findByCreatedBy(ownerEmail);
+            List<ActivityDTO> dtos = activities.stream().map(this::toDTO).collect(Collectors.toList());
+            responseDTO.setData(dtos);
+            responseDTO.setMessage("Owner activities retrieved successfully");
+            responseDTO.setStatus(HttpStatus.OK.toString());
+            responseDTO.setSuccess(true);
+            log.info("Retrieved {} activities for owner {}", dtos.size(), ownerEmail);
+        } catch (Exception e) {
+            log.error("Error retrieving owner activities: {}", e.getMessage());
+            responseDTO.setMessage("Error retrieving owner activities");
+            responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
+            responseDTO.setSuccess(false);
+        }
+        return responseDTO;
+    }
+    
+    @Override
+    public ResponseDTO<List<ActivityDTO>> getActiveActivitiesByOwner(String ownerEmail) {
+        ResponseDTO<List<ActivityDTO>> responseDTO = new ResponseDTO<>();
+        try {
+            log.info("Retrieving active activities for owner: {}", ownerEmail);
+            List<Activity> activities = activityRepository.findByCreatedByAndActiveTrue(ownerEmail);
+            List<ActivityDTO> dtos = activities.stream().map(this::toDTO).collect(Collectors.toList());
+            responseDTO.setData(dtos);
+            responseDTO.setMessage("Active owner activities retrieved successfully");
+            responseDTO.setStatus(HttpStatus.OK.toString());
+            responseDTO.setSuccess(true);
+            log.info("Retrieved {} active activities for owner {}", dtos.size(), ownerEmail);
+        } catch (Exception e) {
+            log.error("Error retrieving active owner activities: {}", e.getMessage());
+            responseDTO.setMessage("Error retrieving active owner activities");
+            responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
+            responseDTO.setSuccess(false);
+        }
+        return responseDTO;
+    }
 }

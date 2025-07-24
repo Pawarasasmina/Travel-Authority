@@ -61,4 +61,9 @@ public class OfferController {
     public ResponseDTO<Void> deleteAllOffers() {
         return offerService.deleteAllOffers();
     }
+    
+    @GetMapping("/owner/{email}")
+    public ResponseDTO<List<OfferDTO>> getOffersByOwner(@PathVariable String email) {
+        return offerService.getOffersByOwner(email);
+    }
 }

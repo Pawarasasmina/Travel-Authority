@@ -9,6 +9,8 @@ public interface ActivityService {
     ResponseDTO<ActivityDTO> saveActivity(ActivityDTO activityDTO);
     ResponseDTO<List<ActivityDTO>> getAllActivities();
     ResponseDTO<List<ActivityDTO>> getActiveActivities();
+    ResponseDTO<List<ActivityDTO>> getActivitiesByOwner(String ownerEmail);
+    ResponseDTO<List<ActivityDTO>> getActiveActivitiesByOwner(String ownerEmail);
     ResponseDTO<ActivityDTO> getActivityById(int id);
     ResponseDTO<ActivityDTO> updateActivity(int id, ActivityDTO activityDTO);
     ResponseDTO<Void> deleteActivity(int id);

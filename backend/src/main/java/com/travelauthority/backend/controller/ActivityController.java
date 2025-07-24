@@ -5,6 +5,8 @@ import com.travelauthority.backend.dto.ResponseDTO;
 import com.travelauthority.backend.service.ActivityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import java.util.Base64;
 
 import java.util.List;
 
@@ -60,5 +62,15 @@ public class ActivityController {
     @DeleteMapping("/delete/all")
     public ResponseDTO<Void> deleteAllActivities() {
         return activityService.deleteAllActivities();
+    }
+    
+    @GetMapping("/owner/{email}")
+    public ResponseDTO<List<ActivityDTO>> getActivitiesByOwner(@PathVariable String email) {
+        return activityService.getActivitiesByOwner(email);
+    }
+    
+    @GetMapping("/owner/active/{email}")
+    public ResponseDTO<List<ActivityDTO>> getActiveActivitiesByOwner(@PathVariable String email) {
+        return activityService.getActiveActivitiesByOwner(email);
     }
 }

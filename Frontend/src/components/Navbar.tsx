@@ -115,6 +115,27 @@ const Navbar: React.FC<NavbarProps> = ({ transparent = false }) => {  const navi
               <span className="text-white text-xs hidden md:block">
                 {user?.firstName}
               </span>
+              
+              {/* Admin Dashboard Link */}
+              {user?.role === 'ADMIN' && (
+                <button 
+                  className="text-white bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded-md text-xs transition hidden md:block" 
+                  onClick={() => navigate('/admin/dashboard')}
+                >
+                  Admin Dashboard
+                </button>
+              )}
+              
+              {/* Travel Activity Owner Dashboard Link */}
+              {user?.role === 'TRAVEL_ACTIVITY_OWNER' && (
+                <button 
+                  className="text-white bg-green-600 hover:bg-green-700 px-2 py-1 rounded-md text-xs transition hidden md:block" 
+                  onClick={() => navigate('/owner/dashboard')}
+                >
+                  Owner Dashboard
+                </button>
+              )}
+              
               <button 
                 className="text-white hover:text-red-400 transition" 
                 aria-label="Logout"

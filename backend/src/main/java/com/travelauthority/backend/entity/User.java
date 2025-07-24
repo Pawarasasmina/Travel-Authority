@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 public class User {
 
     public enum Role {
-        USER, ADMIN
+        USER, ADMIN, TRAVEL_ACTIVITY_OWNER
     }
 
     @Id 
@@ -48,6 +48,10 @@ public class User {
     // Helper methods
     public boolean isAdmin() {
         return role == Role.ADMIN;
+    }
+    
+    public boolean isTravelActivityOwner() {
+        return role == Role.TRAVEL_ACTIVITY_OWNER;
     }
     
     // Derived field for backward compatibility

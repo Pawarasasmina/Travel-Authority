@@ -34,6 +34,16 @@ export const deleteActivity = async (id: number) => {
   return res.data;
 };
 
+export const fetchActivitiesByOwner = async (email: string) => {
+  const res = await api.get(`${BASE_URL}/owner/${email}`);
+  return res.data.data;
+};
+
+export const fetchActiveActivitiesByOwner = async (email: string) => {
+  const res = await api.get(`${BASE_URL}/owner/${email}/active`);
+  return res.data.data;
+};
+
 // Check activity availability for a specific date and package
 export const checkAvailability = async (activityId: number, packageId: number | undefined, date: string) => {
   try {

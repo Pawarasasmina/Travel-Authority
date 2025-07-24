@@ -9,4 +9,12 @@ import java.util.List;
 @Repository
 public interface OfferRepository extends JpaRepository<Offer, Integer> {
     List<Offer> findByActiveTrue();
+    List<Offer> findByCreatedBy(String createdBy);
+    List<Offer> findBySelectedForHomepageTrue();
+    
+    // Count offers by creator
+    long countByCreatedBy(String createdBy);
+    
+    // Count selected offers by creator
+    long countByCreatedByAndSelectedForHomepageTrue(String createdBy);
 }
