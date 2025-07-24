@@ -66,4 +66,11 @@ public class OfferController {
     public ResponseDTO<List<OfferDTO>> getOffersByOwner(@PathVariable String email) {
         return offerService.getOffersByOwner(email);
     }
+    
+    @GetMapping("/check-package")
+    public ResponseDTO<OfferDTO> checkPackageOffer(
+            @RequestParam Integer activityId,
+            @RequestParam Long packageId) {
+        return offerService.checkPackageOffer(activityId, packageId);
+    }
 }

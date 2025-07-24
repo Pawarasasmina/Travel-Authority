@@ -36,4 +36,9 @@ public class BookingRequestDTO {
     private String ticketInstructions;
     private String itinerary;
     private String cancellationPolicy;
+    
+    // Discount information
+    private Boolean hasDiscount;
+    private Double discountPercentage;
+    private String offerTitle;
 }

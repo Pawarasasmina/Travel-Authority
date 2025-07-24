@@ -85,6 +85,7 @@ export interface Activity {
     additionalInfo?: string;
     packages?: Package[];
     active?: boolean;
+    ownerEmail?: string;
 }
 
 // Booking data

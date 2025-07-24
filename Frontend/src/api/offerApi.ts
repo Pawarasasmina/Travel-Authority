@@ -8,7 +8,14 @@ export interface OfferData {
     title: string;
     image: string;
     discount?: string;
+    discountPercentage?: number;
     active?: boolean;
+    activityId?: number;
+    activityTitle?: string;
+    startDate?: string;
+    endDate?: string;
+    createdBy?: string;
+    selectedPackages?: number[]; // IDs of selected packages
 }
 
 interface ApiResponse {
@@ -177,4 +184,53 @@ export const deleteAllOffers = async (): Promise<ApiResponse> => {
             message: 'Failed to delete all offers'
         };
     }
+};
+
+// Check if a package is part of an active offer and get discount details
+export const checkPackageOffer = async (activityId: number, packageId: number): Promise<{
+    hasOffer: boolean;
+    discountPercentage: number;
+    offerTitle?: string;
+}> => {
+    try {
+        debugLog('OFFERS', `Checking offers for activity: ${activityId}, package: ${packageId}`);
+        
+        const response = await api.get(`${OFFERS_PATH}/check-package`, {
+            params: {
+                activityId,
+                packageId
+            }
+        });
+        
+        debugLog('OFFERS', 'Check package offer response', response.data);
+        
+        if (response.data.success && response.data.data) {
+            return {
+                hasOffer: true,
+                discountPercentage: response.data.data.discountPercentage || 0,
+                offerTitle: response.data.data.title
+            };
+        }
+        
+        return {
+            hasOffer: false,
+            discountPercentage: 0
+        };
+    } catch (error: any) {
+        debugLog('OFFERS', 'Error checking package offer', error);
+        return {
+            hasOffer: false,
+            discountPercentage: 0
+        };
+    }
+};
+
+// Calculate price with applied offer discount
+export const calculateDiscountedPrice = (originalPrice: number, discountPercentage: number): number => {
+    if (!discountPercentage || discountPercentage <= 0) {
+        return originalPrice;
+    }
+    
+    const discount = (originalPrice * discountPercentage) / 100;
+    return Math.round((originalPrice - discount) * 100) / 100; // Round to 2 decimal places
 };

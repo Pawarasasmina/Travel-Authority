@@ -24,6 +24,9 @@ interface BookingRequest {
     ticketInstructions?: string;
     itinerary?: string;
     cancellationPolicy?: string;
+    hasDiscount?: boolean;
+    discountPercentage?: number;
+    offerTitle?: string;
 }
 
 interface BookingResponse {
@@ -48,6 +51,9 @@ interface BookingResponse {
     contactEmail?: string;
     contactPhone?: string;
     ticketInstructions?: string;
+    hasDiscount?: boolean;
+    discountPercentage?: number;
+    offerTitle?: string;
     itinerary?: string;
     cancellationPolicy?: string;
     orderNumber?: string;

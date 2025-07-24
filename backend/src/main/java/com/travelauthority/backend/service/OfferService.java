@@ -16,4 +16,5 @@ public interface OfferService {
     ResponseDTO<OfferDTO> toggleHomepageSelection(int id, boolean selected);
     ResponseDTO<Void> deleteOffer(int id);
     ResponseDTO<Void> deleteAllOffers();
+    ResponseDTO<OfferDTO> checkPackageOffer(Integer activityId, Long packageId);
 }

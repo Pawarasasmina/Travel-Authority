@@ -47,4 +47,9 @@ public class BookingResponseDTO {
     // User information (for admin views)
     private String userEmail;
     private String userName;
+    
+    // Discount information
+    private Boolean hasDiscount;
+    private Double discountPercentage;
+    private String offerTitle;
 }

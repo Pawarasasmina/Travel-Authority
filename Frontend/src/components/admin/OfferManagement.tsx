@@ -1,19 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Check, X, Edit, Trash2, Plus, RefreshCcw, ImageIcon } from 'lucide-react';
+import { Check, X, Edit, Trash2, Plus, RefreshCcw, ImageIcon, Info } from 'lucide-react';
 import { debugLog } from '../../utils/debug';
 import * as offerApi from '../../api/offerApi';
 import OfferForm from './OfferForm';
+import { useAuth } from '../../hooks/useAuth';
 
 interface Offer {
-  id: number;
-  title: string;
-  image: string;
-  discount?: string;
-  active: boolean;
-  createdBy?: string;
+    id: number;
+    title: string;
+    image: string;
+    discount?: string;
+    discountPercentage?: number;
+    active?: boolean;
+    activityId?: number;
+    activityTitle?: string;
+    startDate?: string;
+    endDate?: string;
+    createdBy?: string;
+    selectedPackages?: number[]; 
 }
 
 const OfferManagement: React.FC = () => {
+  const { user } = useAuth();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
@@ -22,11 +30,14 @@ const OfferManagement: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterOwner, setFilterOwner] = useState<string | null>(null);
   
-  // Filtered offers based on search term
-  const filteredOffers = offers.filter(offer => 
-    offer.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtered offers based on search term and owner filter
+  const filteredOffers = offers.filter(offer => {
+    const matchesSearch = offer.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesOwner = !filterOwner || offer.createdBy === filterOwner;
+    return matchesSearch && matchesOwner;
+  });
 
   useEffect(() => {
     fetchOffers();
@@ -176,6 +187,19 @@ const OfferManagement: React.FC = () => {
         </div>
       )}
 
+      {/* Admin info message */}
+      {user?.role === 'ADMIN' && (
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-md">
+          <div className="flex items-start">
+            <Info className="w-5 h-5 text-blue-600 mr-2 mt-0.5" />
+            <div>
+              <p className="text-sm text-blue-700 font-medium">Administrator Access</p>
+              <p className="text-sm text-blue-600">As an admin, you can manage offers for all activities in the system. Use the filter options below to narrow down the list.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Search and Refresh Controls */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-grow">
@@ -192,6 +216,21 @@ const OfferManagement: React.FC = () => {
             </svg>
           </div>
         </div>
+        
+        {user?.role === 'ADMIN' && (
+          <select 
+            className="px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            value={filterOwner || ''}
+            onChange={(e) => setFilterOwner(e.target.value || null)}
+          >
+            <option value="">All Owners</option>
+            {/* Create a unique list of owner emails */}
+            {[...new Set(offers.map(offer => offer.createdBy).filter(Boolean))].map(owner => (
+              <option key={owner} value={owner}>{owner}</option>
+            ))}
+          </select>
+        )}
+        
         <button
           onClick={() => setRefreshKey(prevKey => prevKey + 1)}
           className="px-4 py-3 border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center text-gray-600"
@@ -231,6 +270,9 @@ const OfferManagement: React.FC = () => {
                   Title
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Activity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Discount
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -265,9 +307,23 @@ const OfferManagement: React.FC = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {offer.discount ? (
+                    {offer.activityTitle ? (
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{offer.activityTitle}</div>
+                        {offer.selectedPackages && offer.selectedPackages.length > 0 && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {offer.selectedPackages.length} package{offer.selectedPackages.length > 1 ? 's' : ''} selected
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 text-sm">—</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {offer.discount || offer.discountPercentage ? (
                       <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        {offer.discount}
+                        {offer.discount || `${offer.discountPercentage}% OFF`}
                       </span>
                     ) : (
                       <span className="text-gray-500 text-sm">—</span>

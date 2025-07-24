@@ -97,6 +97,9 @@ public class BookingService {
                     .activityId(request.getActivityId())
                     .peopleCounts(peopleCountsJson)
                     .description(request.getDescription())
+                    .hasDiscount(request.getHasDiscount())
+                    .discountPercentage(request.getDiscountPercentage())
+                    .offerTitle(request.getOfferTitle())
                     .user(user)
                     .contactEmail(request.getContactEmail() != null ? request.getContactEmail() : user.getEmail())
                     .contactPhone(request.getContactPhone() != null ? request.getContactPhone() : user.getPhoneNumber())
@@ -260,6 +263,9 @@ public class BookingService {
                     .qrCodeData(booking.getQrCodeData())
                     .userEmail(booking.getUser().getEmail())
                     .userName(booking.getUser().getFirstName() + " " + booking.getUser().getLastName())
+                    .hasDiscount(booking.getHasDiscount())
+                    .discountPercentage(booking.getDiscountPercentage())
+                    .offerTitle(booking.getOfferTitle())
                     .build();
         } catch (Exception e) {
             log.error("Error converting booking to DTO: ", e);

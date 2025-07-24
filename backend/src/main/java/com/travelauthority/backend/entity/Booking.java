@@ -98,6 +98,16 @@ public class Booking {
     // QR code data for ticket verification
     @Column(length = 2000)
     private String qrCodeData;
+    
+    // Discount information
+    @Column
+    private Boolean hasDiscount;
+    
+    @Column
+    private Double discountPercentage;
+    
+    @Column(length = 255)
+    private String offerTitle;
 
     public enum BookingStatus {
         PENDING,

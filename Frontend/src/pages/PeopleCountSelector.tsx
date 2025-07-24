@@ -4,6 +4,7 @@ import Button from '../components/ui/Button';
 import { useAlert } from '../contexts/AlertContext';
 import PaymentModal from '../components/PaymentModal';
 import { checkAvailability } from '../api/activityApi';
+import { checkPackageOffer } from '../api/offerApi';
 
 // Counter component for quantity selection
 const QuantityCounter = ({ 
@@ -58,6 +59,16 @@ const PeopleCountSelector = () => {
     description
   } = location.state || {};
   
+  // State for storing offer information
+  const [offerInfo, setOfferInfo] = useState<{
+    hasOffer: boolean;
+    discountPercentage: number;
+    offerTitle?: string;
+  }>({
+    hasOffer: false,
+    discountPercentage: 0
+  });
+
   // Initialize people counts
   const [counts, setCounts] = useState({
     foreignAdult: 0,
@@ -132,8 +143,30 @@ const PeopleCountSelector = () => {
       total += prices[type as keyof typeof prices] * counts[type as keyof typeof counts];
     }
     
+    // Apply discount if an offer exists
+    if (offerInfo.hasOffer && offerInfo.discountPercentage > 0) {
+      const discount = total * (offerInfo.discountPercentage / 100);
+      total = total - discount;
+    }
+    
     return `LKR ${total.toFixed(2)}`;
   };
+
+  // Check for package offers when component loads or when package changes
+  useEffect(() => {
+    const checkOffers = async () => {
+      if (activityId && packageData?.id) {
+        try {
+          const offerResponse = await checkPackageOffer(activityId, packageData.id);
+          setOfferInfo(offerResponse);
+        } catch (error) {
+          console.error("Error checking for offers:", error);
+        }
+      }
+    };
+    
+    checkOffers();
+  }, [activityId, packageData?.id]);
 
   // Check availability when date changes
   const checkDateAvailability = async (date: string) => {
@@ -351,6 +384,13 @@ const PeopleCountSelector = () => {
           
           <div className="mt-6">
             <div className="text-right mb-4">
+              {offerInfo.hasOffer && offerInfo.discountPercentage > 0 && (
+                <div className="text-green-600 text-sm font-medium mb-1">
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-md">
+                    {offerInfo.discountPercentage}% discount applied! {offerInfo.offerTitle && `(${offerInfo.offerTitle})`}
+                  </span>
+                </div>
+              )}
               <div className="text-xl font-semibold">{calculateTotal()}</div>
             </div>
           </div>
@@ -564,7 +604,10 @@ const PeopleCountSelector = () => {
           peopleCounts: counts,
           bookingDate: selectedDate,
           image,
-          description
+          description,
+          hasDiscount: offerInfo.hasOffer,
+          discountPercentage: offerInfo.discountPercentage,
+          offerTitle: offerInfo.offerTitle
         }}
       />
     </div>

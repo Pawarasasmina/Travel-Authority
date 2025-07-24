@@ -22,6 +22,9 @@ interface PaymentModalProps {
     bookingDate: string;
     image: string;
     description?: string;
+    hasDiscount?: boolean;
+    discountPercentage?: number;
+    offerTitle?: string;
   };
 }
 
@@ -33,7 +36,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   bookingDetails 
 }) => {
   // Calculate additional charges
-  const baseAmount = parseFloat(totalAmount.replace(/[^\d.]/g, ''));
+  const rawBaseAmount = parseFloat(totalAmount.replace(/[^\d.]/g, ''));
+  
+  // Base amount already includes any discount applied from calculateTotal in PeopleCountSelector
+  const baseAmount = rawBaseAmount;
+  
+  // Calculate service fee and tax based on the discounted amount
   const serviceFee = baseAmount * 0.05; // 5% service fee
   const tax = baseAmount * 0.15; // 15% tax
   const finalTotal = baseAmount + serviceFee + tax;
@@ -58,7 +66,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       totalPrice: finalTotal,
       totalPersons: Object.values(bookingDetails.peopleCounts).reduce((a, b) => (a as number) + (b as number), 0) as number,
       paymentMethod: "Credit Card",
-      peopleCounts: bookingDetails.peopleCounts
+      peopleCounts: bookingDetails.peopleCounts,
+      hasDiscount: bookingDetails.hasDiscount || false,
+      discountPercentage: bookingDetails.discountPercentage || 0,
+      offerTitle: bookingDetails.offerTitle || ''
     };
 
     // Create booking data for frontend navigation
@@ -70,6 +81,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       date: bookingDetails.bookingDate,
       status: "Pending",
       price: finalTotal,
+      hasDiscount: bookingDetails.hasDiscount || false,
+      discountPercentage: bookingDetails.discountPercentage || 0,
+      offerTitle: bookingDetails.offerTitle || '',
       serviceFee,
       tax,
       persons: Object.values(bookingDetails.peopleCounts).reduce((a, b) => (a as number) + (b as number), 0) as number,
@@ -138,6 +152,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 <span className="text-gray-600">{bookingDetails.activityTitle}</span>
                 <span>LKR {baseAmount.toFixed(2)}</span>
               </div>
+              {bookingDetails.hasDiscount && bookingDetails.discountPercentage && bookingDetails.discountPercentage > 0 && (
+                <div className="flex justify-between py-2">
+                  <span className="text-green-600">
+                    Discount ({bookingDetails.discountPercentage}%)
+                    {bookingDetails.offerTitle && ` - ${bookingDetails.offerTitle}`}
+                  </span>
+                  <span className="text-green-600">-LKR {((baseAmount * bookingDetails.discountPercentage) / 100).toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between py-2">
                 <span className="text-gray-600">Service Fee (5%)</span>
                 <span>LKR {serviceFee.toFixed(2)}</span>

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
 
 @Service
 @Slf4j
@@ -180,6 +181,15 @@ public class OfferServiceImpl implements OfferService {
             existingOffer.setImage(offerDTO.getImage());
             existingOffer.setDiscount(offerDTO.getDiscount());
             
+            // Update new fields
+            existingOffer.setDiscountPercentage(offerDTO.getDiscountPercentage());
+            existingOffer.setActivityId(offerDTO.getActivityId());
+            existingOffer.setActivityTitle(offerDTO.getActivityTitle());
+            existingOffer.setStartDate(offerDTO.getStartDate());
+            existingOffer.setEndDate(offerDTO.getEndDate());
+            existingOffer.setSelectedPackages(offerDTO.getSelectedPackages());
+            existingOffer.setDescription(offerDTO.getDescription());
+            
             // Preserve the createdBy field if it's being updated
             if (offerDTO.getCreatedBy() != null && !offerDTO.getCreatedBy().isEmpty()) {
                 existingOffer.setCreatedBy(offerDTO.getCreatedBy());
@@ -287,6 +297,65 @@ public class OfferServiceImpl implements OfferService {
         }
     }
     
+    @Override
+    public ResponseDTO<OfferDTO> checkPackageOffer(Integer activityId, Long packageId) {
+        ResponseDTO<OfferDTO> responseDTO = new ResponseDTO<>();
+        
+        try {
+            if (activityId == null || packageId == null) {
+                responseDTO.setStatus(HttpStatus.BAD_REQUEST.toString());
+                responseDTO.setMessage("Activity ID and package ID are required");
+                return responseDTO;
+            }
+            
+            // Get today's date
+            LocalDate today = LocalDate.now();
+            
+            // Find active offers for this activity and package
+            List<Offer> offers = offerRepository.findByActiveTrue()
+                .stream()
+                .filter(offer -> 
+                    // Match activity ID
+                    offer.getActivityId() != null && 
+                    offer.getActivityId().equals(activityId) &&
+                    // Check offer dates
+                    offer.getStartDate() != null &&
+                    offer.getEndDate() != null &&
+                    !today.isBefore(offer.getStartDate()) && 
+                    !today.isAfter(offer.getEndDate()) &&
+                    // Check selected packages
+                    offer.getSelectedPackages() != null &&
+                    offer.getSelectedPackages().contains(packageId))
+                .collect(Collectors.toList());
+            
+            if (offers.isEmpty()) {
+                responseDTO.setStatus(HttpStatus.NOT_FOUND.toString());
+                responseDTO.setMessage("No active offer found for the specified activity and package");
+                return responseDTO;
+            }
+            
+            // Return the best offer (highest discount)
+            Offer bestOffer = offers.stream()
+                .max((a, b) -> {
+                    if (a.getDiscountPercentage() == null) return -1;
+                    if (b.getDiscountPercentage() == null) return 1;
+                    return Double.compare(a.getDiscountPercentage(), b.getDiscountPercentage());
+                })
+                .orElse(offers.get(0));
+            
+            responseDTO.setStatus(HttpStatus.OK.toString());
+            responseDTO.setMessage("Offer found for the specified activity and package");
+            responseDTO.setData(mapToDTO(bestOffer));
+            
+            return responseDTO;
+        } catch (Exception e) {
+            log.error("Error checking package offer: {}", e.getMessage());
+            responseDTO.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.toString());
+            responseDTO.setMessage("Error checking package offer: " + e.getMessage());
+            return responseDTO;
+        }
+    }
+    
     // Helper methods to map between DTO and Entity
     private OfferDTO mapToDTO(Offer offer) {
         return OfferDTO.builder()
@@ -294,9 +363,16 @@ public class OfferServiceImpl implements OfferService {
                 .title(offer.getTitle())
                 .image(offer.getImage())
                 .discount(offer.getDiscount())
+                .discountPercentage(offer.getDiscountPercentage())
                 .active(offer.getActive())
                 .selectedForHomepage(offer.getSelectedForHomepage())
                 .createdBy(offer.getCreatedBy())
+                .activityId(offer.getActivityId())
+                .activityTitle(offer.getActivityTitle())
+                .startDate(offer.getStartDate())
+                .endDate(offer.getEndDate())
+                .selectedPackages(offer.getSelectedPackages())
+                .description(offer.getDescription())
                 .build();
     }
     
@@ -306,9 +382,16 @@ public class OfferServiceImpl implements OfferService {
                 .title(offerDTO.getTitle())
                 .image(offerDTO.getImage())
                 .discount(offerDTO.getDiscount())
+                .discountPercentage(offerDTO.getDiscountPercentage())
                 .active(offerDTO.getActive() != null ? offerDTO.getActive() : true)
                 .selectedForHomepage(offerDTO.getSelectedForHomepage() != null ? offerDTO.getSelectedForHomepage() : false)
                 .createdBy(offerDTO.getCreatedBy())
+                .activityId(offerDTO.getActivityId())
+                .activityTitle(offerDTO.getActivityTitle())
+                .startDate(offerDTO.getStartDate())
+                .endDate(offerDTO.getEndDate())
+                .selectedPackages(offerDTO.getSelectedPackages())
+                .description(offerDTO.getDescription())
                 .build();
     }
 }
