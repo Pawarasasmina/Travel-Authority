@@ -16,6 +16,7 @@ interface User {
 interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
+    isLoading: boolean;
     token: string | null;
     login: (userData: User, authToken?: string) => void;
     logout: () => void;
@@ -25,6 +26,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
     user: null,
     isAuthenticated: false,
+    isLoading: true,
     token: null,
     login: () => {},
     logout: () => {},
@@ -37,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
     useEffect(() => {
         // Check if user and token are stored in localStorage
@@ -57,6 +60,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setToken(storedToken);
             setIsAuthenticated(true);
         }
+        
+        // Set loading to false after checking localStorage
+        setIsLoading(false);
     }, []);
     
     const login = (userData: User, authToken?: string) => {
@@ -174,7 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, isAuthenticated, login, logout, updateUser }}>
+        <AuthContext.Provider value={{ user, token, isAuthenticated, isLoading, login, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import SuccessModal from '../components/ui/SuccessModal';
@@ -16,11 +17,16 @@ interface ChangePasswordFormData {
 
 // Change Password Form component
 function ChangePasswordForm() {
+  const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ChangePasswordFormData>();
   const { logout } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  
+  const handleCancel = () => {
+    navigate(-1); // Navigate back to the previous page
+  };
   const onSubmit = async (data: ChangePasswordFormData) => {
     // Reset error message
     setErrorMessage(null);
@@ -117,14 +123,25 @@ function ChangePasswordForm() {
         )}
       </div>
       
-      <Button
-        type="submit"
-        fullWidth
-        className="mt-8"
-        disabled={isLoading}
-      >
-        {isLoading ? "Changing Password..." : "Save Changes"}
-      </Button>
+      <div className="flex flex-col md:flex-row gap-4 mt-8">
+        <Button
+          type="submit"
+          fullWidth
+          disabled={isLoading}
+        >
+          {isLoading ? "Changing Password..." : "Save Changes"}
+        </Button>
+        
+        <Button
+          type="button"
+          variant="secondary"
+          fullWidth
+          onClick={handleCancel}
+          disabled={isLoading}
+        >
+          Cancel
+        </Button>
+      </div>
       
       {/* Success Modal */}
       <SuccessModal

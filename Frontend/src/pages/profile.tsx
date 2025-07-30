@@ -152,11 +152,25 @@ const Profile = () => {
     )
   };
 
+  const handleGoBack = () => {
+    navigate(-1); // Navigate to the previous page
+  };
+
   return (
     <div className="min-h-screen flex flex-col mt-12">
       {/* Header Background */}
       <div className="h-64  inset-0  z-0 bg-cover bg-center relative" 
            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2144&auto=format&fit=crop')" }}>
+        {/* Back Button */}
+        <div 
+          className="absolute top-4 left-4 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-100 transition-colors"
+          onClick={handleGoBack}
+          title="Go Back"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
+        </div>
         {/* Change Password Button */}
         <div 
           className="absolute bottom-4 right-4 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-100 transition-colors"

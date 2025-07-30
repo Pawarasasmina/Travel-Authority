@@ -81,11 +81,15 @@ function LoginForm() {
     if (isAuthenticated && !authLoading) {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const isAdmin = user?.role === 'ADMIN';
+      const isOwner = user?.role === 'TRAVEL_ACTIVITY_OWNER';
       
       if (isAdmin) {
         debugLog('LOGIN', 'Admin user authenticated, redirecting to admin dashboard');
         navigate('/admin/dashboard');
-      } else {
+      }else if (isOwner) {
+        debugLog('LOGIN', 'Admin user authenticated, redirecting to admin dashboard');
+        navigate('/owner/dashboard');
+      }  else {
         debugLog('LOGIN', 'Regular user authenticated, redirecting to home');
         navigate('/home');
       }
@@ -149,10 +153,17 @@ function LoginForm() {
             
             // Check user role for navigation
             const isAdmin = userData.role === 'ADMIN';
+            const isOwner = userData.role === 'TRAVEL_ACTIVITY_OWNER';
             if (isAdmin) {
               debugLog('LOGIN', 'Admin user logged in, navigating to admin dashboard');
               setTimeout(() => {
                 navigate('/admin/dashboard');
+              }, 500); // Give time for the state to update
+            }
+            else if (isOwner) {
+              debugLog('LOGIN', 'Owner user logged in, navigating to Owner dashboard');
+              setTimeout(() => {
+                navigate('/owner/dashboard');
               }, 500); // Give time for the state to update
             } else {
               debugLog('LOGIN', 'Regular user logged in, navigating to home');

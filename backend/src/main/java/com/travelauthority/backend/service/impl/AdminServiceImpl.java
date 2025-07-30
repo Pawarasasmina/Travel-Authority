@@ -225,6 +225,20 @@ public class AdminServiceImpl implements AdminService {
             long selectedOffers = offerRepository.countByCreatedByAndSelectedForHomepageTrue(ownerEmail);
             dashboardData.put("selectedOffers", selectedOffers);
             
+            // Add booking statistics for the owner
+            long totalBookings = bookingRepository.countBookingsByActivityOwner(ownerEmail);
+            dashboardData.put("totalBookings", totalBookings);
+            
+            // Count bookings by status
+            for (Booking.BookingStatus status : Booking.BookingStatus.values()) {
+                Long count = bookingRepository.countBookingsByActivityOwnerAndStatus(ownerEmail, status);
+                dashboardData.put("bookingsBy" + status.name(), count != null ? count : 0);
+            }
+            
+            // Get total revenue for this owner's activities
+            Double totalRevenue = bookingRepository.getTotalRevenueByActivityOwner(ownerEmail);
+            dashboardData.put("totalRevenue", totalRevenue != null ? totalRevenue : 0.0);
+            
             responseDTO.setData(dashboardData);
             responseDTO.setStatus(HttpStatus.OK.toString());
             responseDTO.setMessage("Travel activity owner dashboard data retrieved successfully");

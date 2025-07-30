@@ -61,35 +61,38 @@ const Navbar: React.FC<NavbarProps> = ({ transparent = false }) => {  const navi
           </span>
         </div>
         <div className="flex-1" />
-        <div className="hidden md:flex gap-9 items-center">
-          <NavLink 
-            to="/home" 
-            className={({ isActive }) => 
-              `text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition relative
-              ${isActive ? 'after:content-[""] after:absolute after:left-0 after:bottom-[-4px] after:h-[2px] after:w-full after:bg-orange-400' : ''}`
-            }
-          >
-            Home
-          </NavLink>
-          <NavLink 
-            to="/categories" 
-            className={({ isActive }) => 
-              `text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition relative
-              ${isActive ? 'after:content-[""] after:absolute after:left-0 after:bottom-[-4px] after:h-[2px] after:w-full after:bg-orange-400' : ''}`
-            }
-          >
-            Categories
-          </NavLink>
-          <NavLink 
-            to="/purchase-list" 
-            className={({ isActive }) => 
-              `text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition relative
-              ${isActive ? 'after:content-[""] after:absolute after:left-0 after:bottom-[-4px] after:h-[2px] after:w-full after:bg-orange-400' : ''}`
-            }
-          >
-            Purchase List
-          </NavLink>
-        </div>
+        {/* Hide navigation links for admin and travel activity owner */}
+        {(!user?.role || (user.role !== 'ADMIN' && user.role !== 'TRAVEL_ACTIVITY_OWNER')) && (
+          <div className="hidden md:flex gap-9 items-center">
+            <NavLink 
+              to="/home" 
+              className={({ isActive }) => 
+                `text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition relative
+                ${isActive ? 'after:content-[""] after:absolute after:left-0 after:bottom-[-4px] after:h-[2px] after:w-full after:bg-orange-400' : ''}`
+              }
+            >
+              Home
+            </NavLink>
+            <NavLink 
+              to="/categories" 
+              className={({ isActive }) => 
+                `text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition relative
+                ${isActive ? 'after:content-[""] after:absolute after:left-0 after:bottom-[-4px] after:h-[2px] after:w-full after:bg-orange-400' : ''}`
+              }
+            >
+              Categories
+            </NavLink>
+            <NavLink 
+              to="/purchase-list" 
+              className={({ isActive }) => 
+                `text-white uppercase text-xs font-semibold tracking-widest hover:text-orange-400 transition relative
+                ${isActive ? 'after:content-[""] after:absolute after:left-0 after:bottom-[-4px] after:h-[2px] after:w-full after:bg-orange-400' : ''}`
+              }
+            >
+              Purchase List
+            </NavLink>
+          </div>
+        )}
         <div className="flex items-center gap-4 ml-8">
           <div className="relative">
             <button 
@@ -116,25 +119,9 @@ const Navbar: React.FC<NavbarProps> = ({ transparent = false }) => {  const navi
                 {user?.firstName}
               </span>
               
-              {/* Admin Dashboard Link */}
-              {user?.role === 'ADMIN' && (
-                <button 
-                  className="text-white bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded-md text-xs transition hidden md:block" 
-                  onClick={() => navigate('/admin/dashboard')}
-                >
-                  Admin Dashboard
-                </button>
-              )}
+             
               
-              {/* Travel Activity Owner Dashboard Link */}
-              {user?.role === 'TRAVEL_ACTIVITY_OWNER' && (
-                <button 
-                  className="text-white bg-green-600 hover:bg-green-700 px-2 py-1 rounded-md text-xs transition hidden md:block" 
-                  onClick={() => navigate('/owner/dashboard')}
-                >
-                  Owner Dashboard
-                </button>
-              )}
+          
               
               <button 
                 className="text-white hover:text-red-400 transition" 

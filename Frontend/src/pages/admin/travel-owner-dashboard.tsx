@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Activity } from 'lucide-react';
+import { Package, Activity, FileText, DollarSign, Users, Clock, Check } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import * as adminApi from '../../api/adminApi';
 import { debugLog } from '../../utils/debug';
 import OwnerActivityManagement from '../../components/admin/OwnerActivityManagement';
 import OwnerOfferManagement from '../../components/admin/OwnerOfferManagement';
+import TravelOwnerBookingManagement from '../../components/admin/TravelOwnerBookingManagement';
 
 const TravelOwnerDashboard = () => {
   const navigate = useNavigate();
@@ -14,7 +15,13 @@ const TravelOwnerDashboard = () => {
   const [stats, setStats] = useState({
     ownerActivities: 0,
     ownerOffers: 0,
-    selectedOffers: 0
+    selectedOffers: 0,
+    totalBookings: 0,
+    bookingsByPENDING: 0,
+    bookingsByCONFIRMED: 0,
+    bookingsByCOMPLETED: 0,
+    bookingsbyCANCELLED: 0,
+    totalRevenue: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +48,13 @@ const TravelOwnerDashboard = () => {
         setStats({
           ownerActivities: dashboardData.ownerActivities || 0,
           ownerOffers: dashboardData.ownerOffers || 0,
-          selectedOffers: dashboardData.selectedOffers || 0
+          selectedOffers: dashboardData.selectedOffers || 0,
+          totalBookings: dashboardData.totalBookings || 0,
+          bookingsByPENDING: dashboardData.bookingsByPENDING || 0,
+          bookingsByCONFIRMED: dashboardData.bookingsByCONFIRMED || 0,
+          bookingsByCOMPLETED: dashboardData.bookingsByCOMPLETED || 0,
+          bookingsbyCANCELLED: dashboardData.bookingsByCANCELLED || 0,
+          totalRevenue: dashboardData.totalRevenue || 0
         });
       } else {
         debugLog('OWNER_DASHBOARD', 'Failed to get dashboard stats', statsResponse);
@@ -59,18 +72,22 @@ const TravelOwnerDashboard = () => {
   const StatCard = ({ 
     icon, 
     title, 
-    value 
+    value,
+    isRevenue = false
   }: { 
     icon: React.ReactNode; 
     title: string; 
     value: number;
+    isRevenue?: boolean;
   }) => (
     <div className="bg-white p-6 rounded-lg shadow-md flex flex-col">
       <div className="flex justify-between items-center mb-4">
         <div className="p-3 bg-green-100 rounded-full">
           {icon}
         </div>
-        <span className="text-2xl font-bold">{value}</span>
+        <span className="text-2xl font-bold">
+          {isRevenue ? `LKR ${value.toLocaleString()}` : value}
+        </span>
       </div>
       <h3 className="text-gray-600 text-sm">{title}</h3>
     </div>
@@ -119,6 +136,12 @@ const TravelOwnerDashboard = () => {
               My Activities
             </button>
             <button 
+              onClick={() => setActiveTab('bookings')}
+              className={`pb-4 px-2 font-medium ${activeTab === 'bookings' ? 'border-b-2 border-green-500 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Bookings & QR
+            </button>
+            <button 
               onClick={() => setActiveTab('offers')}
               className={`pb-4 px-2 font-medium ${activeTab === 'offers' ? 'border-b-2 border-green-500 text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
@@ -131,22 +154,71 @@ const TravelOwnerDashboard = () => {
         {activeTab === 'dashboard' && (
           <div>
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <StatCard 
                 icon={<Activity size={24} className="text-green-600" />} 
                 title="Your Activities" 
                 value={stats.ownerActivities} 
               />
               <StatCard 
-                icon={<Package size={24} className="text-green-600" />} 
+                icon={<Package size={24} className="text-blue-600" />} 
                 title="Your Offers" 
                 value={stats.ownerOffers} 
               />
               <StatCard 
-                icon={<Package size={24} className="text-green-600" />} 
-                title="Selected for Homepage" 
-                value={stats.selectedOffers} 
+                icon={<FileText size={24} className="text-purple-600" />} 
+                title="Total Bookings" 
+                value={stats.totalBookings} 
               />
+              <StatCard 
+                icon={<DollarSign size={24} className="text-green-600" />} 
+                title="Total Revenue" 
+                value={Math.round(stats.totalRevenue)} 
+                isRevenue={true}
+              />
+            </div>
+
+            {/* Booking Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-yellow-100 rounded-full">
+                    <Clock size={24} className="text-yellow-600" />
+                  </div>
+                  <span className="text-2xl font-bold">{stats.bookingsByPENDING}</span>
+                </div>
+                <h3 className="text-gray-600 text-sm">Pending Bookings</h3>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <Check size={24} className="text-green-600" />
+                  </div>
+                  <span className="text-2xl font-bold">{stats.bookingsByCONFIRMED}</span>
+                </div>
+                <h3 className="text-gray-600 text-sm">Confirmed Bookings</h3>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-blue-100 rounded-full">
+                    <Users size={24} className="text-blue-600" />
+                  </div>
+                  <span className="text-2xl font-bold">{stats.bookingsByCOMPLETED}</span>
+                </div>
+                <h3 className="text-gray-600 text-sm">Completed Bookings</h3>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-red-100 rounded-full">
+                    <Package size={24} className="text-red-600" />
+                  </div>
+                  <span className="text-2xl font-bold">{stats.selectedOffers}</span>
+                </div>
+                <h3 className="text-gray-600 text-sm">Featured Offers</h3>
+              </div>
             </div>
 
             {/* Welcome Card */}
@@ -174,6 +246,17 @@ const TravelOwnerDashboard = () => {
                     Manage your offers →
                   </button>
                 </div>
+                
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                  <h3 className="font-medium text-purple-800 mb-2">Manage Bookings & QR Codes</h3>
+                  <p className="text-purple-700">View and manage customer bookings, verify QR codes, and mark bookings as completed.</p>
+                  <button 
+                    onClick={() => setActiveTab('bookings')}
+                    className="mt-2 text-sm text-purple-600 hover:text-purple-800 font-medium"
+                  >
+                    Manage bookings →
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -183,6 +266,13 @@ const TravelOwnerDashboard = () => {
         {activeTab === 'activities' && (
           <div className="bg-white rounded-lg shadow-md p-6">
             <OwnerActivityManagement />
+          </div>
+        )}
+        
+        {/* Bookings Management */}
+        {activeTab === 'bookings' && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <TravelOwnerBookingManagement />
           </div>
         )}
         

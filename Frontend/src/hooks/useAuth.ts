@@ -6,12 +6,13 @@ import { debugLog } from '../utils/debug';
 // Enhanced hook with auto-loading capability
 export const useAuth = () => {
   const auth = useAuthContext();
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [additionalLoading, setAdditionalLoading] = useState<boolean>(false);
     // Function to check and load user profile
   const checkAndLoadProfile = useCallback(async () => {
     const token = localStorage.getItem('token');
     
-    if (token && !auth.user) {
+    if (token && !auth.user && !auth.isLoading) {
+      setAdditionalLoading(true);
       debugLog('AUTH_HOOK', 'Found token but no user, fetching profile');
       
       try {
@@ -44,24 +45,25 @@ export const useAuth = () => {
         localStorage.removeItem('token');
         return false;
       } finally {
-        setIsLoading(false);
+        setAdditionalLoading(false);
       }
     } else {
       debugLog('AUTH_HOOK', 
-        token ? 'User is already loaded' : 'No token found',
-        { hasToken: !!token, hasUser: !!auth.user }
+        token ? 'User is already loaded or auth is loading' : 'No token found',
+        { hasToken: !!token, hasUser: !!auth.user, authLoading: auth.isLoading }
       );
-      setIsLoading(false);
       return !!auth.user;
     }
   }, [auth]);
   
   useEffect(() => {
-    checkAndLoadProfile();
-  }, [checkAndLoadProfile]);  // Dependency on the callback
+    if (!auth.isLoading) {
+      checkAndLoadProfile();
+    }
+  }, [checkAndLoadProfile, auth.isLoading]);  // Dependency on the callback
   return {
     ...auth,
-    isLoading,
+    isLoading: auth.isLoading || additionalLoading,
     checkAndLoadProfile
   };
 };

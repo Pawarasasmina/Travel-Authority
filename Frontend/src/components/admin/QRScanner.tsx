@@ -3,6 +3,7 @@ import QrScanner from 'qr-scanner';
 import { X, Camera, CameraOff, CheckCircle, AlertCircle } from 'lucide-react';
 import Button from '../ui/Button';
 import { verifyQRCode } from '../../api/adminApi';
+import { verifyOwnerQRCode } from '../../api/ownerApi';
 import { debugLog } from '../../utils/debug';
 
 interface QRScannerProps {
@@ -10,13 +11,15 @@ interface QRScannerProps {
   onClose: () => void;
   onScanSuccess: (data: any) => void;
   expectedBookingId?: string;
+  mode?: 'admin' | 'owner'; // Add mode prop to determine which API to use
 }
 
 const QRScanner: React.FC<QRScannerProps> = ({ 
   isOpen, 
   onClose, 
   onScanSuccess, 
-  expectedBookingId 
+  expectedBookingId,
+  mode = 'admin' // Default to admin mode for backward compatibility
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [qrScanner, setQrScanner] = useState<QrScanner | null>(null);
@@ -123,9 +126,11 @@ const QRScanner: React.FC<QRScannerProps> = ({
         throw new Error('QR code does not match expected booking');
       }
 
-      // Verify with backend
-      debugLog('QR_SCANNER', 'Verifying QR code with backend');
-      const verificationResponse = await verifyQRCode(data);
+      // Verify with backend using the appropriate API
+      debugLog('QR_SCANNER', 'Verifying QR code with backend', { mode });
+      const verificationResponse = mode === 'owner' 
+        ? await verifyOwnerQRCode(data)
+        : await verifyQRCode(data);
       
       // Check if verification was successful
       if (!verificationResponse.success) {

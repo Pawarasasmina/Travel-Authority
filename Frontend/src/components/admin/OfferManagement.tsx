@@ -187,18 +187,7 @@ const OfferManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Admin info message */}
-      {user?.role === 'ADMIN' && (
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-md">
-          <div className="flex items-start">
-            <Info className="w-5 h-5 text-blue-600 mr-2 mt-0.5" />
-            <div>
-              <p className="text-sm text-blue-700 font-medium">Administrator Access</p>
-              <p className="text-sm text-blue-600">As an admin, you can manage offers for all activities in the system. Use the filter options below to narrow down the list.</p>
-            </div>
-          </div>
-        </div>
-      )}
+     
 
       {/* Search and Refresh Controls */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">

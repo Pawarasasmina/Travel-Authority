@@ -489,4 +489,317 @@ public class BookingService {
             throw new RuntimeException("Failed to delete all bookings: " + e.getMessage());
         }
     }
+    
+    // Travel Activity Owner methods
+    public List<BookingResponseDTO> getBookingsByActivityOwner(String ownerEmail) {
+        List<Booking> bookings = bookingRepository.findBookingsByActivityOwner(ownerEmail);
+        return bookings.stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+    }
+    
+    public List<BookingResponseDTO> getBookingsByActivityOwnerAndStatus(String ownerEmail, Booking.BookingStatus status) {
+        List<Booking> bookings = bookingRepository.findBookingsByActivityOwnerAndStatus(ownerEmail, status);
+        return bookings.stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+    }
+    
+    @Transactional
+    public BookingResponseDTO updateBookingStatusAsOwner(String bookingId, Booking.BookingStatus status, String ownerEmail) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        
+        // Check if the booking belongs to an activity owned by the user
+        User owner = userRepository.findByEmail(ownerEmail)
+                .orElseThrow(() -> new RuntimeException("Owner not found"));
+        
+        if (!owner.isTravelActivityOwner()) {
+            throw new RuntimeException("Access denied: User is not a travel activity owner");
+        }
+        
+        // Verify this booking is for an activity owned by this user
+        List<Booking> ownerBookings = bookingRepository.findBookingsByActivityOwner(ownerEmail);
+        boolean isOwnerBooking = ownerBookings.stream()
+                .anyMatch(b -> b.getId().equals(bookingId));
+        
+        if (!isOwnerBooking) {
+            throw new RuntimeException("Access denied: Booking does not belong to owner's activities");
+        }
+        
+        booking.setStatus(status);
+        Booking updatedBooking = bookingRepository.save(booking);
+        
+        log.info("Booking status updated by owner {}: {} -> {}", ownerEmail, bookingId, status);
+        
+        return convertToResponseDTO(updatedBooking);
+    }
+    
+    @Transactional
+    public BookingResponseDTO verifyQRCodeAsOwner(String qrCodeData, String ownerEmail) {
+        try {
+            // Debug logging
+            log.info("QR Code verification request by owner - ownerEmail: {}", ownerEmail);
+            log.info("QR Code data received: {}", qrCodeData);
+            
+            // Validate input
+            if (qrCodeData == null || qrCodeData.trim().isEmpty()) {
+                log.error("QR code data is null or empty");
+                throw new RuntimeException("QR code data is empty");
+            }
+            
+            // Parse QR code data
+            @SuppressWarnings("unchecked")
+            Map<String, Object> qrData = objectMapper.readValue(qrCodeData, Map.class);
+            String ticketId = (String) qrData.get("ticketId");
+            String verificationCode = (String) qrData.get("verificationCode");
+            
+            if (ticketId == null || verificationCode == null) {
+                throw new RuntimeException("Invalid QR code format - missing required fields");
+            }
+            
+            // Find the booking
+            Optional<Booking> bookingOpt = bookingRepository.findById(ticketId);
+            if (bookingOpt.isEmpty()) {
+                throw new RuntimeException("Booking not found for ID: " + ticketId);
+            }
+            
+            Booking booking = bookingOpt.get();
+            
+            // Check if the booking belongs to an activity owned by this user
+            User owner = userRepository.findByEmail(ownerEmail)
+                    .orElseThrow(() -> new RuntimeException("Owner not found"));
+            
+            if (!owner.isTravelActivityOwner()) {
+                throw new RuntimeException("Access denied: User is not a travel activity owner");
+            }
+            
+            // Verify this booking is for an activity owned by this user
+            List<Booking> ownerBookings = bookingRepository.findBookingsByActivityOwner(ownerEmail);
+            boolean isOwnerBooking = ownerBookings.stream()
+                    .anyMatch(b -> b.getId().equals(ticketId));
+            
+            if (!isOwnerBooking) {
+                throw new RuntimeException("Access denied: This ticket is not for your activities");
+            }
+            
+            // Check if booking has QR code data stored
+            if (booking.getQrCodeData() == null || booking.getQrCodeData().trim().isEmpty()) {
+                log.warn("Booking {} has no stored QR code data, generating new one", ticketId);
+                // Generate QR code data for existing booking
+                String newQrCodeData = generateQRCodeData(
+                    booking.getId(), 
+                    booking.getTitle(), 
+                    booking.getBookingDate(), 
+                    booking.getTotalPersons(), 
+                    booking.getOrderNumber(), 
+                    booking.getStatus().toString()
+                );
+                booking.setQrCodeData(newQrCodeData);
+                booking = bookingRepository.save(booking);
+            }
+            
+            // Verify QR code data matches booking basic info
+            String qrEventTitle = (String) qrData.get("eventTitle");
+            String qrDate = (String) qrData.get("date");
+            Integer qrPersons = (Integer) qrData.get("persons");
+            String qrOrderNumber = (String) qrData.get("orderNumber");
+            
+            // Basic validation against booking data
+            if (!booking.getTitle().equals(qrEventTitle)) {
+                throw new RuntimeException("QR code event title does not match booking");
+            }
+            
+            if (!booking.getBookingDate().equals(qrDate)) {
+                throw new RuntimeException("QR code date does not match booking");
+            }
+            
+            if (!booking.getTotalPersons().equals(qrPersons)) {
+                throw new RuntimeException("QR code person count does not match booking");
+            }
+            
+            if (booking.getOrderNumber() != null && !booking.getOrderNumber().equals(qrOrderNumber)) {
+                throw new RuntimeException("QR code order number does not match booking");
+            }
+            
+            // Verify the QR code is not from a cancelled booking
+            if (booking.getStatus() == Booking.BookingStatus.CANCELLED) {
+                throw new RuntimeException("This ticket has been cancelled and is not valid");
+            }
+            
+            // Log verification
+            log.info("QR code verified successfully by owner: {} for booking: {} (Status: {})", 
+                    ownerEmail, ticketId, booking.getStatus());
+            
+            return convertToResponseDTO(booking);
+            
+        } catch (Exception e) {
+            log.error("Error verifying QR code by owner {}: ", ownerEmail, e);
+            throw new RuntimeException("QR code verification failed: " + e.getMessage());
+        }
+    }
+    
+    @Transactional
+    public BookingResponseDTO markBookingAsCompletedByOwner(String bookingId, String ownerEmail) {
+        try {
+            log.info("Marking booking {} as completed by owner: {}", bookingId, ownerEmail);
+            
+            Booking booking = bookingRepository.findById(bookingId)
+                    .orElseThrow(() -> new RuntimeException("Booking not found"));
+            
+            // Check if the booking belongs to an activity owned by this user
+            User owner = userRepository.findByEmail(ownerEmail)
+                    .orElseThrow(() -> new RuntimeException("Owner not found"));
+            
+            if (!owner.isTravelActivityOwner()) {
+                throw new RuntimeException("Access denied: User is not a travel activity owner");
+            }
+            
+            // Verify this booking is for an activity owned by this user
+            List<Booking> ownerBookings = bookingRepository.findBookingsByActivityOwner(ownerEmail);
+            boolean isOwnerBooking = ownerBookings.stream()
+                    .anyMatch(b -> b.getId().equals(bookingId));
+            
+            if (!isOwnerBooking) {
+                throw new RuntimeException("Access denied: Booking does not belong to your activities");
+            }
+            
+            // Check if booking is already completed
+            if (booking.getStatus() == Booking.BookingStatus.COMPLETED) {
+                log.warn("Booking {} is already marked as completed", bookingId);
+                return convertToResponseDTO(booking);
+            }
+            
+            // Check if booking is cancelled
+            if (booking.getStatus() == Booking.BookingStatus.CANCELLED) {
+                throw new RuntimeException("Cannot mark cancelled booking as completed");
+            }
+            
+            // Update status to completed
+            booking.setStatus(Booking.BookingStatus.COMPLETED);
+            Booking updatedBooking = bookingRepository.save(booking);
+            
+            log.info("Booking {} successfully marked as completed by owner: {}", bookingId, ownerEmail);
+            
+            return convertToResponseDTO(updatedBooking);
+            
+        } catch (Exception e) {
+            log.error("Error marking booking {} as completed by owner: ", bookingId, e);
+            throw new RuntimeException("Failed to mark booking as completed: " + e.getMessage());
+        }
+    }
+    
+    public Long getBookingCountByActivityOwner(String ownerEmail) {
+        return bookingRepository.countBookingsByActivityOwner(ownerEmail);
+    }
+    
+    public Long getBookingCountByActivityOwnerAndStatus(String ownerEmail, Booking.BookingStatus status) {
+        return bookingRepository.countBookingsByActivityOwnerAndStatus(ownerEmail, status);
+    }
+    
+    public Double getTotalRevenueByActivityOwner(String ownerEmail) {
+        Double revenue = bookingRepository.getTotalRevenueByActivityOwner(ownerEmail);
+        return revenue != null ? revenue : 0.0;
+    }
+    
+    // Additional owner methods with token support for AdminController integration
+    public List<BookingResponseDTO> getBookingsByActivityOwnerToken(String token) {
+        try {
+            // Decode token to get user email
+            String decodedToken = new String(java.util.Base64.getDecoder().decode(token));
+            String[] parts = decodedToken.split(":");
+            
+            if (parts.length < 2) {
+                throw new RuntimeException("Invalid token format");
+            }
+            
+            int userId = Integer.parseInt(parts[0]);
+            User owner = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("Owner not found"));
+            
+            if (!owner.isTravelActivityOwner()) {
+                throw new RuntimeException("Access denied: User is not a travel activity owner");
+            }
+            
+            return getBookingsByActivityOwner(owner.getEmail());
+        } catch (Exception e) {
+            log.error("Error getting bookings by activity owner token: ", e);
+            throw new RuntimeException("Failed to retrieve owner bookings: " + e.getMessage());
+        }
+    }
+    
+    public BookingResponseDTO updateBookingStatusAsOwnerToken(String bookingId, Booking.BookingStatus status, String token) {
+        try {
+            // Decode token to get user email
+            String decodedToken = new String(java.util.Base64.getDecoder().decode(token));
+            String[] parts = decodedToken.split(":");
+            
+            if (parts.length < 2) {
+                throw new RuntimeException("Invalid token format");
+            }
+            
+            int userId = Integer.parseInt(parts[0]);
+            User owner = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("Owner not found"));
+            
+            if (!owner.isTravelActivityOwner()) {
+                throw new RuntimeException("Access denied: User is not a travel activity owner");
+            }
+            
+            return updateBookingStatusAsOwner(bookingId, status, owner.getEmail());
+        } catch (Exception e) {
+            log.error("Error updating booking status by owner token: ", e);
+            throw new RuntimeException("Failed to update booking status: " + e.getMessage());
+        }
+    }
+    
+    public BookingResponseDTO verifyQRCodeByOwnerToken(String qrCodeData, String token) {
+        try {
+            // Decode token to get user email
+            String decodedToken = new String(java.util.Base64.getDecoder().decode(token));
+            String[] parts = decodedToken.split(":");
+            
+            if (parts.length < 2) {
+                throw new RuntimeException("Invalid token format");
+            }
+            
+            int userId = Integer.parseInt(parts[0]);
+            User owner = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("Owner not found"));
+            
+            if (!owner.isTravelActivityOwner()) {
+                throw new RuntimeException("Access denied: User is not a travel activity owner");
+            }
+            
+            return verifyQRCodeAsOwner(qrCodeData, owner.getEmail());
+        } catch (Exception e) {
+            log.error("Error verifying QR code by owner token: ", e);
+            throw new RuntimeException("Failed to verify QR code: " + e.getMessage());
+        }
+    }
+    
+    public BookingResponseDTO markBookingAsCompletedByOwnerToken(String bookingId, String token) {
+        try {
+            // Decode token to get user email
+            String decodedToken = new String(java.util.Base64.getDecoder().decode(token));
+            String[] parts = decodedToken.split(":");
+            
+            if (parts.length < 2) {
+                throw new RuntimeException("Invalid token format");
+            }
+            
+            int userId = Integer.parseInt(parts[0]);
+            User owner = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("Owner not found"));
+            
+            if (!owner.isTravelActivityOwner()) {
+                throw new RuntimeException("Access denied: User is not a travel activity owner");
+            }
+            
+            return markBookingAsCompletedByOwner(bookingId, owner.getEmail());
+        } catch (Exception e) {
+            log.error("Error marking booking as completed by owner token: ", e);
+            throw new RuntimeException("Failed to mark booking as completed: " + e.getMessage());
+        }
+    }
 }

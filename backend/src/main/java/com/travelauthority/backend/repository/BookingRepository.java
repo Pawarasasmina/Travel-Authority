@@ -42,4 +42,24 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
     
     // Find bookings by activity ID and booking date
     List<Booking> findByActivityIdAndBookingDate(Integer activityId, String bookingDate);
+    
+    // Find bookings for activities created by a specific owner
+    @Query("SELECT b FROM Booking b WHERE b.activityId IN (SELECT a.id FROM Activity a WHERE a.createdBy = :ownerEmail) ORDER BY b.bookingTime DESC")
+    List<Booking> findBookingsByActivityOwner(@Param("ownerEmail") String ownerEmail);
+    
+    // Find bookings for activities created by a specific owner with status filter
+    @Query("SELECT b FROM Booking b WHERE b.activityId IN (SELECT a.id FROM Activity a WHERE a.createdBy = :ownerEmail) AND b.status = :status ORDER BY b.bookingTime DESC")
+    List<Booking> findBookingsByActivityOwnerAndStatus(@Param("ownerEmail") String ownerEmail, @Param("status") Booking.BookingStatus status);
+    
+    // Count bookings for activities created by a specific owner
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.activityId IN (SELECT a.id FROM Activity a WHERE a.createdBy = :ownerEmail)")
+    Long countBookingsByActivityOwner(@Param("ownerEmail") String ownerEmail);
+    
+    // Count bookings by status for activities created by a specific owner
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.activityId IN (SELECT a.id FROM Activity a WHERE a.createdBy = :ownerEmail) AND b.status = :status")
+    Long countBookingsByActivityOwnerAndStatus(@Param("ownerEmail") String ownerEmail, @Param("status") Booking.BookingStatus status);
+    
+    // Get total revenue for activities created by a specific owner
+    @Query("SELECT SUM(b.totalPrice) FROM Booking b WHERE b.activityId IN (SELECT a.id FROM Activity a WHERE a.createdBy = :ownerEmail) AND (b.status = 'CONFIRMED' OR b.status = 'COMPLETED')")
+    Double getTotalRevenueByActivityOwner(@Param("ownerEmail") String ownerEmail);
 }
