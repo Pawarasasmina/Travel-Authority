@@ -1,72 +1,25 @@
 import React, { useEffect } from "react";
 import { X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import offer from "../assets/offers/offer1.jpg";
-import offer2 from "../assets/offers/offer2.jpg";
-import offer3 from "../assets/offers/offer3.jpg";
+import { useNotifications } from "../contexts/NotificationContext";
+import { debugLog } from "../utils/debug";
 
-// Sample notification data
-const todayNotifications = [
-  {
-    id: 1,
-    title: "Special Offers",
-    description: "20% discount from travel packages.",
-    time: "2 hours ago",
-    icon: offer,
-  },
-  {
-    id: 2,
-    title: "Tour Travels",
-    description: "New exciting destinations are waiting for you.",
-    time: "4 hours ago",
-    icon: offer2,
-  },
-  {
-    id: 3,
-    title: "Southern Travels",
-    description: "Special deal for Galle Camp planners.",
-    time: "5 hours ago",
-    icon: offer3,
-  },
-  {
-    id: 4,
-    title: "Soda Tura Sri Lanka",
-    description: "Explore the beautiful east of Sri Lanka.",
-    time: "6 hours ago",
-    icon: offer,
-  },
-];
-
-const yesterdayNotifications = [
-  {
-    id: 5,
-    title: "Special Offers",
-    description: "Limited spots left for New Year's Eve special packages.",
-    time: "1 day ago",
-    icon: offer3,
-  },
-  {
-    id: 6,
-    title: "Southern Travels",
-    description: "New destinations added to camping plans.",
-    time: "1 day ago",
-    icon: offer2,
-  },
-  {
-    id: 7,
-    title: "Sigma Tour Sri Lanka",
-    description: "Sign up for our newsletter to receive special offers.",
-    time: "1 day ago",
-    icon: offer ,
-  },
-  {
-    id: 8,
-    title: "Southern Travels",
-    description: "Upcoming events for Eastern Camp planners.",
-    time: "1 day ago",
-    icon: offer3,
-  },
-];
+interface NotificationData {
+  id: number;
+  title: string;
+  description: string;
+  message: string;
+  type: 'OFFER' | 'ALERT' | 'UPDATE' | 'SYSTEM' | 'BOOKING_CONFIRMATION' | 'PAYMENT_SUCCESS';
+  targetUserType: 'ALL_USERS' | 'NORMAL_USERS' | 'ACTIVITY_OWNERS' | 'SPECIFIC_USER';
+  targetUserId?: number;
+  createdAt: string;
+  expiresAt?: string;
+  isActive: boolean;
+  actionUrl?: string;
+  iconUrl?: string;
+  createdByName: string;
+  isRead: boolean;
+}
 
 interface NotificationModalProps {
   onClose: () => void;
@@ -74,6 +27,7 @@ interface NotificationModalProps {
 
 const NotificationModal: React.FC<NotificationModalProps> = ({ onClose }) => {
   const navigate = useNavigate();
+  const { notifications, markAsRead } = useNotifications();
 
   // Prevent body scrolling when modal is open
   useEffect(() => {
@@ -82,6 +36,62 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ onClose }) => {
       document.body.style.overflow = 'unset';
     };
   }, []);
+
+  const handleNotificationClick = async (notification: NotificationData) => {
+    // Mark as read if not already read
+    if (!notification.isRead) {
+      try {
+        await markAsRead(notification.id);
+        debugLog('NOTIFICATION_MODAL', 'Notification marked as read', { id: notification.id });
+      } catch (err) {
+        debugLog('NOTIFICATION_MODAL', 'Error marking notification as read', err);
+      }
+    }
+
+    // Navigate to action URL if provided
+    if (notification.actionUrl) {
+      onClose();
+      navigate(notification.actionUrl);
+    }
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} minutes ago`;
+    } else if (diffInMinutes < 1440) {
+      return `${Math.floor(diffInMinutes / 60)} hours ago`;
+    } else {
+      return `${Math.floor(diffInMinutes / 1440)} days ago`;
+    }
+  };
+
+  const groupNotificationsByDate = (notifications: NotificationData[]) => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const todayNotifications = notifications.filter(n => {
+      const notificationDate = new Date(n.createdAt);
+      return notificationDate.toDateString() === today.toDateString();
+    });
+
+    const yesterdayNotifications = notifications.filter(n => {
+      const notificationDate = new Date(n.createdAt);
+      return notificationDate.toDateString() === yesterday.toDateString();
+    });
+
+    const olderNotifications = notifications.filter(n => {
+      const notificationDate = new Date(n.createdAt);
+      return notificationDate.toDateString() !== today.toDateString() && 
+             notificationDate.toDateString() !== yesterday.toDateString();
+    });
+
+    return { todayNotifications, yesterdayNotifications, olderNotifications };
+  };
 
   // Close modal when clicking outside
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -94,6 +104,8 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ onClose }) => {
     onClose();
     navigate('/notifications');
   };
+
+  const { todayNotifications, yesterdayNotifications, olderNotifications } = groupNotificationsByDate(notifications);
 
   return (
     <>
@@ -112,51 +124,145 @@ const NotificationModal: React.FC<NotificationModalProps> = ({ onClose }) => {
         </div>
 
         <div className="max-h-[calc(100vh-60px)] md:max-h-[400px] overflow-y-auto">
-          {/* Today's notifications */}
-          <div className="p-4 md:p-3 border-b">
-            <h4 className="text-orange-400 font-semibold mb-3 md:mb-2 text-sm">Today</h4>
-            <div className="space-y-4 md:space-y-3">
-              {todayNotifications.map((notification) => (
-                <div key={notification.id} className="flex gap-4 md:gap-3 cursor-pointer hover:bg-gray-50 p-3 md:p-2 rounded-lg md:rounded">
-                  <img 
-                    src={notification.icon} 
-                    alt={notification.title} 
-                    className="w-12 h-12 md:w-10 md:h-10 rounded-lg md:rounded object-cover"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between">
-                      <h5 className="font-medium text-base md:text-sm truncate">{notification.title}</h5>
-                      <span className="text-gray-400 text-sm md:text-xs whitespace-nowrap ml-2">{notification.time}</span>
-                    </div>
-                    <p className="text-sm md:text-xs text-gray-600 line-clamp-2">{notification.description}</p>
+          {notifications.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-gray-500 text-sm">No notifications yet</p>
+            </div>
+          ) : (
+            <>
+              {/* Today's notifications */}
+              {todayNotifications.length > 0 && (
+                <div className="p-4 md:p-3 border-b">
+                  <h4 className="text-orange-400 font-semibold mb-3 md:mb-2 text-sm">Today</h4>
+                  <div className="space-y-4 md:space-y-3">
+                    {todayNotifications.map((notification) => (
+                      <div 
+                        key={notification.id} 
+                        className={`flex gap-4 md:gap-3 cursor-pointer hover:bg-gray-50 p-3 md:p-2 rounded-lg md:rounded ${!notification.isRead ? 'bg-orange-50' : ''}`}
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <div className="w-12 h-12 md:w-10 md:h-10 rounded-lg md:rounded bg-orange-100 flex items-center justify-center">
+                          {notification.iconUrl ? (
+                            <img 
+                              src={notification.iconUrl} 
+                              alt={notification.title} 
+                              className="w-full h-full rounded-lg md:rounded object-cover"
+                            />
+                          ) : (
+                            <span className="text-orange-600 font-semibold text-sm">
+                              {notification.type.charAt(0)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between">
+                            <h5 className={`font-medium text-base md:text-sm truncate ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+                              {notification.title}
+                            </h5>
+                            <span className="text-gray-400 text-sm md:text-xs whitespace-nowrap ml-2">
+                              {formatTime(notification.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-sm md:text-xs text-gray-600 line-clamp-2">{notification.message}</p>
+                          {!notification.isRead && (
+                            <div className="w-2 h-2 bg-orange-500 rounded-full mt-1"></div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              )}
 
-          {/* Yesterday's notifications - same structure as Today's */}
-          <div className="p-4 md:p-3 border-b">
-            <h4 className="text-orange-400 font-semibold mb-3 md:mb-2 text-sm">Yesterday</h4>
-            <div className="space-y-4 md:space-y-3">
-              {yesterdayNotifications.map((notification) => (
-                <div key={notification.id} className="flex gap-4 md:gap-3 cursor-pointer hover:bg-gray-50 p-3 md:p-2 rounded-lg md:rounded">
-                  <img 
-                    src={notification.icon} 
-                    alt={notification.title} 
-                    className="w-12 h-12 md:w-10 md:h-10 rounded-lg md:rounded object-cover"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between">
-                      <h5 className="font-medium text-base md:text-sm truncate">{notification.title}</h5>
-                      <span className="text-gray-400 text-sm md:text-xs whitespace-nowrap ml-2">{notification.time}</span>
-                    </div>
-                    <p className="text-sm md:text-xs text-gray-600 line-clamp-2">{notification.description}</p>
+              {/* Yesterday's notifications */}
+              {yesterdayNotifications.length > 0 && (
+                <div className="p-4 md:p-3 border-b">
+                  <h4 className="text-orange-400 font-semibold mb-3 md:mb-2 text-sm">Yesterday</h4>
+                  <div className="space-y-4 md:space-y-3">
+                    {yesterdayNotifications.map((notification) => (
+                      <div 
+                        key={notification.id} 
+                        className={`flex gap-4 md:gap-3 cursor-pointer hover:bg-gray-50 p-3 md:p-2 rounded-lg md:rounded ${!notification.isRead ? 'bg-orange-50' : ''}`}
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <div className="w-12 h-12 md:w-10 md:h-10 rounded-lg md:rounded bg-orange-100 flex items-center justify-center">
+                          {notification.iconUrl ? (
+                            <img 
+                              src={notification.iconUrl} 
+                              alt={notification.title} 
+                              className="w-full h-full rounded-lg md:rounded object-cover"
+                            />
+                          ) : (
+                            <span className="text-orange-600 font-semibold text-sm">
+                              {notification.type.charAt(0)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between">
+                            <h5 className={`font-medium text-base md:text-sm truncate ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+                              {notification.title}
+                            </h5>
+                            <span className="text-gray-400 text-sm md:text-xs whitespace-nowrap ml-2">
+                              {formatTime(notification.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-sm md:text-xs text-gray-600 line-clamp-2">{notification.message}</p>
+                          {!notification.isRead && (
+                            <div className="w-2 h-2 bg-orange-500 rounded-full mt-1"></div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              )}
+
+              {/* Older notifications */}
+              {olderNotifications.length > 0 && (
+                <div className="p-4 md:p-3 border-b">
+                  <h4 className="text-orange-400 font-semibold mb-3 md:mb-2 text-sm">Earlier</h4>
+                  <div className="space-y-4 md:space-y-3">
+                    {olderNotifications.slice(0, 3).map((notification) => (
+                      <div 
+                        key={notification.id} 
+                        className={`flex gap-4 md:gap-3 cursor-pointer hover:bg-gray-50 p-3 md:p-2 rounded-lg md:rounded ${!notification.isRead ? 'bg-orange-50' : ''}`}
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <div className="w-12 h-12 md:w-10 md:h-10 rounded-lg md:rounded bg-orange-100 flex items-center justify-center">
+                          {notification.iconUrl ? (
+                            <img 
+                              src={notification.iconUrl} 
+                              alt={notification.title} 
+                              className="w-full h-full rounded-lg md:rounded object-cover"
+                            />
+                          ) : (
+                            <span className="text-orange-600 font-semibold text-sm">
+                              {notification.type.charAt(0)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between">
+                            <h5 className={`font-medium text-base md:text-sm truncate ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+                              {notification.title}
+                            </h5>
+                            <span className="text-gray-400 text-sm md:text-xs whitespace-nowrap ml-2">
+                              {formatTime(notification.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-sm md:text-xs text-gray-600 line-clamp-2">{notification.message}</p>
+                          {!notification.isRead && (
+                            <div className="w-2 h-2 bg-orange-500 rounded-full mt-1"></div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
 
           {/* View all button */}
           <div className="sticky bottom-0 p-4 md:p-3 bg-white border-t">

@@ -7,12 +7,17 @@ import org.springframework.web.bind.annotation.*;
 
 import com.travelauthority.backend.dto.ResponseDTO;
 import com.travelauthority.backend.dto.BookingResponseDTO;
+import com.travelauthority.backend.dto.CreateNotificationDTO;
+import com.travelauthority.backend.dto.NotificationDTO;
 import com.travelauthority.backend.service.AdminService;
 import com.travelauthority.backend.service.UserService;
 import com.travelauthority.backend.service.BookingService;
+import com.travelauthority.backend.service.NotificationService;
 import com.travelauthority.backend.entity.Booking;
+import com.travelauthority.backend.entity.Notification;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 
 import java.util.Map;
 import java.util.List;
@@ -31,6 +36,9 @@ public class AdminController {
     
     @Autowired
     private BookingService bookingService;
+    
+    @Autowired
+    private NotificationService notificationService;
     
     @GetMapping("/dashboard")
     public ResponseEntity<ResponseDTO> getDashboardData(@RequestHeader("Authorization") String authHeader) {
@@ -325,5 +333,170 @@ public class AdminController {
             errorResponse.setMessage("QR code verification failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
+    }
+    
+    // Admin Notification Management Endpoints
+    
+    @PostMapping("/notifications")
+    public ResponseEntity<ResponseDTO<NotificationDTO>> createNotification(
+            @RequestBody CreateNotificationDTO createDTO,
+            @RequestHeader("Authorization") String authHeader) {
+        log.info("Admin request to create notification: {}", createDTO.getTitle());
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
+        
+        try {
+            // Verify admin access
+            ResponseDTO accessCheck = adminService.checkAdminAccess(token);
+            if (!accessCheck.getStatus().equals(HttpStatus.OK.toString())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ResponseDTO.<NotificationDTO>builder()
+                        .status(HttpStatus.FORBIDDEN.toString())
+                        .message("Unauthorized: Admin access required")
+                        .build());
+            }
+            
+            // Get admin user ID from token
+            String decodedToken = new String(java.util.Base64.getDecoder().decode(token));
+            String[] parts = decodedToken.split(":");
+            int adminUserId = Integer.parseInt(parts[0]);
+            
+            NotificationDTO notification = notificationService.createNotification(createDTO, adminUserId);
+            
+            ResponseDTO<NotificationDTO> response = new ResponseDTO<>();
+            response.setStatus("OK");
+            response.setMessage("Notification created successfully");
+            response.setData(notification);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            log.error("Error creating notification: ", e);
+            ResponseDTO<NotificationDTO> errorResponse = new ResponseDTO<>();
+            errorResponse.setStatus("ERROR");
+            errorResponse.setMessage("Failed to create notification: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    @GetMapping("/notifications")
+    public ResponseEntity<ResponseDTO<Map<String, Object>>> getAllNotifications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestHeader("Authorization") String authHeader) {
+        log.info("Admin request to get all notifications");
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
+        
+        try {
+            // Verify admin access
+            ResponseDTO accessCheck = adminService.checkAdminAccess(token);
+            if (!accessCheck.getStatus().equals(HttpStatus.OK.toString())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ResponseDTO.<Map<String, Object>>builder()
+                        .status(HttpStatus.FORBIDDEN.toString())
+                        .message("Unauthorized: Admin access required")
+                        .build());
+            }
+            
+            Page<NotificationDTO> notifications = notificationService.getAllNotificationsForAdmin(page, size);
+            
+            Map<String, Object> responseData = Map.of(
+                    "notifications", notifications.getContent(),
+                    "totalElements", notifications.getTotalElements(),
+                    "totalPages", notifications.getTotalPages(),
+                    "currentPage", page
+            );
+            
+            ResponseDTO<Map<String, Object>> response = new ResponseDTO<>();
+            response.setStatus("OK");
+            response.setMessage("Notifications retrieved successfully");
+            response.setData(responseData);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error fetching notifications: ", e);
+            ResponseDTO<Map<String, Object>> errorResponse = new ResponseDTO<>();
+            errorResponse.setStatus("ERROR");
+            errorResponse.setMessage("Failed to fetch notifications: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    @PutMapping("/notifications/{notificationId}")
+    public ResponseEntity<ResponseDTO<NotificationDTO>> updateNotification(
+            @PathVariable Long notificationId,
+            @RequestBody CreateNotificationDTO updateDTO,
+            @RequestHeader("Authorization") String authHeader) {
+        log.info("Admin request to update notification ID: {}", notificationId);
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
+        
+        try {
+            // Verify admin access
+            ResponseDTO accessCheck = adminService.checkAdminAccess(token);
+            if (!accessCheck.getStatus().equals(HttpStatus.OK.toString())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ResponseDTO.<NotificationDTO>builder()
+                        .status(HttpStatus.FORBIDDEN.toString())
+                        .message("Unauthorized: Admin access required")
+                        .build());
+            }
+            
+            NotificationDTO notification = notificationService.updateNotification(notificationId, updateDTO);
+            
+            ResponseDTO<NotificationDTO> response = new ResponseDTO<>();
+            response.setStatus("OK");
+            response.setMessage("Notification updated successfully");
+            response.setData(notification);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error updating notification: ", e);
+            ResponseDTO<NotificationDTO> errorResponse = new ResponseDTO<>();
+            errorResponse.setStatus("ERROR");
+            errorResponse.setMessage("Failed to update notification: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    @DeleteMapping("/notifications/{notificationId}")
+    public ResponseEntity<ResponseDTO<Void>> deleteNotification(
+            @PathVariable Long notificationId,
+            @RequestHeader("Authorization") String authHeader) {
+        log.info("Admin request to delete notification ID: {}", notificationId);
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
+        
+        try {
+            // Verify admin access
+            ResponseDTO accessCheck = adminService.checkAdminAccess(token);
+            if (!accessCheck.getStatus().equals(HttpStatus.OK.toString())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ResponseDTO.<Void>builder()
+                        .status(HttpStatus.FORBIDDEN.toString())
+                        .message("Unauthorized: Admin access required")
+                        .build());
+            }
+            
+            notificationService.deleteNotification(notificationId);
+            
+            ResponseDTO<Void> response = new ResponseDTO<>();
+            response.setStatus("OK");
+            response.setMessage("Notification deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error deleting notification: ", e);
+            ResponseDTO<Void> errorResponse = new ResponseDTO<>();
+            errorResponse.setStatus("ERROR");
+            errorResponse.setMessage("Failed to delete notification: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    @GetMapping("/notifications/types")
+    public ResponseEntity<ResponseDTO<Notification.NotificationType[]>> getNotificationTypes() {
+        ResponseDTO<Notification.NotificationType[]> response = new ResponseDTO<>();
+        response.setStatus("OK");
+        response.setMessage("Notification types retrieved successfully");
+        response.setData(Notification.NotificationType.values());
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/notifications/target-types")
+    public ResponseEntity<ResponseDTO<Notification.TargetUserType[]>> getTargetUserTypes() {
+        ResponseDTO<Notification.TargetUserType[]> response = new ResponseDTO<>();
+        response.setStatus("OK");
+        response.setMessage("Target user types retrieved successfully");
+        response.setData(Notification.TargetUserType.values());
+        return ResponseEntity.ok(response);
     }
 }

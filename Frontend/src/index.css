@@ -24,6 +24,20 @@
     color: #4CAF50; /* Green */
     transform: scale(1.5);
   }
+
+  /* Notification toast animation */
+  .animate-shrink {
+    animation: shrink linear forwards;
+  }
+
+  @keyframes shrink {
+    from {
+      width: 100%;
+    }
+    to {
+      width: 0%;
+    }
+  }
 }
 
 

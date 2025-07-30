@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Activity, CreditCard, Package, ChevronDown, ChevronUp, Tag } from 'lucide-react';
+import { Users, Activity, CreditCard, Package, ChevronDown, ChevronUp, Tag, Bell } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import * as adminApi from '../../api/adminApi';
 import { debugLog } from '../../utils/debug';
@@ -8,6 +8,7 @@ import ActivityManagement from '../../components/admin/ActivityManagement';
 import BookingManagement from '../../components/admin/BookingManagement';
 import UserManagement from '../../components/admin/UserManagement';
 import OfferManagement from '../../components/admin/OfferManagement';
+import NotificationManagement from '../../components/admin/NotificationManagement';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -177,6 +178,12 @@ const AdminDashboard = () => {
             >
               Offers
             </button>
+            <button 
+              onClick={() => setActiveTab('notifications')}
+              className={`pb-4 px-2 font-medium ${activeTab === 'notifications' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Notifications
+            </button>
           </nav>
         </div>
 
@@ -298,6 +305,11 @@ const AdminDashboard = () => {
           <div className="bg-white rounded-lg shadow-md p-6">
             <OfferManagement />
           </div>
+        )}
+        
+        {/* Notifications Management */}
+        {activeTab === 'notifications' && (
+          <NotificationManagement />
         )}
       </div>
     </div>

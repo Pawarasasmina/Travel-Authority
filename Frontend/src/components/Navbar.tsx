@@ -4,6 +4,7 @@ import navbarBg from "../assets/navbar/navbar_bg.png";
 import { Bell, User, LogOut } from "lucide-react";
 import NotificationModal from "./NotificationModal";
 import { useAuth } from "../contexts/AuthContext";
+import { useNotifications } from "../contexts/NotificationContext";
 
 interface NavbarProps {
   transparent?: boolean;
@@ -12,6 +13,7 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ transparent = false }) => {  const navigate = useNavigate();
   const location = useLocation();
   const { logout, isAuthenticated, user } = useAuth();
+  const { unreadCount, refreshNotifications } = useNotifications();
   const [showNotifications, setShowNotifications] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -101,8 +103,12 @@ const Navbar: React.FC<NavbarProps> = ({ transparent = false }) => {  const navi
               onClick={toggleNotifications}
             >
               <Bell size={22} />
-              {/* Optional: Notification indicator */}
-              <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center text-[10px] text-white">3</span>
+              {/* Dynamic notification indicator */}
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center text-[10px] text-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
             {showNotifications && <NotificationModal onClose={() => setShowNotifications(false)} />}
           </div>          <button 

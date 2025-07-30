@@ -10,8 +10,10 @@ import Categories from './pages/categories';
 import Profile from './pages/profile';
 import PurchaseList from './pages/purchase-list';
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider, useNotifications } from './contexts/NotificationContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import NotificationToast from './components/NotificationToast';
 import ActivityDetail from './components/activities/ActivityDetail';
 import BookedTicketPage from './pages/booked-ticket-page';
 import PeopleCountSelector from './pages/PeopleCountSelector';
@@ -28,6 +30,7 @@ import { monitorUserData, fixUserData } from './utils/userDataMonitor';
 // Component to conditionally render navbar based on route
 const AppContent = () => {
   const location = useLocation();
+  const { newNotification, dismissNewNotification } = useNotifications();
   const authRoutes = ['/login', '/signup', '/signup2', '/forgot-password', '/change-password', '/'];
   
   // Pages that should have transparent navbar
@@ -64,7 +67,19 @@ const AppContent = () => {
   
   return (
     <>
-      {showNavbar && <Navbar transparent={shouldHaveTransparentNavbar} />}      <Routes>
+      {showNavbar && <Navbar transparent={shouldHaveTransparentNavbar} />}
+      
+      {/* Notification Toast */}
+      {newNotification && (
+        <NotificationToast
+          notification={newNotification}
+          onClose={dismissNewNotification}
+          autoClose={true}
+          duration={6000}
+        />
+      )}
+      
+      <Routes>
         <Route path="/" element={<Navigate to="/login" />} /> 
         <Route path="/login" element={<Login />} />      
         <Route path="/home" element={<ProtectedRoute><Home/></ProtectedRoute>}/>
@@ -106,9 +121,11 @@ function App() {
   
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <NotificationProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 }
