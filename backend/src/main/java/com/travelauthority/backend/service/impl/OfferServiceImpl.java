@@ -55,7 +55,7 @@ public class OfferServiceImpl implements OfferService {
                         (savedOffer.getDiscountPercentage() != null ? " (" + savedOffer.getDiscountPercentage() + "% OFF)" : ""))
                     .type(Notification.NotificationType.OFFER)
                     .targetUserType(Notification.TargetUserType.ALL_USERS)
-                    .actionUrl(null)
+                    .actionUrl("/offers/" + savedOffer.getId())
                     .iconUrl(savedOffer.getImage())
                     .build();
                 // Use null for createdByUserId (system user will be picked inside NotificationService)

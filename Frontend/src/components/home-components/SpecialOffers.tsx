@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getActiveOffers } from '../../api/offerApi';
 import { debugLog } from '../../utils/debug';
+import { Link } from 'react-router-dom';
 // Fallback images in case API doesn't return any offers
 import offer1 from '../../assets/home-images/offers/offer1.png';
 import offer2 from '../../assets/home-images/offers/offer2.png';
@@ -21,25 +22,27 @@ interface Offer {
   active: boolean;
 }
 
-const OfferCard: React.FC<OfferCardProps> = ({ image, title, discount, className }) => {
+const OfferCard: React.FC<OfferCardProps & { id?: number }> = ({ image, title, discount, className, id }) => {
   return (
-    <div className={`relative rounded-lg overflow-hidden shadow-lg ${className} group animate-zoom-in`}>
-      <img 
-        src={image} 
-        alt={title} 
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-        onError={(e) => {
-          // Use a default image if the image fails to load
-          e.currentTarget.src = offer1;
-        }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end p-4">
-        {discount && (
-          <div className="text-white font-bold text-3xl mb-2">{discount}</div>
-        )}
-        <h3 className="text-white font-bold text-xl">{title}</h3>
+    <Link to={id ? `/offers/${id}` : "#"} className="block">
+      <div className={`relative rounded-lg overflow-hidden shadow-lg ${className} group animate-zoom-in`}>
+        <img 
+          src={image} 
+          alt={title} 
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          onError={(e) => {
+            // Use a default image if the image fails to load
+            e.currentTarget.src = offer1;
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end p-4">
+          {discount && (
+            <div className="text-white font-bold text-3xl mb-2">{discount}</div>
+          )}
+          <h3 className="text-white font-bold text-xl">{title}</h3>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
@@ -134,6 +137,7 @@ const SpecialOffers = () => {
                 className="inline-block w-1/4 flex-shrink-0 px-2"
               >
                 <OfferCard 
+                  id={offer.id}
                   image={offer.image}
                   title={offer.title}
                   discount={offer.discount}
@@ -148,6 +152,7 @@ const SpecialOffers = () => {
                 className="inline-block w-1/4 flex-shrink-0 px-2"
               >
                 <OfferCard 
+                  id={offer.id}
                   image={offer.image}
                   title={offer.title}
                   discount={offer.discount}

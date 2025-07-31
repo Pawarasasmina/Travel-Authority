@@ -25,7 +25,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import TravelOwnerRoute from './components/TravelOwnerRoute';
 import { monitorUserData, fixUserData } from './utils/userDataMonitor';
-
+import OfferDetails from './pages/OfferDetails';
 
 // Component to conditionally render navbar based on route
 const AppContent = () => {
@@ -95,6 +95,7 @@ const AppContent = () => {
         <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
         <Route path="/bookings/:id" element={<ProtectedRoute><BookedTicketPage /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+        <Route path="/offers/:id" element={<OfferDetails />} />
         
         {/* Admin Routes */}
         <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
