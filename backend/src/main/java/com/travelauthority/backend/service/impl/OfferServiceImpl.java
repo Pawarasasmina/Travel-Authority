@@ -54,7 +54,7 @@ public class OfferServiceImpl implements OfferService {
                     .message("A new offer has been added: " + savedOffer.getTitle() +
                         (savedOffer.getDiscountPercentage() != null ? " (" + savedOffer.getDiscountPercentage() + "% OFF)" : ""))
                     .type(Notification.NotificationType.OFFER)
-                    .targetUserType(Notification.TargetUserType.ALL_USERS)
+                    .targetUserType(Notification.TargetUserType.ALL_USERS) // <-- ensure ALL_USERS
                     .actionUrl("/offers/" + savedOffer.getId())
                     .iconUrl(savedOffer.getImage())
                     .build();
