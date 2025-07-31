@@ -77,11 +77,19 @@ const markAsRead = async (id: number) => {
     setUnreadCount(0);
   };
 
+  const notificationTypes = [
+    { id: 'OFFER', label: 'Offers', icon: Tag },
+    { id: 'ALERT', label: 'Alerts', icon: Bell },
+    { id: 'UPDATE', label: 'Updates', icon: Clock },
+    { id: 'SYSTEM', label: 'System', icon: Bell },
+    { id: 'BOOKING_CONFIRMATION', label: 'Booking Confirmed', icon: Mail },
+    { id: 'PAYMENT_SUCCESS', label: 'Payment Success', icon: Mail },
+  ];
+
   const tabs = [
     { id: 'all', label: 'All', icon: MessageSquare },
     { id: 'unread', label: 'Unread', icon: Mail },
-    { id: 'OFFER', label: 'Offers', icon: Tag },
-    { id: 'ALERT', label: 'Alerts', icon: Bell },
+    ...notificationTypes
   ];
 
   const filterNotifications = (notifications: NotificationData[]) => {
@@ -89,6 +97,7 @@ const markAsRead = async (id: number) => {
       .filter(notif => {
         if (activeTab === 'all') return true;
         if (activeTab === 'unread') return !notif.isRead;
+        // Support all backend types
         return notif.type === activeTab;
       })
       .filter(notif =>
@@ -204,7 +213,8 @@ const markAsRead = async (id: number) => {
                               {formatTime(notification.createdAt)}
                             </span>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeStyle(notification.type)}`}>
-                              {notification.type.replace('_', ' ')}
+                              {/* Display user-friendly label */}
+                              {notificationTypes.find(t => t.id === notification.type)?.label || notification.type.replace('_', ' ')}
                             </span>
                           </div>
                         </div>

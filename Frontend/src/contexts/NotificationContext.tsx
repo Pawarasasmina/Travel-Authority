@@ -6,7 +6,6 @@ import { debugLog } from '../utils/debug';
 interface NotificationData {
   id: number;
   title: string;
-  description: string;
   message: string;
   type: 'OFFER' | 'ALERT' | 'UPDATE' | 'SYSTEM' | 'BOOKING_CONFIRMATION' | 'PAYMENT_SUCCESS';
   targetUserType: 'ALL_USERS' | 'NORMAL_USERS' | 'ACTIVITY_OWNERS' | 'SPECIFIC_USER';
@@ -43,6 +42,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [newNotification, setNewNotification] = useState<NotificationData | null>(null);
   const [lastChecked, setLastChecked] = useState<Date>(new Date());
+
+  // Track last shown notification ID in localStorage
+  const getLastShownNotificationId = () => {
+    const id = localStorage.getItem('lastShownNotificationId');
+    return id ? parseInt(id, 10) : null;
+  };
+  const setLastShownNotificationId = (id: number) => {
+    localStorage.setItem('lastShownNotificationId', id.toString());
+  };
 
   // Fetch initial data when user is available
   useEffect(() => {
@@ -118,22 +126,17 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       );
 
       if (response.status === 'OK' && response.data) {
-        // Check if there are any new notifications since last check
-        const newNotifications = response.data.filter(notification => 
-          new Date(notification.createdAt) > lastChecked
-        );
-
-        if (newNotifications.length > 0) {
-          debugLog('NOTIFICATION_CONTEXT', 'Found new notifications', { count: newNotifications.length });
-          
-          // Show the most recent notification as popup
-          setNewNotification(newNotifications[0]);
-          
-          // Update the notifications list
+        // Only show popup for the latest notification if it's new
+        const lastShownId = getLastShownNotificationId();
+        const sorted = [...response.data].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const latest = sorted[0];
+        if (latest && latest.id !== lastShownId) {
+          debugLog('NOTIFICATION_CONTEXT', 'Found new notification for popup', { id: latest.id });
+          setNewNotification(latest);
+          // Don't update lastShownNotificationId here; update when dismissed
           refreshNotifications();
           fetchUnreadCount();
         }
-
         setLastChecked(new Date());
       }
     } catch (error) {
@@ -189,6 +192,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   };
 
   const dismissNewNotification = () => {
+    if (newNotification) {
+      setLastShownNotificationId(newNotification.id);
+    }
     setNewNotification(null);
   };
 
