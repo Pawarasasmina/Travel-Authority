@@ -30,12 +30,20 @@ public class NotificationService {
     private final UserNotificationStatusRepository userNotificationStatusRepository;
     private final UserRepository userRepository;
 
+    // Make this method public and allow createdByUserId to be null (use system user if null)
     @Transactional
     public NotificationDTO createNotification(CreateNotificationDTO createDTO, Integer createdByUserId) {
         log.info("Creating notification: {}", createDTO.getTitle());
 
-        User createdBy = userRepository.findById(createdByUserId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User createdBy;
+        if (createdByUserId != null) {
+            createdBy = userRepository.findById(createdByUserId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        } else {
+            // Use system user (admin) if not provided
+            createdBy = userRepository.findByRole(User.Role.ADMIN).stream().findFirst()
+                    .orElseThrow(() -> new RuntimeException("System admin user not found"));
+        }
 
         // Validate specific user target
         if (createDTO.getTargetUserType() == Notification.TargetUserType.SPECIFIC_USER) {

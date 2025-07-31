@@ -3,9 +3,11 @@ package com.travelauthority.backend.controller;
 import com.travelauthority.backend.dto.OfferDTO;
 import com.travelauthority.backend.dto.ResponseDTO;
 import com.travelauthority.backend.service.OfferService;
+import com.travelauthority.backend.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.annotation.PostConstruct;
 import java.util.List;
 
 @RequestMapping("/api/v1/offers")
@@ -15,6 +17,15 @@ public class OfferController {
 
     @Autowired
     private OfferService offerService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    // Wire NotificationService into OfferServiceImpl to avoid circular dependency
+    @PostConstruct
+    public void init() {
+        offerService.setNotificationService(notificationService);
+    }
 
     @PostMapping("/save")
     public ResponseDTO<OfferDTO> saveOffer(@RequestBody OfferDTO offerDTO, @RequestHeader(value = "X-User-Email", required = false) String userEmail) {

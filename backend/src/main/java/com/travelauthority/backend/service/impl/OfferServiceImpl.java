@@ -5,6 +5,9 @@ import com.travelauthority.backend.dto.ResponseDTO;
 import com.travelauthority.backend.entity.Offer;
 import com.travelauthority.backend.repository.OfferRepository;
 import com.travelauthority.backend.service.OfferService;
+import com.travelauthority.backend.service.NotificationService;
+import com.travelauthority.backend.dto.CreateNotificationDTO;
+import com.travelauthority.backend.entity.Notification;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +25,14 @@ public class OfferServiceImpl implements OfferService {
     @Autowired
     private OfferRepository offerRepository;
 
+    // Add NotificationService (not autowired to avoid circular dependency)
+    private NotificationService notificationService;
+
+    @Override
+    public void setNotificationService(NotificationService notificationService) {
+        this.notificationService = notificationService;
+    }
+
     @Override
     public ResponseDTO<OfferDTO> saveOffer(OfferDTO offerDTO) {
         ResponseDTO<OfferDTO> responseDTO = new ResponseDTO<>();
@@ -36,6 +47,22 @@ public class OfferServiceImpl implements OfferService {
             responseDTO.setMessage("Offer created successfully");
             responseDTO.setData(mapToDTO(savedOffer));
             
+            // --- Send notification for new offer ---
+            if (notificationService != null) {
+                CreateNotificationDTO notification = CreateNotificationDTO.builder()
+                    .title("New Offer: " + savedOffer.getTitle())
+                    .message("A new offer has been added: " + savedOffer.getTitle() +
+                        (savedOffer.getDiscountPercentage() != null ? " (" + savedOffer.getDiscountPercentage() + "% OFF)" : ""))
+                    .type(Notification.NotificationType.OFFER)
+                    .targetUserType(Notification.TargetUserType.ALL_USERS)
+                    .actionUrl(null)
+                    .iconUrl(savedOffer.getImage())
+                    .build();
+                // Use null for createdByUserId (system user will be picked inside NotificationService)
+                notificationService.createNotification(notification, null);
+            }
+            // --- end notification ---
+
             return responseDTO;
         } catch (Exception e) {
             log.error("Error creating offer: {}", e.getMessage());

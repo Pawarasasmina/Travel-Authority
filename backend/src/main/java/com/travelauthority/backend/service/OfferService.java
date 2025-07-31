@@ -17,4 +17,5 @@ public interface OfferService {
     ResponseDTO<Void> deleteOffer(int id);
     ResponseDTO<Void> deleteAllOffers();
     ResponseDTO<OfferDTO> checkPackageOffer(Integer activityId, Long packageId);
+    void setNotificationService(NotificationService notificationService);
 }

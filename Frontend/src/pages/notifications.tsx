@@ -132,6 +132,16 @@ const markAsRead = async (id: number) => {
   return (
     <div className="pt-16 min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-4 sm:py-8">
+        {/* Back Button */}
+        <button
+          onClick={() => window.history.back()}
+          className="mb-4 flex items-center gap-2 text-orange-600 hover:text-orange-800 font-medium"
+        >
+          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
         <div className="bg-white rounded-xl shadow-sm border">
           {/* Header */}
           <div className="p-4 sm:p-6 border-b">
