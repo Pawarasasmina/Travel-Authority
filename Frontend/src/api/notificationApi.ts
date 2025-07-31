@@ -4,7 +4,6 @@ import { debugLog } from '../utils/debug';
 export interface NotificationDTO {
   id: number;
   title: string;
-  description: string;
   message: string;
   type: 'OFFER' | 'ALERT' | 'UPDATE' | 'SYSTEM' | 'BOOKING_CONFIRMATION' | 'PAYMENT_SUCCESS';
   targetUserType: 'ALL_USERS' | 'NORMAL_USERS' | 'ACTIVITY_OWNERS' | 'SPECIFIC_USER';
@@ -20,7 +19,6 @@ export interface NotificationDTO {
 
 export interface CreateNotificationDTO {
   title: string;
-  description: string;
   message: string;
   type: 'OFFER' | 'ALERT' | 'UPDATE' | 'SYSTEM' | 'BOOKING_CONFIRMATION' | 'PAYMENT_SUCCESS';
   targetUserType: 'ALL_USERS' | 'NORMAL_USERS' | 'ACTIVITY_OWNERS' | 'SPECIFIC_USER';
@@ -93,7 +91,7 @@ export const markNotificationAsRead = async (
   try {
     debugLog('NOTIFICATION_API', 'Marking notification as read', { notificationId, userId });
     
-    const response = await api.put(`/api/notifications/${notificationId}/read`, null, {
+    const response = await api.put(`/notifications/${notificationId}/read`, null, {
       params: { userId }
     });
     
@@ -112,7 +110,7 @@ export const markAllNotificationsAsRead = async (
   try {
     debugLog('NOTIFICATION_API', 'Marking all notifications as read', { userId });
     
-    const response = await api.put('/api/notifications/mark-all-read', null, {
+    const response = await api.put('/notifications/mark-all-read', null, {
       params: { userId }
     });
     

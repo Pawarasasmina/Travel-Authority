@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 public class NotificationDTO {
     private Long id;
     private String title;
-    private String description;
     private String message;
     private Notification.NotificationType type;
     private Notification.TargetUserType targetUserType;

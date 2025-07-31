@@ -13,7 +13,7 @@ The notification system now includes **real-time popup notifications** that appe
 - ✅ **Manual control**: Users can dismiss popups manually or click to view details
 
 ### **2. Interactive Popup Features**
-- **Title & Description**: Rich content with both title and detailed description
+- **Title & Message**: Rich content with title and message
 - **Action Button**: "View Details" button for notifications with action URLs
 - **Dismiss Button**: "Dismiss" button to mark as read and close
 - **Visual Indicators**: Different colors and icons based on notification type

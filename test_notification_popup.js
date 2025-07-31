@@ -6,7 +6,6 @@ const testNotificationPopup = async () => {
   
   const testNotification = {
     title: "🎉 Welcome! New Feature Available",
-    description: "We've added a real-time notification system for better user experience.",
     message: "You can now receive instant notifications about important updates, offers, and system alerts. Click 'View Details' to explore more features!",
     type: "UPDATE",
     targetUserType: "ALL_USERS",

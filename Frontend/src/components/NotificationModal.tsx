@@ -7,7 +7,6 @@ import { debugLog } from "../utils/debug";
 interface NotificationData {
   id: number;
   title: string;
-  description: string;
   message: string;
   type: 'OFFER' | 'ALERT' | 'UPDATE' | 'SYSTEM' | 'BOOKING_CONFIRMATION' | 'PAYMENT_SUCCESS';
   targetUserType: 'ALL_USERS' | 'NORMAL_USERS' | 'ACTIVITY_OWNERS' | 'SPECIFIC_USER';

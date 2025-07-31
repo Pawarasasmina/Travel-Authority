@@ -33,9 +33,6 @@ public class Notification {
     private String title;
 
     @Column(nullable = false, length = 1000)
-    private String description;
-
-    @Column(nullable = false, length = 1000)
     private String message;
 
     @Enumerated(EnumType.STRING)

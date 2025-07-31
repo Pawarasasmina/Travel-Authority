@@ -11,12 +11,10 @@ import {
   UserCheck,
   Target,
   Search,
-  Filter,
   Calendar,
   AlertCircle,
   Mail,
   Settings,
-  Eye,
   Send
 } from 'lucide-react';
 import * as notificationApi from '../../api/notificationApi';
@@ -25,7 +23,6 @@ import { debugLog } from '../../utils/debug';
 interface NotificationDTO {
   id: number;
   title: string;
-  description: string;
   message: string;
   type: string;
   targetUserType: string;
@@ -41,7 +38,6 @@ interface NotificationDTO {
 
 interface CreateNotificationDTO {
   title: string;
-  description: string;
   message: string;
   type: 'OFFER' | 'ALERT' | 'UPDATE' | 'SYSTEM' | 'BOOKING_CONFIRMATION' | 'PAYMENT_SUCCESS';
   targetUserType: 'ALL_USERS' | 'NORMAL_USERS' | 'ACTIVITY_OWNERS' | 'SPECIFIC_USER';
@@ -76,7 +72,6 @@ const NotificationManagement: React.FC = () => {
   // Form data
   const [formData, setFormData] = useState<CreateNotificationDTO>({
     title: '',
-    description: '',
     message: '',
     type: 'SYSTEM',
     targetUserType: 'ALL_USERS',
@@ -208,7 +203,6 @@ const NotificationManagement: React.FC = () => {
   const resetForm = () => {
     setFormData({
       title: '',
-      description: '',
       message: '',
       type: 'SYSTEM',
       targetUserType: 'ALL_USERS',
@@ -223,7 +217,6 @@ const NotificationManagement: React.FC = () => {
     setSelectedNotification(notification);
     setFormData({
       title: notification.title,
-      description: notification.description,
       message: notification.message,
       type: notification.type as any,
       targetUserType: notification.targetUserType as any,
@@ -550,18 +543,6 @@ const NotificationManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                      placeholder="Enter notification description"
-                      rows={3}
-                      required
-                    />
-                  </div>
-
-                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Type *</label>
                     <select
                       value={formData.type}
@@ -668,7 +649,7 @@ const NotificationManagement: React.FC = () => {
                 </button>
                 <button
                   onClick={showCreateModal ? handleCreateNotification : handleUpdateNotification}
-                  disabled={!formData.title || !formData.description || !formData.message}
+                  disabled={!formData.title || !formData.message}
                   className="px-5 py-2.5 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <Send size={16} />

@@ -48,7 +48,6 @@ public class NotificationService {
 
         Notification notification = Notification.builder()
                 .title(createDTO.getTitle())
-                .description(createDTO.getDescription())
                 .message(createDTO.getMessage())
                 .type(createDTO.getType())
                 .targetUserType(createDTO.getTargetUserType())
@@ -160,7 +159,6 @@ public class NotificationService {
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
 
         notification.setTitle(updateDTO.getTitle());
-        notification.setDescription(updateDTO.getDescription());
         notification.setMessage(updateDTO.getMessage());
         notification.setType(updateDTO.getType());
         notification.setTargetUserType(updateDTO.getTargetUserType());
@@ -234,12 +232,36 @@ public class NotificationService {
                 .type(Notification.NotificationType.BOOKING_CONFIRMATION)
                 .targetUserType(Notification.TargetUserType.SPECIFIC_USER)
                 .targetUserId(userId)
-                .actionUrl("/booked-tickets/" + bookingId)
+                .actionUrl("/bookings/" + bookingId)
                 .build();
 
         User systemUser = userRepository.findByRole(User.Role.ADMIN).stream().findFirst()
                 .orElse(null);
         
+        if (systemUser != null) {
+            createNotification(createDTO, systemUser.getId());
+        }
+    }
+
+    // Helper method to create payment success notifications
+    @Transactional
+    public void createPaymentSuccessNotification(Integer userId, String activityTitle, String bookingId, Double amount) {
+        String title = "Payment Successful";
+        String message = String.format("Your payment for %s (Booking ID: %s) was successful. Amount: Rs. %.2f", 
+                                      activityTitle, bookingId, amount != null ? amount : 0.0);
+
+        CreateNotificationDTO createDTO = CreateNotificationDTO.builder()
+                .title(title)
+                .message(message)
+                .type(Notification.NotificationType.PAYMENT_SUCCESS)
+                .targetUserType(Notification.TargetUserType.SPECIFIC_USER)
+                .targetUserId(userId)
+                .actionUrl("/bookings/" + bookingId)
+                .build();
+
+        User systemUser = userRepository.findByRole(User.Role.ADMIN).stream().findFirst()
+                .orElse(null);
+
         if (systemUser != null) {
             createNotification(createDTO, systemUser.getId());
         }
@@ -254,7 +276,6 @@ public class NotificationService {
         return NotificationDTO.builder()
                 .id(notification.getId())
                 .title(notification.getTitle())
-                .description(notification.getDescription())
                 .message(notification.getMessage())
                 .type(notification.getType())
                 .targetUserType(notification.getTargetUserType())

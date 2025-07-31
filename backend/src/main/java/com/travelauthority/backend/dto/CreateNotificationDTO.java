@@ -16,8 +16,6 @@ public class CreateNotificationDTO {
     
     private String title;
     
-    private String description;
-    
     private String message;
     
     private Notification.NotificationType type;

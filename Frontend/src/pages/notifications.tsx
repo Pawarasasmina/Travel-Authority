@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, Search, Filter, Bell, Clock, Tag, Mail, Trash2, Check, MessageSquare } from 'lucide-react';
+import { Bell, Mail, Tag, MessageSquare, Clock } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useAuth } from '../hooks/useAuth';
 import * as notificationApi from '../api/notificationApi';
@@ -19,14 +19,12 @@ interface NotificationData {
 const NotificationsPage = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('all');
-  const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -37,29 +35,13 @@ const NotificationsPage = () => {
 
   const fetchNotifications = async () => {
     if (!user) return;
-
+    setLoading(true);
     try {
-      setLoading(true);
-      debugLog('NOTIFICATIONS_PAGE', 'Fetching notifications', { userId: user.id, role: user.role, page: currentPage });
-
-      const response = await notificationApi.getUserNotifications(
-        user.id,
-        user.role,
-        currentPage,
-        20
-      );
-
+      const response = await notificationApi.getUserNotifications(user.id, user.role, currentPage, 20);
       if (response.status === 'OK') {
         setNotifications(response.data || []);
         setTotalPages(response.totalPages || 0);
-        debugLog('NOTIFICATIONS_PAGE', 'Notifications loaded', response.data);
-      } else {
-        setError('Failed to load notifications');
-        debugLog('NOTIFICATIONS_PAGE', 'Failed to load notifications', response);
       }
-    } catch (err: any) {
-      debugLog('NOTIFICATIONS_PAGE', 'Error fetching notifications', err);
-      setError('Error loading notifications');
     } finally {
       setLoading(false);
     }
@@ -67,15 +49,32 @@ const NotificationsPage = () => {
 
   const fetchUnreadCount = async () => {
     if (!user) return;
+    const response = await notificationApi.getUnreadNotificationCount(user.id, user.role);
+    if (response.status === 'OK') setUnreadCount(response.unreadCount || 0);
+  };
 
-    try {
-      const response = await notificationApi.getUnreadNotificationCount(user.id, user.role);
-      if (response.status === 'OK') {
-        setUnreadCount(response.unreadCount || 0);
-      }
-    } catch (err: any) {
-      debugLog('NOTIFICATIONS_PAGE', 'Error fetching unread count', err);
-    }
+ const [markingReadId, setMarkingReadId] = useState<number | null>(null);
+
+const markAsRead = async (id: number) => {
+  if (!user || markingReadId === id) return;
+  setMarkingReadId(id);
+  try {
+    const response = await notificationApi.markNotificationAsRead(id, user.id);
+    // Optionally check response status here
+    setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
+    fetchUnreadCount();
+  } catch (err) {
+    // Optionally show an error toast or message
+    console.error('Failed to mark as read', err);
+  } finally {
+    setMarkingReadId(null);
+  }
+};
+  const markAllAsRead = async () => {
+    if (!user) return;
+    await notificationApi.markAllNotificationsAsRead(user.id);
+    setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+    setUnreadCount(0);
   };
 
   const tabs = [
@@ -100,66 +99,23 @@ const NotificationsPage = () => {
 
   const getTypeStyle = (type: string) => {
     switch (type) {
-      case 'OFFER':
-        return 'bg-green-100 text-green-800';
-      case 'ALERT':
-        return 'bg-red-100 text-red-800';
-      case 'UPDATE':
-        return 'bg-blue-100 text-blue-800';
-      case 'SYSTEM':
-        return 'bg-purple-100 text-purple-800';
-      case 'BOOKING_CONFIRMATION':
-        return 'bg-indigo-100 text-indigo-800';
-      case 'PAYMENT_SUCCESS':
-        return 'bg-emerald-100 text-emerald-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'OFFER': return 'bg-green-100 text-green-800';
+      case 'ALERT': return 'bg-red-100 text-red-800';
+      case 'UPDATE': return 'bg-blue-100 text-blue-800';
+      case 'SYSTEM': return 'bg-purple-100 text-purple-800';
+      case 'BOOKING_CONFIRMATION': return 'bg-indigo-100 text-indigo-800';
+      case 'PAYMENT_SUCCESS': return 'bg-emerald-100 text-emerald-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const markAsRead = async (id: number) => {
-    if (!user) return;
-
-    try {
-      await notificationApi.markNotificationAsRead(id, user.id);
-      setNotifications(notifications.map(n => 
-        n.id === id ? { ...n, isRead: true } : n
-      ));
-      fetchUnreadCount();
-    } catch (err: any) {
-      debugLog('NOTIFICATIONS_PAGE', 'Error marking as read', err);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    if (!user) return;
-
-    try {
-      await notificationApi.markAllNotificationsAsRead(user.id);
-      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
-      setUnreadCount(0);
-    } catch (err: any) {
-      debugLog('NOTIFICATIONS_PAGE', 'Error marking all as read', err);
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
   };
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes} minutes ago`;
-    } else if (diffInMinutes < 1440) {
-      return `${Math.floor(diffInMinutes / 60)} hours ago`;
-    } else {
-      return `${Math.floor(diffInMinutes / 1440)} days ago`;
-    }
+    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hours ago`;
+    return `${Math.floor(diffInMinutes / 1440)} days ago`;
   };
 
   const filteredNotifications = filterNotifications(notifications);
@@ -173,8 +129,7 @@ const NotificationsPage = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Notifications</h1>
             <p className="text-gray-600 mt-2 text-sm sm:text-base">Stay updated with your travel activities and offers</p>
           </div>
-
-          {/* Tabs - Horizontal scrollable on mobile */}
+          {/* Tabs */}
           <div className="border-b overflow-x-auto scrollbar-hide">
             <div className="flex gap-2 sm:gap-8 px-4 sm:px-6 min-w-max">
               {tabs.map((tab) => (
@@ -189,47 +144,25 @@ const NotificationsPage = () => {
                 >
                   <tab.icon size={16} className="sm:size-[18px]" />
                   <span className="font-medium">{tab.label}</span>
-                  {tab.id === 'unread' && (
+                  {tab.id === 'unread' && unreadCount > 0 && (
                     <span className="bg-orange-100 text-orange-600 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full">
-                      3
+                      {unreadCount}
                     </span>
                   )}
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Search and Filters */}
+          {/* Search */}
           <div className="p-4 border-b bg-gray-50">
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
-              <div className="relative w-full sm:w-auto">
-                <select
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="all">All Notifications</option>
-                  <option value="unread">Unread</option>
-                  <option value="offer">Offers</option>
-                  <option value="alert">Alerts</option>
-                  <option value="update">Updates</option>
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-              </div>
-              
-              <div className="relative flex-1 sm:max-w-xs">
-                <input
-                  type="text"
-                  placeholder="Search notifications..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              </div>
-            </div>
+            <input
+              type="text"
+              placeholder="Search notifications..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
           </div>
-
           {/* Notifications List */}
           <div className="divide-y">
             {loading ? (
@@ -277,13 +210,13 @@ const NotificationsPage = () => {
                         </div>
                         <div className="flex items-center gap-2 mt-2 sm:mt-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           {!notification.isRead && (
-                            <Button
-                              variant="outline"
-                              className="p-2"
-                              onClick={() => markAsRead(notification.id)}
-                            >
-                              <Mail size={16} />
-                            </Button>
+                            <button
+  onClick={() => markAsRead(notification.id)}
+  disabled={markingReadId === notification.id}
+  className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
+>
+                              {markingReadId === notification.id ? 'Marking...' : 'Mark as Read'}
+                            </button>
                           )}
                         </div>
                       </div>
@@ -293,7 +226,6 @@ const NotificationsPage = () => {
               ))
             )}
           </div>
-
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="px-6 py-4 border-t bg-gray-50">
@@ -320,7 +252,6 @@ const NotificationsPage = () => {
               </div>
             </div>
           )}
-
           {/* Mark all as read button */}
           {unreadCount > 0 && (
             <div className="px-6 py-4 border-t bg-gray-50">

@@ -112,11 +112,24 @@ public class BookingService {
             
             // Save booking
             Booking savedBooking = bookingRepository.save(booking);
-            
+
             log.info("Booking created successfully: {}", savedBooking.getId());
-            
+
+            // --- Create notification for payment success ---
+            try {
+                NotificationService notificationService = ApplicationContextProvider.getBean(NotificationService.class);
+                notificationService.createPaymentSuccessNotification(
+                    savedBooking.getUser().getId(),
+                    savedBooking.getTitle(),
+                    savedBooking.getId(),
+                    savedBooking.getTotalPrice()
+                );
+            } catch (Exception ex) {
+                log.warn("Failed to create payment success notification: {}", ex.getMessage());
+            }
+
             return convertToResponseDTO(savedBooking);
-            
+
         } catch (Exception e) {
             log.error("Error creating booking: ", e);
             throw new RuntimeException("Failed to create booking: " + e.getMessage());
@@ -186,12 +199,26 @@ public class BookingService {
     public BookingResponseDTO updateBookingStatusAsAdmin(String bookingId, Booking.BookingStatus status) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
-        
+
         booking.setStatus(status);
         Booking updatedBooking = bookingRepository.save(booking);
-        
+
         log.info("Booking status updated by admin: {} -> {}", bookingId, status);
-        
+
+        // --- Create notification for booking confirmation ---
+        if (status == Booking.BookingStatus.CONFIRMED) {
+            try {
+                NotificationService notificationService = ApplicationContextProvider.getBean(NotificationService.class);
+                notificationService.createBookingConfirmationNotification(
+                    updatedBooking.getUser().getId(),
+                    updatedBooking.getTitle(),
+                    updatedBooking.getId()
+                );
+            } catch (Exception ex) {
+                log.warn("Failed to create booking confirmation notification: {}", ex.getMessage());
+            }
+        }
+
         return convertToResponseDTO(updatedBooking);
     }
     

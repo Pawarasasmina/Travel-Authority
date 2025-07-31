@@ -7,7 +7,6 @@ interface NotificationToastProps {
   notification: {
     id: number;
     title: string;
-    description: string;
     message: string;
     type: 'OFFER' | 'ALERT' | 'UPDATE' | 'SYSTEM' | 'BOOKING_CONFIRMATION' | 'PAYMENT_SUCCESS';
     actionUrl?: string;
@@ -138,13 +137,6 @@ const NotificationToast: React.FC<NotificationToastProps> = ({
               <X className="w-4 h-4" />
             </button>
           </div>
-
-          {/* Description */}
-          {notification.description && (
-            <p className="text-xs text-gray-600 mb-2 line-clamp-2">
-              {notification.description}
-            </p>
-          )}
 
           {/* Message */}
           <p className="text-sm text-gray-700 mb-3 line-clamp-3">
