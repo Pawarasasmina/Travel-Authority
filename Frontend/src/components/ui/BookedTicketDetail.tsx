@@ -97,6 +97,16 @@ const BookedTicketDetail: React.FC<BookedTicketDetailProps> = ({ ticket, onBack 
     }
   };
 
+  // Helper: Check if booking can be cancelled (>= 3 days from today)
+  const canCancelBooking = () => {
+    const bookingDate = new Date(ticket.date);
+    const today = new Date();
+    bookingDate.setHours(0,0,0,0);
+    today.setHours(0,0,0,0);
+    const diffDays = Math.ceil((bookingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays >= 3;
+  };
+
   const qrCodeData = getQRCodeData();
   
   // Debug logging
@@ -413,7 +423,9 @@ const BookedTicketDetail: React.FC<BookedTicketDetailProps> = ({ ticket, onBack 
             {(ticket.status.toUpperCase() === "CONFIRMED" || ticket.status.toUpperCase() === "PENDING") && (
               <Button
                 variant="outline"
-                className="px-6 text-sm h-auto py-3 md:w-auto w-full text-red-500 border-red-500 hover:bg-red-50"
+                className={`px-6 text-sm h-auto py-3 md:w-auto w-full text-red-500 border-red-500 hover:bg-red-50 ${!canCancelBooking() ? "opacity-50 cursor-not-allowed" : ""}`}
+                disabled={!canCancelBooking()}
+                title={!canCancelBooking() ? "Cannot cancel less than 3 days before booking date" : undefined}
               >
                 Cancel Booking
               </Button>

@@ -14,6 +14,20 @@ const PurchaseList = () => {
   // Function to handle booking cancellation
   const handleCancelBooking = async (bookingId: string): Promise<void> => {
     try {
+      // Find the booking to check its date
+      const booking = purchaseData.find(item => item.id === bookingId);
+      if (booking) {
+        const bookingDate = new Date(booking.date);
+        const today = new Date();
+        bookingDate.setHours(0,0,0,0);
+        today.setHours(0,0,0,0);
+        const diffDays = Math.ceil((bookingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays < 3) {
+          await showAlert("You cannot cancel a booking less than 3 days before the booking date.", "Not Allowed");
+          return;
+        }
+      }
+      
       const response = await cancelBooking(bookingId);
       
       if (response.success) {

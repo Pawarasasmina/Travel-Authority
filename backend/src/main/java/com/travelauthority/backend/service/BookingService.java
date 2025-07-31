@@ -186,7 +186,21 @@ public class BookingService {
         if (!user.isAdmin() && !booking.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("Access denied: Cannot modify booking");
         }
-        
+
+        // Prevent user from cancelling if booking date is less than 3 days from today
+        if (status == Booking.BookingStatus.CANCELLED && !user.isAdmin()) {
+            try {
+                java.time.LocalDate bookingDate = java.time.LocalDate.parse(booking.getBookingDate());
+                java.time.LocalDate today = java.time.LocalDate.now();
+                long diffDays = java.time.temporal.ChronoUnit.DAYS.between(today, bookingDate);
+                if (diffDays < 3) {
+                    throw new RuntimeException("You cannot cancel a booking less than 3 days before the booking date.");
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to check booking date for cancellation: " + e.getMessage());
+            }
+        }
+
         booking.setStatus(status);
         Booking updatedBooking = bookingRepository.save(booking);
         

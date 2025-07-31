@@ -82,6 +82,17 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({ purchase, className = '', o
     }
   };
 
+  // Helper: Check if booking can be cancelled (>= 3 days from today)
+  const canCancelBooking = () => {
+    const bookingDate = new Date(purchase.date);
+    const today = new Date();
+    // Set both dates to midnight for accurate diff
+    bookingDate.setHours(0,0,0,0);
+    today.setHours(0,0,0,0);
+    const diffDays = Math.ceil((bookingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays >= 3;
+  };
+
   return (
     <div className={`bg-white rounded-lg overflow-hidden shadow-md flex flex-col md:flex-row hover:shadow-lg transition-shadow duration-300 ${className}`}>
       <div className="md:w-1/4 h-60 md:h-auto overflow-hidden">
@@ -156,9 +167,10 @@ const PurchaseCard: React.FC<PurchaseCardProps> = ({ purchase, className = '', o
           
           {(purchase.status.toUpperCase() === "CONFIRMED" || purchase.status.toUpperCase() === "PENDING") && (
             <button 
-              className="text-gray-500 hover:text-red-500 text-sm" 
-              onClick={handleCancelBooking}
-              disabled={isCancelling}
+              className={`text-gray-500 hover:text-red-500 text-sm ${!canCancelBooking() ? "opacity-50 cursor-not-allowed" : ""}`} 
+              onClick={canCancelBooking() ? handleCancelBooking : undefined}
+              disabled={isCancelling || !canCancelBooking()}
+              title={!canCancelBooking() ? "Cannot cancel less than 3 days before booking date" : undefined}
             >
               {isCancelling ? 'Cancelling...' : 'Cancel Booking'}
             </button>
