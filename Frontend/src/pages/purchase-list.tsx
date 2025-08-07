@@ -1,84 +1,191 @@
-import React, { useState } from "react";
-// Import images from home components
-import image1 from '../assets/home-images/event-images/1.jpg';
-import image2 from '../assets/home-images/event-images/2.jpg';
-import image3 from '../assets/home-images/event-images/3.jpg';
-import image4 from '../assets/home-images/event-images/4.jpg';
-import image5 from '../assets/home-images/event-images/5.jpg';
-import image6 from '../assets/home-images/event-images/6.jpg';
+import { useState, useEffect, useCallback } from "react";
 import PurchaseCard, { PurchaseItem } from '../components/ui/PurchaseCard';
-
-// Mock data for purchase history
-const purchaseData: PurchaseItem[] = [
-  {
-    id: "PUR-001",
-    title: "White Water Rafting",
-    location: "Kitulgala",
-    image: image1,
-    date: "2024-05-15",
-    status: "Confirmed",
-    price: 4500,
-    persons: 2
-  },
-  {
-    id: "PUR-002",
-    title: "Uva Tea Factory Tour",
-    location: "Haputale",
-    image: image2,
-    date: "2024-06-20",
-    status: "Pending",
-    price: 3200,
-    persons: 1
-  },
-  {
-    id: "PUR-003",
-    title: "Birds Safari Tour",
-    location: "Bundala",
-    image: image3,
-    date: "2024-04-10",
-    status: "Completed",
-    price: 5000,
-    persons: 4
-  },
-  {
-    id: "PUR-004",
-    title: "Flying Ravana",
-    location: "Ella",
-    image: image4,
-    date: "2024-07-05",
-    status: "Confirmed",
-    price: 6500,
-    persons: 2
-  },
-  {
-    id: "PUR-005",
-    title: "Dolphin Watching",
-    location: "Kalpitiya",
-    image: image5,
-    date: "2024-05-30",
-    status: "Pending",
-    price: 8000,
-    persons: 3
-  },
-  {
-    id: "PUR-006",
-    title: "Paramotoring",
-    location: "Bentota",
-    image: image6,
-    date: "2024-08-12",
-    status: "Cancelled",
-    price: 7500,
-    persons: 1
-  }
-];
+import { getUserBookings, cancelBooking } from '../api/bookingApi';
+import { useAlert } from "../contexts/AlertContext";
 
 const PurchaseList = () => {
-  const [selectedFilter, setSelectedFilter] = useState("all");
+  const { showAlert } = useAlert();
+  const [filter, setFilter] = useState<string>("All");
+  const [purchaseData, setPurchaseData] = useState<PurchaseItem[]>([]);
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Filter purchases based on selected filter
-  const filteredPurchases = selectedFilter === "all" 
-    ? purchaseData 
-    : purchaseData.filter(purchase => purchase.status.toLowerCase() === selectedFilter.toLowerCase());
+  // Function to handle booking cancellation
+  const handleCancelBooking = async (bookingId: string): Promise<void> => {
+    try {
+      // Find the booking to check its date
+      const booking = purchaseData.find(item => item.id === bookingId);
+      if (booking) {
+        const bookingDate = new Date(booking.date);
+        const today = new Date();
+        bookingDate.setHours(0,0,0,0);
+        today.setHours(0,0,0,0);
+        const diffDays = Math.ceil((bookingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays < 3) {
+          await showAlert("You cannot cancel a booking less than 3 days before the booking date.", "Not Allowed");
+          return;
+        }
+      }
+      
+      const response = await cancelBooking(bookingId);
+      
+      if (response.success) {
+        // Update the UI to reflect the cancellation
+        setPurchaseData(prevData => 
+          prevData.map(item => 
+            item.id === bookingId ? { ...item, status: "CANCELLED" } : item
+          )
+        );
+        
+        // Refresh the status counts
+        fetchStatusCounts();
+        
+        // Show success message
+        await showAlert("Booking cancelled successfully", "Success");
+      } else {
+        throw new Error(response.message || "Failed to cancel booking");
+      }
+    } catch (error: any) {
+      console.error('Error cancelling booking:', error);
+      await showAlert(
+        error.message || "There was an error cancelling your booking. Please try again.",
+        "Error"
+      );
+      throw error; // Re-throw to be caught by the component
+    }
+  };
+
+  // Fetch status counts for filter buttons
+  const fetchStatusCounts = useCallback(async () => {
+    try {
+      const backendStatuses = ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"];
+      const frontendStatuses = ["Pending", "Confirmed", "Completed", "Cancelled"];
+      const counts: Record<string, number> = {};
+      
+      // Fetch all bookings to get total count
+      const allResponse = await getUserBookings();
+      counts["All"] = allResponse.success && allResponse.data ? allResponse.data.length : 0;
+      
+      // Fetch counts for each status
+      for (let i = 0; i < backendStatuses.length; i++) {
+        const backendStatus = backendStatuses[i];
+        const frontendStatus = frontendStatuses[i];
+        const response = await getUserBookings(backendStatus);
+        counts[frontendStatus] = response.success && response.data ? response.data.length : 0;
+      }
+      
+      setStatusCounts(counts);
+    } catch (err) {
+      console.error('Error fetching status counts:', err);
+    }
+  }, []);  // Empty dependency array
+
+  // Initial fetch of status counts
+  useEffect(() => {
+    fetchStatusCounts();
+  }, [fetchStatusCounts]);
+
+  // Fetch bookings from backend
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setLoading(true);
+        // Map frontend filter to backend status
+        let statusParam: string | undefined;
+        if (filter !== "All") {
+          const statusMapping: Record<string, string> = {
+            "Pending": "PENDING",
+            "Confirmed": "CONFIRMED", 
+            "Completed": "COMPLETED",
+            "Cancelled": "CANCELLED"
+          };
+          statusParam = statusMapping[filter];
+        }
+        
+        // This should only return the current user's bookings based on their authentication token
+        const response = await getUserBookings(statusParam);
+        
+        if (response.success && response.data) {
+          // Convert backend booking format to frontend format
+          // First, filter out bookings that don't belong to the current user
+          const userEmail = JSON.parse(localStorage.getItem('user') || '{}').email;
+          
+          // Filter bookings by userEmail if available in the response data
+          const filteredBookings = response.data.filter((booking: any) => {
+            // If booking has userEmail field, make sure it matches the current user
+            // If it doesn't have a userEmail field, we'll assume it's for the current user
+            // since the backend should be filtering based on the auth token
+            return !booking.userEmail || booking.userEmail === userEmail;
+          });
+          
+          const formattedBookings: PurchaseItem[] = filteredBookings.map((booking: any) => ({
+            id: booking.id,
+            title: booking.title,
+            location: booking.location,
+            image: booking.image || '/src/assets/categories/adventure.jpg', // Default image if none provided
+            date: booking.bookingDate,
+            status: booking.status,
+            price: booking.totalPrice,
+            persons: booking.totalPersons
+          }));
+          
+          setPurchaseData(formattedBookings);
+        } else {
+          setError(response.message || 'Failed to fetch bookings');
+        }
+      } catch (err) {
+        console.error('Error fetching bookings:', err);
+        setError('Failed to fetch bookings. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, [filter]);
+
+  // Update status counts when filter changes (except for the initial "All" fetch)
+  useEffect(() => {
+    if (filter !== "All") {
+      // Update the count for the current filter based on the fetched data
+      setStatusCounts(prev => ({
+        ...prev,
+        [filter]: purchaseData.length
+      }));
+    }
+  }, [purchaseData, filter]);
+
+  // Count bookings by status
+  const getCountByStatus = (status: string) => {
+    return statusCounts[status] || 0;
+  };
+
+  if (loading) {
+    return (
+      <div className="pt-[52px] container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="text-xl">Loading your bookings...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="pt-[52px] container mx-auto px-4 py-8">
+        <div className="text-center">
+          <div className="text-red-600 text-xl">{error}</div>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col mt-8">
@@ -89,30 +196,34 @@ const PurchaseList = () => {
           
           {/* Filter Buttons */}
           <div className="flex flex-wrap gap-2 mb-8">
-            {["All", "Confirmed", "Pending", "Completed", "Cancelled"].map((filter) => (
+            {["All", "Confirmed", "Pending", "Completed", "Cancelled"].map((filterOption) => (
               <button 
-                key={filter}
-                onClick={() => setSelectedFilter(filter.toLowerCase())} 
+                key={filterOption}
+                onClick={() => setFilter(filterOption)} 
                 className={`px-4 py-2 rounded-full border transition-colors ${
-                  selectedFilter === filter.toLowerCase() 
+                  filter === filterOption 
                     ? 'bg-gradient-to-r from-[#FF7F50] to-[#BF360C] text-white' 
                     : 'border-gray-300 text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                {filter}
+                {filterOption} ({getCountByStatus(filterOption)})
               </button>
             ))}
           </div>
           
           {/* Purchases List */}
           <div className="space-y-6">
-            {filteredPurchases.length === 0 ? (
+            {purchaseData.length === 0 ? (
               <div className="text-center py-16 bg-gray-50 rounded-lg">
                 <p className="text-gray-500 text-xl">No purchases found for the selected filter.</p>
               </div>
             ) : (
-              filteredPurchases.map(purchase => (
-                <PurchaseCard key={purchase.id} purchase={purchase} />
+              purchaseData.map(purchase => (
+                <PurchaseCard 
+                  key={purchase.id} 
+                  purchase={purchase} 
+                  onCancelBooking={handleCancelBooking} 
+                />
               ))
             )}
           </div>
@@ -121,5 +232,4 @@ const PurchaseList = () => {
     </div>
   );
 };
-
 export default PurchaseList;

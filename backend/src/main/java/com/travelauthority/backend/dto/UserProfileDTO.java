@@ -1,0 +1,21 @@
+package com.travelauthority.backend.dto;
+
+import com.travelauthority.backend.entity.User.Role;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserProfileDTO {
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String phoneNumber;
+    private String birthdate;
+    private String gender;
+    private String nic;
+    private String role;
+}

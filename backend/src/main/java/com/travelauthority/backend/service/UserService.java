@@ -10,4 +10,5 @@ public interface UserService {
     public ResponseDTO getUserById(int id);
     public ResponseDTO updateUser(int id, UserDTO userDTO);
     public ResponseDTO deleteUser(int id);
+    public ResponseDTO changePassword(int userId, String currentPassword, String newPassword);
 }

@@ -1,11 +1,14 @@
 // login.tsx
-import * as React from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from 'react-router-dom';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Divider from '../components/ui/Divider';
 import AuthLayout from '../components/layouts/AuthLayout';
+import { useAuth } from '../hooks/useAuth';
+import * as authApi from '../api/authApi';
+import { debugLog } from '../utils/debug';
 
 interface LoginFormData {
   email: string;
@@ -69,11 +72,121 @@ function SocialLogin() {
 // Login Form component
 function LoginForm() {
   const navigate = useNavigate();
-  const { register, handleSubmit } = useForm<LoginFormData>();
-
-  const onSubmit = (data: LoginFormData) => {
-    console.log(data);
-    navigate('/home');
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
+    // Redirect already authenticated users based on role
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const isAdmin = user?.role === 'ADMIN';
+      const isOwner = user?.role === 'TRAVEL_ACTIVITY_OWNER';
+      
+      if (isAdmin) {
+        debugLog('LOGIN', 'Admin user authenticated, redirecting to admin dashboard');
+        navigate('/admin/dashboard');
+      }else if (isOwner) {
+        debugLog('LOGIN', 'Admin user authenticated, redirecting to admin dashboard');
+        navigate('/owner/dashboard');
+      }  else {
+        debugLog('LOGIN', 'Regular user authenticated, redirecting to home');
+        navigate('/home');
+      }
+    }
+  }, [isAuthenticated, authLoading, navigate]);
+    const onSubmit = async (data: LoginFormData) => {
+    try {
+      setIsLoading(true);
+      setErrorMessage(null);
+      
+      const response = await authApi.login(data);
+      debugLog('LOGIN', 'Checking login response status:', response.status);
+        if (response.status === "OK" || response.status === "200 OK") {
+        debugLog('LOGIN', 'Login successful, response data:', response.data);        // Handle different response structures from the API based on your console logs
+        if (response.data && response.data.user) {
+          // Case 1: Response has nested user object with user data
+          debugLog('LOGIN', 'Found user object in response.data.user');
+          const token = response.data.token || '';
+          debugLog('LOGIN', 'Token from response', token ? 'present' : 'not present');
+          login(response.data.user, token);
+          debugLog('LOGIN', 'Logged in successfully, navigating to home');
+          setTimeout(() => {
+            navigate('/home');
+          }, 500); // Give time for the state to update
+        } else if (response.data && typeof response.data === 'object') {
+          // Case 2: User data is directly in response.data
+          debugLog('LOGIN', 'User data found directly in response.data');
+          
+          // Handle the specific response structure from your API
+          // Based on your console log: {firstName: 'sample', lastName: 'user', phoneNumber: '0775211771', nic: '200235802231', id: 1, …}
+          let userData = null;
+          let token = null;
+          
+          if (response.data.firstName && response.data.id) {
+            // This is the format from your console logs
+            userData = response.data;
+            token = response.data.token || response.data.accessToken || '';
+            debugLog('LOGIN', 'Found user data and extracted token', { userData, hasToken: !!token });
+          } else if (response.data.data && typeof response.data.data === 'object') {
+            // Data might be nested one level deeper
+            userData = response.data.data;
+            token = userData.token || userData.accessToken || '';
+            debugLog('LOGIN', 'Found nested user data', { userData, hasToken: !!token });
+            
+            // Cleanup token from user data if it exists there
+            if (userData.token) delete userData.token;
+            if (userData.accessToken) delete userData.accessToken;
+          } else {
+            // Generic case - try to use response.data directly
+            userData = {...response.data}; // Clone to avoid mutation
+            token = userData.token || userData.accessToken || '';
+            debugLog('LOGIN', 'Using response data directly', { userData, hasToken: !!token });
+            
+            // Cleanup token from user data if it exists
+            if (userData.token) delete userData.token;
+            if (userData.accessToken) delete userData.accessToken;
+          }
+            // Call login with the user data and token
+          if (userData) {
+            login(userData, token);
+            
+            // Check user role for navigation
+            const isAdmin = userData.role === 'ADMIN';
+            const isOwner = userData.role === 'TRAVEL_ACTIVITY_OWNER';
+            if (isAdmin) {
+              debugLog('LOGIN', 'Admin user logged in, navigating to admin dashboard');
+              setTimeout(() => {
+                navigate('/admin/dashboard');
+              }, 500); // Give time for the state to update
+            }
+            else if (isOwner) {
+              debugLog('LOGIN', 'Owner user logged in, navigating to Owner dashboard');
+              setTimeout(() => {
+                navigate('/owner/dashboard');
+              }, 500); // Give time for the state to update
+            } else {
+              debugLog('LOGIN', 'Regular user logged in, navigating to home');
+              setTimeout(() => {
+                navigate('/home');
+              }, 500); // Give time for the state to update
+            }
+          } else {
+            setErrorMessage("Could not extract user data from response");
+          }
+        } else {
+          setErrorMessage("Invalid user data format received from server");
+          debugLog('LOGIN', 'Invalid response format', response);
+        }
+      } else {
+        setErrorMessage(response.message || "Login failed. Please check your credentials.");
+      }
+    } catch (error) {
+      setErrorMessage("An error occurred during login. Please try again.");
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const emailIcon = (
@@ -107,12 +220,16 @@ function LoginForm() {
       />
     </svg>
   );
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-[327px]">
       <div className="text-[44px] font-bold text-center mb-[29px] max-sm:text-[32px]">
         Log In
       </div>
+      {errorMessage && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {errorMessage}
+        </div>
+      )}
       <div className="flex flex-col gap-4 mb-8 max-sm:gap-3">
         <Input 
           id="email"
@@ -120,19 +237,31 @@ function LoginForm() {
           placeholder="Email"
           label="Email"
           icon={emailIcon}
-          {...register("email")}
+          {...register("email", { 
+            required: "Email is required",
+            pattern: {
+              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+              message: "Invalid email address"
+            }
+          })}
         />
+        {errors.email && (
+          <span className="text-red-500 text-xs">{errors.email.message}</span>
+        )}
         <Input 
           id="password"
           type="password"
           placeholder="Password"
           label="Password"
           icon={passwordIcon}
-          {...register("password")}
+          {...register("password", { required: "Password is required" })}
         />
+        {errors.password && (
+          <span className="text-red-500 text-xs">{errors.password.message}</span>
+        )}
       </div>
-      <Button type="submit" fullWidth>
-        Log In
+      <Button type="submit" fullWidth disabled={isLoading}>
+        {isLoading ? "Logging in..." : "Log In"}
       </Button>
 
       <div

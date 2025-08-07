@@ -1,110 +1,154 @@
-import React, { useState } from 'react';
-import { ChevronDown, Search, Filter, Bell, Clock, Tag, Mail, Trash2, Check, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, Mail, Tag, MessageSquare, Clock } from 'lucide-react';
 import Button from '../components/ui/Button';
+import { useAuth } from '../hooks/useAuth';
+import * as notificationApi from '../api/notificationApi';
+import { debugLog } from '../utils/debug';
 
-interface Notification {
+interface NotificationData {
   id: number;
   title: string;
-  description: string;
-  date: string;
-  time: string;
-  type: 'offer' | 'alert' | 'update';
+  message: string;
+  type: string;
+  createdAt: string;
+  iconUrl?: string;
+  actionUrl?: string;
   isRead: boolean;
-  icon: React.ElementType;
 }
 
-
 const NotificationsPage = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('all');
-  const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  const notifications: Notification[] = [
-    {
-      id: 1,
-      title: "Special Summer Offer",
-      description: "Get 20% off on all beach activities this summer! Limited time offer.",
-      date: "2024-02-20",
-      time: "09:30 AM",
-      type: "offer",
-      isRead: false,
-      icon: Tag
-    },
-    {
-      id: 2,
-      title: "Booking Confirmation",
-      description: "Your booking for Sigiriya Rock Fortress has been confirmed.",
-      date: "2024-02-20",
-      time: "10:15 AM",
-      type: "update",
-      isRead: true,
-      icon: Check
-    },
-    {
-      id: 3,
-      title: "Weather Alert",
-      description: "Weather warning for Southern coastal areas. Please check your booking.",
-      date: "2024-02-19",
-      time: "03:45 PM",
-      type: "alert",
-      isRead: false,
-      icon: Bell
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      fetchUnreadCount();
     }
+  }, [user, currentPage]);
+
+  const fetchNotifications = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const response = await notificationApi.getUserNotifications(user.id, user.role, currentPage, 20);
+      if (response.status === 'OK') {
+        setNotifications(response.data || []);
+        setTotalPages(response.totalPages || 0);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUnreadCount = async () => {
+    if (!user) return;
+    const response = await notificationApi.getUnreadNotificationCount(user.id, user.role);
+    if (response.status === 'OK') setUnreadCount(response.unreadCount || 0);
+  };
+
+ const [markingReadId, setMarkingReadId] = useState<number | null>(null);
+
+const markAsRead = async (id: number) => {
+  if (!user || markingReadId === id) return;
+  setMarkingReadId(id);
+  try {
+    const response = await notificationApi.markNotificationAsRead(id, user.id);
+    // Optionally check response status here
+    setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
+    fetchUnreadCount();
+  } catch (err) {
+    // Optionally show an error toast or message
+    console.error('Failed to mark as read', err);
+  } finally {
+    setMarkingReadId(null);
+  }
+};
+  const markAllAsRead = async () => {
+    if (!user) return;
+    await notificationApi.markAllNotificationsAsRead(user.id);
+    setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+    setUnreadCount(0);
+  };
+
+  const notificationTypes = [
+    { id: 'OFFER', label: 'Offers', icon: Tag },
+    { id: 'ALERT', label: 'Alerts', icon: Bell },
+    { id: 'UPDATE', label: 'Updates', icon: Clock },
+    { id: 'SYSTEM', label: 'System', icon: Bell },
+    { id: 'BOOKING_CONFIRMATION', label: 'Booking Confirmed', icon: Mail },
+    { id: 'PAYMENT_SUCCESS', label: 'Payment Success', icon: Mail },
   ];
 
   const tabs = [
     { id: 'all', label: 'All', icon: MessageSquare },
     { id: 'unread', label: 'Unread', icon: Mail },
-    { id: 'offers', label: 'Offers', icon: Tag },
-    { id: 'alerts', label: 'Alerts', icon: Bell },
+    ...notificationTypes
   ];
 
-  const filterNotifications = (notifications: Notification[]) => {
+  const filterNotifications = (notifications: NotificationData[]) => {
     return notifications
       .filter(notif => {
-        if (filter === 'all') return true;
-        if (filter === 'unread') return !notif.isRead;
-        return notif.type === filter;
+        if (activeTab === 'all') return true;
+        if (activeTab === 'unread') return !notif.isRead;
+        // Support all backend types
+        return notif.type === activeTab;
       })
       .filter(notif =>
         notif.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        notif.description.toLowerCase().includes(searchQuery.toLowerCase())
+        notif.message.toLowerCase().includes(searchQuery.toLowerCase())
       );
   };
 
   const getTypeStyle = (type: string) => {
     switch (type) {
-      case 'offer':
-        return 'bg-green-100 text-green-800';
-      case 'alert':
-        return 'bg-red-100 text-red-800';
-      case 'update':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'OFFER': return 'bg-green-100 text-green-800';
+      case 'ALERT': return 'bg-red-100 text-red-800';
+      case 'UPDATE': return 'bg-blue-100 text-blue-800';
+      case 'SYSTEM': return 'bg-purple-100 text-purple-800';
+      case 'BOOKING_CONFIRMATION': return 'bg-indigo-100 text-indigo-800';
+      case 'PAYMENT_SUCCESS': return 'bg-emerald-100 text-emerald-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const markAsRead = (id: number) => {
-    // Implement mark as read functionality
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hours ago`;
+    return `${Math.floor(diffInMinutes / 1440)} days ago`;
   };
 
-  const deleteNotification = (id: number) => {
-    // Implement delete functionality
-  };
+  const filteredNotifications = filterNotifications(notifications);
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-4 sm:py-8">
+        {/* Back Button */}
+        <button
+          onClick={() => window.history.back()}
+          className="mb-4 flex items-center gap-2 text-orange-600 hover:text-orange-800 font-medium"
+        >
+          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
         <div className="bg-white rounded-xl shadow-sm border">
           {/* Header */}
           <div className="p-4 sm:p-6 border-b">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Notifications</h1>
             <p className="text-gray-600 mt-2 text-sm sm:text-base">Stay updated with your travel activities and offers</p>
           </div>
-
-          {/* Tabs - Horizontal scrollable on mobile */}
+          {/* Tabs */}
           <div className="border-b overflow-x-auto scrollbar-hide">
             <div className="flex gap-2 sm:gap-8 px-4 sm:px-6 min-w-max">
               {tabs.map((tab) => (
@@ -119,47 +163,25 @@ const NotificationsPage = () => {
                 >
                   <tab.icon size={16} className="sm:size-[18px]" />
                   <span className="font-medium">{tab.label}</span>
-                  {tab.id === 'unread' && (
+                  {tab.id === 'unread' && unreadCount > 0 && (
                     <span className="bg-orange-100 text-orange-600 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full">
-                      3
+                      {unreadCount}
                     </span>
                   )}
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Search and Filters */}
+          {/* Search */}
           <div className="p-4 border-b bg-gray-50">
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
-              <div className="relative w-full sm:w-auto">
-                <select
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="all">All Notifications</option>
-                  <option value="unread">Unread</option>
-                  <option value="offer">Offers</option>
-                  <option value="alert">Alerts</option>
-                  <option value="update">Updates</option>
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-              </div>
-              
-              <div className="relative flex-1 sm:max-w-xs">
-                <input
-                  type="text"
-                  placeholder="Search notifications..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              </div>
-            </div>
+            <input
+              type="text"
+              placeholder="Search notifications..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
           </div>
-
           {/* Notifications List */}
           <div className="divide-y">
             {loading ? (
@@ -167,14 +189,14 @@ const NotificationsPage = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
                 <p className="mt-4 text-gray-500">Loading notifications...</p>
               </div>
-            ) : notifications.length === 0 ? (
-              <div className="p-12 text-center">
+            ) : filteredNotifications.length === 0 ? (
+              <div className="text-center py-12">
                 <Bell size={48} className="mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications yet</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications found</h3>
                 <p className="text-gray-500">We'll notify you when something arrives.</p>
               </div>
             ) : (
-              filterNotifications(notifications).map((notification) => (
+              filteredNotifications.map((notification) => (
                 <div
                   key={notification.id}
                   className={`group p-4 sm:p-6 hover:bg-gray-50 transition-colors ${
@@ -183,42 +205,39 @@ const NotificationsPage = () => {
                 >
                   <div className="flex items-start gap-3 sm:gap-4">
                     <div className={`p-2 rounded-full ${getTypeStyle(notification.type)} bg-opacity-10 hidden sm:block`}>
-                      <notification.icon size={20} />
+                      <Bell size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row gap-3 sm:items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                          <h3 className={`font-semibold text-sm sm:text-base truncate ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
                             {notification.title}
+                            {!notification.isRead && (
+                              <span className="inline-block w-2 h-2 bg-orange-500 rounded-full ml-2"></span>
+                            )}
                           </h3>
-                          <p className="text-gray-600 mt-1 text-sm line-clamp-2">{notification.description}</p>
+                          <p className="text-gray-600 mt-1 text-sm line-clamp-2">{notification.message}</p>
                           <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2">
                             <span className="flex items-center gap-1 text-xs sm:text-sm text-gray-500">
                               <Clock size={14} />
-                              {notification.date}
+                              {formatTime(notification.createdAt)}
                             </span>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeStyle(notification.type)}`}>
-                              {notification.type}
+                              {/* Display user-friendly label */}
+                              {notificationTypes.find(t => t.id === notification.type)?.label || notification.type.replace('_', ' ')}
                             </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 mt-2 sm:mt-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           {!notification.isRead && (
-                            <Button
-                              variant="outline"
-                              className="p-2"
-                              onClick={() => markAsRead(notification.id)}
-                            >
-                              <Mail size={16} />
-                            </Button>
+                            <button
+  onClick={() => markAsRead(notification.id)}
+  disabled={markingReadId === notification.id}
+  className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
+>
+                              {markingReadId === notification.id ? 'Marking...' : 'Mark as Read'}
+                            </button>
                           )}
-                          <Button
-                            variant="outline"
-                            className="p-2 text-red-600 hover:bg-red-50"
-                            onClick={() => deleteNotification(notification.id)}
-                          >
-                            <Trash2 size={16} />
-                          </Button>
                         </div>
                       </div>
                     </div>
@@ -227,6 +246,43 @@ const NotificationsPage = () => {
               ))
             )}
           </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t bg-gray-50">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  Page {currentPage + 1} of {totalPages}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                    disabled={currentPage === 0}
+                    className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                    disabled={currentPage === totalPages - 1}
+                    className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Mark all as read button */}
+          {unreadCount > 0 && (
+            <div className="px-6 py-4 border-t bg-gray-50">
+              <button
+                onClick={markAllAsRead}
+                className="w-full py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
+              >
+                Mark All as Read ({unreadCount})
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

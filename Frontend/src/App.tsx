@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import Login from './pages/login';
 import Registration from './pages/signup';
 import ForgotPassword from './pages/forgot-password';
@@ -8,18 +9,28 @@ import Home from './pages/home';
 import Categories from './pages/categories';
 import Profile from './pages/profile';
 import PurchaseList from './pages/purchase-list';
+import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider, useNotifications } from './contexts/NotificationContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import NotificationToast from './components/NotificationToast';
 import ActivityDetail from './components/activities/ActivityDetail';
 import BookedTicketPage from './pages/booked-ticket-page';
 import PeopleCountSelector from './pages/PeopleCountSelector';
 import PaymentSuccess from './pages/PaymentSuccess';
 import NotificationsPage from './pages/notifications';
-
+import AdminDashboard from './pages/admin/dashboard';
+import TravelOwnerDashboard from './pages/admin/travel-owner-dashboard';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+import TravelOwnerRoute from './components/TravelOwnerRoute';
+import { monitorUserData, fixUserData } from './utils/userDataMonitor';
+import OfferDetails from './pages/OfferDetails';
 
 // Component to conditionally render navbar based on route
 const AppContent = () => {
   const location = useLocation();
+  const { newNotification, dismissNewNotification } = useNotifications();
   const authRoutes = ['/login', '/signup', '/signup2', '/forgot-password', '/change-password', '/'];
   
   // Pages that should have transparent navbar
@@ -57,22 +68,40 @@ const AppContent = () => {
   return (
     <>
       {showNavbar && <Navbar transparent={shouldHaveTransparentNavbar} />}
+      
+      {/* Notification Toast */}
+      {newNotification && (
+        <NotificationToast
+          notification={newNotification}
+          onClose={dismissNewNotification}
+          autoClose={true}
+          duration={6000}
+        />
+      )}
+      
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} /> 
-        <Route path="/login" element={<Login />} />
-        <Route path="/home" element={<Home/>}/>
+        <Route path="/login" element={<Login />} />      
+        <Route path="/home" element={<ProtectedRoute><Home/></ProtectedRoute>}/>
         <Route path="/signup" element={<Registration />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/change-password" element={<ChangePassword/>} />
         <Route path="/aboutus" element={<AboutUs/>} />
-        <Route path="/categories" element={<Categories/>} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/purchase-list" element={<PurchaseList />} />
-        <Route path="/activities/:id/:title" element={<ActivityDetail />} />
-        <Route path="/booking/people-count" element={<PeopleCountSelector />} />
-        <Route path="/payment-success" element={<PaymentSuccess />} />
-        <Route path="/bookings/:id" element={<BookedTicketPage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/categories" element={<ProtectedRoute><Categories/></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/purchase-list" element={<ProtectedRoute><PurchaseList /></ProtectedRoute>} />
+        <Route path="/activities/:id/:title" element={<ProtectedRoute><ActivityDetail /></ProtectedRoute>} />
+        <Route path="/booking/people-count" element={<ProtectedRoute><PeopleCountSelector /></ProtectedRoute>} />
+        <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+        <Route path="/bookings/:id" element={<ProtectedRoute><BookedTicketPage /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+        <Route path="/offers/:id" element={<OfferDetails />} />
+        
+        {/* Admin Routes */}
+        <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        
+        {/* Travel Activity Owner Routes */}
+        <Route path="/owner/dashboard" element={<TravelOwnerRoute><TravelOwnerDashboard /></TravelOwnerRoute>} />
       </Routes>
       {showFooter && <Footer />}
     </>
@@ -80,10 +109,25 @@ const AppContent = () => {
 };
 
 function App() {
+  // Initialize user data monitoring
+  useEffect(() => {
+    // Check and fix existing user data in localStorage
+    fixUserData();
+    
+    // Set up monitoring for user data changes
+    monitorUserData();
+    
+    console.log("User data monitoring initialized");
+  }, []);
+  
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <AuthProvider>
+      <NotificationProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </NotificationProvider>
+    </AuthProvider>
   );
 }
 

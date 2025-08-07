@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
 
@@ -21,8 +21,11 @@ const PaymentSuccess = () => {
       <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md w-full mx-4">
         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Payment Successful!</h1>
-        <p className="text-gray-600 mb-6">
-          Your booking for {bookingData?.title} has been confirmed.
+        <p className="text-gray-600 mb-4">
+          Your booking for {bookingData?.title} has been submitted successfully.
+        </p>
+        <p className="text-sm text-yellow-600 mb-6">
+          Your booking is currently pending admin confirmation. You will be notified once it's confirmed.
         </p>
         <div className="text-sm text-gray-500">
           Redirecting to your ticket details...

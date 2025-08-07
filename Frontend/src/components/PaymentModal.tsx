@@ -13,12 +13,18 @@ interface PaymentModalProps {
   onConfirm: (bookingData: any) => void;
   totalAmount: string;
   bookingDetails: {
+    activityId?: number;
     activityTitle: string;
     activityLocation: string;
     packageType: string;
-    peopleCounts: any;
+    packageId?: number;
+    peopleCounts: Record<string, number>;
     bookingDate: string;
     image: string;
+    description?: string;
+    hasDiscount?: boolean;
+    discountPercentage?: number;
+    offerTitle?: string;
   };
 }
 
@@ -30,35 +36,83 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   bookingDetails 
 }) => {
   // Calculate additional charges
-  const baseAmount = parseFloat(totalAmount.replace(/[^\d.]/g, ''));
+  const rawBaseAmount = parseFloat(totalAmount.replace(/[^\d.]/g, ''));
+  
+  // Base amount already includes any discount applied from calculateTotal in PeopleCountSelector
+  const baseAmount = rawBaseAmount;
+  
+  // Calculate service fee and tax based on the discounted amount
   const serviceFee = baseAmount * 0.05; // 5% service fee
   const tax = baseAmount * 0.15; // 15% tax
   const finalTotal = baseAmount + serviceFee + tax;
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     // Generate a ticket ID
     const ticketId = `TICK-${Date.now()}`;
     
-    // Create booking data
+    // Create booking data for API
+    const bookingRequestData = {
+      activityId: bookingDetails.activityId || 0,
+      activityTitle: bookingDetails.activityTitle,
+      activityLocation: bookingDetails.activityLocation,
+      image: bookingDetails.image,
+      description: bookingDetails.description || '',
+      bookingDate: bookingDetails.bookingDate,
+      packageId: bookingDetails.packageId,
+      packageName: bookingDetails.packageType,
+      basePrice: baseAmount,
+      serviceFee: serviceFee,
+      tax: tax,
+      totalPrice: finalTotal,
+      totalPersons: Object.values(bookingDetails.peopleCounts).reduce((a, b) => (a as number) + (b as number), 0) as number,
+      paymentMethod: "Credit Card",
+      peopleCounts: bookingDetails.peopleCounts,
+      hasDiscount: bookingDetails.hasDiscount || false,
+      discountPercentage: bookingDetails.discountPercentage || 0,
+      offerTitle: bookingDetails.offerTitle || ''
+    };
+
+    // Create booking data for frontend navigation
     const bookingData = {
       id: ticketId,
       title: bookingDetails.activityTitle,
       location: bookingDetails.activityLocation,
       image: bookingDetails.image,
       date: bookingDetails.bookingDate,
-      status: "Confirmed",
+      status: "Pending",
       price: finalTotal,
+      hasDiscount: bookingDetails.hasDiscount || false,
+      discountPercentage: bookingDetails.discountPercentage || 0,
+      offerTitle: bookingDetails.offerTitle || '',
       serviceFee,
       tax,
-      persons: Object.values(bookingDetails.peopleCounts).reduce((a, b) => (a as number) + (b as number), 0),
+      persons: Object.values(bookingDetails.peopleCounts).reduce((a, b) => (a as number) + (b as number), 0) as number,
       bookingTime: new Date().toISOString(),
       paymentMethod: "Credit Card",
       packageType: bookingDetails.packageType,
       peopleCounts: bookingDetails.peopleCounts
     };
 
-    // Navigate to success page first
-    onConfirm(bookingData);
+    try {
+      // Call the booking API
+      const { createBooking } = await import('../api/bookingApi');
+      const response = await createBooking(bookingRequestData);
+      
+      if (response.success) {
+        // Update the booking data with the actual ID from backend
+        bookingData.id = response.data.id;
+        
+        // Navigate to success page
+        onConfirm(bookingData);
+      } else {
+        // Handle API error
+        console.error('Booking creation failed:', response.message);
+        alert('Failed to create booking: ' + response.message);
+      }
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      alert('Failed to create booking. Please try again.');
+    }
   };
 
   if (!isOpen) return null;
@@ -98,6 +152,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 <span className="text-gray-600">{bookingDetails.activityTitle}</span>
                 <span>LKR {baseAmount.toFixed(2)}</span>
               </div>
+              {bookingDetails.hasDiscount && bookingDetails.discountPercentage && bookingDetails.discountPercentage > 0 && (
+                <div className="flex justify-between py-2">
+                  <span className="text-green-600">
+                    Discount ({bookingDetails.discountPercentage}%)
+                    {bookingDetails.offerTitle && ` - ${bookingDetails.offerTitle}`}
+                  </span>
+                  <span className="text-green-600">-LKR {((baseAmount * bookingDetails.discountPercentage) / 100).toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between py-2">
                 <span className="text-gray-600">Service Fee (5%)</span>
                 <span>LKR {serviceFee.toFixed(2)}</span>
